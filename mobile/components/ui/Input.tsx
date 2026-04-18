@@ -64,7 +64,7 @@ export const Input: React.FC<InputProps> = ({
         <TextInput
           style={[styles.input, multiline && styles.multiline]}
           placeholder={placeholder}
-          placeholderTextColor={colors.gray400}
+          placeholderTextColor={colors.textTertiary}
           value={value}
           onChangeText={onChangeText}
           secureTextEntry={secureTextEntry}
@@ -78,11 +78,13 @@ export const Input: React.FC<InputProps> = ({
           multiline={multiline}
           numberOfLines={numberOfLines}
           maxLength={maxLength}
+          selectionColor={colors.primary}
         />
         {rightIcon && (
           <TouchableOpacity
             onPress={onRightIconPress}
             disabled={!onRightIconPress}
+            style={styles.iconButton}
           >
             {rightIcon}
           </TouchableOpacity>
@@ -98,36 +100,38 @@ const styles = StyleSheet.create({
     marginBottom: spacing.md,
   },
   label: {
-    ...typography.bodySmall,
+    ...typography.caption,
     color: colors.textSecondary,
     marginBottom: spacing.xs,
     fontWeight: "500",
+    textTransform: "uppercase",
+    letterSpacing: 0.5,
   },
   inputContainer: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: colors.background,
-    borderWidth: 1,
-    borderColor: colors.gray300,
-    borderRadius: borderRadius.md,
+    backgroundColor: colors.backgroundCard,
+    borderWidth: 1.5,
+    borderColor: colors.border,
+    borderRadius: borderRadius.sm,
     paddingHorizontal: spacing.md,
   },
   focused: {
     borderColor: colors.primary,
-    borderWidth: 2,
+    backgroundColor: colors.backgroundSecondary,
   },
   error: {
     borderColor: colors.error,
   },
   disabled: {
-    backgroundColor: colors.gray100,
-    opacity: 0.7,
+    backgroundColor: colors.backgroundSecondary,
+    opacity: 0.6,
   },
   input: {
     flex: 1,
     ...typography.body,
     color: colors.textPrimary,
-    paddingVertical: spacing.sm + 2,
+    paddingVertical: spacing.sm + 4,
   },
   multiline: {
     minHeight: 100,
@@ -137,5 +141,8 @@ const styles = StyleSheet.create({
     ...typography.caption,
     color: colors.error,
     marginTop: spacing.xs,
+  },
+  iconButton: {
+    padding: spacing.xs,
   },
 });

@@ -1,7 +1,7 @@
+// Premium Menu Item Card - Glassmorphism Dark Theme
 import React from "react";
 import { View, Text, Image, StyleSheet, TouchableOpacity } from "react-native";
-import { Badge } from "@/components/ui/Badge";
-import { colors, typography, spacing, borderRadius } from "@/theme";
+import { colors, typography, spacing, borderRadius, shadows } from "@/theme";
 import { formatCurrency } from "@/utils/formatters";
 import type { MenuItem } from "@/types/api";
 
@@ -17,50 +17,94 @@ export const MenuItemCard: React.FC<MenuItemCardProps> = ({
   return (
     <View style={styles.card}>
       <View style={styles.content}>
-        <View style={styles.details}>
-          <View style={styles.header}>
-            <View style={styles.vegIndicator}>
-              <View style={[styles.vegBox, item.is_veg ? styles.veg : styles.nonVeg]}>
-                <View style={item.is_veg ? styles.vegDot : styles.nonVegDot} />
-              </View>
+        {/* Left Section - Details */}
+        <View style={styles.detailsSection}>
+          {/* Veg/Non-veg Indicator */}
+          <View style={styles.vegIndicatorRow}>
+            <View
+              style={[
+                styles.vegBox,
+                item.is_veg ? styles.vegBorder : styles.nonVegBorder,
+              ]}
+            >
+              <View
+                style={[
+                  styles.vegDot,
+                  { backgroundColor: item.is_veg ? colors.veg : colors.nonVeg },
+                ]}
+              />
             </View>
-            <Text style={styles.name}>{item.name}</Text>
+            {item.is_featured && (
+              <View style={styles.featuredBadge}>
+                <Text style={styles.featuredIcon}>★</Text>
+                <Text style={styles.featuredText}>Bestseller</Text>
+              </View>
+            )}
           </View>
 
+          {/* Item Name */}
+          <Text style={styles.itemName} numberOfLines={2}>
+            {item.name}
+          </Text>
+
+          {/* Description */}
           {item.description && (
             <Text style={styles.description} numberOfLines={2}>
               {item.description}
             </Text>
           )}
 
-          <View style={styles.footer}>
+          {/* Price Row */}
+          <View style={styles.priceRow}>
             <Text style={styles.price}>{formatCurrency(item.price)}</Text>
-            {item.is_featured && (
-              <Badge text="Featured" variant="warning" size="sm" />
+            {item.preparation_time_minutes && (
+              <Text style={styles.prepTime}>
+                ⏱ {item.preparation_time_minutes} min
+              </Text>
             )}
           </View>
         </View>
 
-        {item.image_url && (
-          <View style={styles.imageContainer}>
-            <Image source={{ uri: item.image_url }} style={styles.image} />
-            <TouchableOpacity style={styles.addButton} onPress={onAddToCart}>
-              <Text style={styles.addButtonText}>+</Text>
-            </TouchableOpacity>
-          </View>
-        )}
-
-        {!item.image_url && item.is_available && (
-          <TouchableOpacity style={styles.addButtonLarge} onPress={onAddToCart}>
-            <Text style={styles.addButtonTextLarge}>ADD</Text>
-          </TouchableOpacity>
-        )}
-
-        {!item.is_available && (
-          <View style={styles.unavailable}>
-            <Text style={styles.unavailableText}>Unavailable</Text>
-          </View>
-        )}
+        {/* Right Section - Image & Add Button */}
+        <View style={styles.rightSection}>
+          {item.image_url ? (
+            <>
+              <Image source={{ uri: item.image_url }} style={styles.itemImage} />
+              {item.is_available ? (
+                <TouchableOpacity
+                  style={styles.addButton}
+                  onPress={onAddToCart}
+                  activeOpacity={0.8}
+                >
+                  <Text style={styles.addButtonText}>ADD</Text>
+                </TouchableOpacity>
+              ) : (
+                <View style={styles.unavailableOverlay}>
+                  <Text style={styles.unavailableText}>Unavailable</Text>
+                </View>
+              )}
+            </>
+          ) : (
+            <>
+              {item.is_available ? (
+                <TouchableOpacity
+                  style={styles.addButtonLarge}
+                  onPress={onAddToCart}
+                  activeOpacity={0.8}
+                >
+                  <Text style={styles.addButtonTextLarge}>ADD</Text>
+                  <Text style={styles.addButtonPriceLarge}>
+                    {formatCurrency(item.price)}
+                  </Text>
+                </TouchableOpacity>
+              ) : (
+                <View style={styles.unavailableLarge}>
+                  <Text style={styles.unavailableTextLarge}>Unavailable</Text>
+                </View>
+              )}
+            </>
+          )}
+        </View>
       </View>
     </View>
   );
@@ -68,123 +112,171 @@ export const MenuItemCard: React.FC<MenuItemCardProps> = ({
 
 const styles = StyleSheet.create({
   card: {
-    backgroundColor: colors.white,
-    paddingVertical: spacing.md,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.gray100,
+    backgroundColor: colors.backgroundCard,
+    marginHorizontal: spacing.md,
+    marginVertical: spacing.sm,
+    borderRadius: borderRadius.lg,
+    borderWidth: 1,
+    borderColor: colors.border,
+    overflow: "hidden",
+    ...shadows.sm,
   },
   content: {
     flexDirection: "row",
-    paddingHorizontal: spacing.md,
+    padding: spacing.md,
   },
-  details: {
+  detailsSection: {
     flex: 1,
     paddingRight: spacing.md,
   },
-  header: {
+  vegIndicatorRow: {
     flexDirection: "row",
-    alignItems: "flex-start",
-    marginBottom: spacing.xs,
-  },
-  vegIndicator: {
-    marginRight: spacing.xs,
+    alignItems: "center",
+    marginBottom: spacing.sm,
+    gap: spacing.sm,
   },
   vegBox: {
-    width: 16,
-    height: 16,
-    borderRadius: 3,
-    borderWidth: 1,
+    width: 20,
+    height: 20,
+    borderRadius: 4,
+    borderWidth: 1.5,
     alignItems: "center",
     justifyContent: "center",
+    backgroundColor: colors.background,
   },
-  veg: {
-    borderColor: colors.success,
+  vegBorder: {
+    borderColor: colors.veg,
   },
-  nonVeg: {
-    borderColor: colors.error,
+  nonVegBorder: {
+    borderColor: colors.nonVeg,
   },
   vegDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    backgroundColor: colors.success,
+    width: 10,
+    height: 10,
+    borderRadius: 5,
   },
-  nonVegDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    backgroundColor: colors.error,
+  featuredBadge: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: colors.warningBg,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.xs,
+    borderRadius: borderRadius.sm,
+    borderWidth: 1,
+    borderColor: colors.warning,
   },
-  name: {
-    ...typography.body,
+  featuredIcon: {
+    fontSize: 10,
+    color: colors.warning,
+    marginRight: 3,
+  },
+  featuredText: {
+    ...typography.small,
+    color: colors.warning,
     fontWeight: "600",
-    flex: 1,
+  },
+  itemName: {
+    ...typography.bodyBold,
+    color: colors.textPrimary,
+    marginBottom: spacing.xs,
+    lineHeight: 22,
   },
   description: {
     ...typography.bodySmall,
     color: colors.textSecondary,
-    marginBottom: spacing.xs,
+    marginBottom: spacing.sm,
+    lineHeight: 18,
   },
-  footer: {
+  priceRow: {
     flexDirection: "row",
     alignItems: "center",
-    gap: spacing.sm,
+    gap: spacing.md,
   },
   price: {
-    ...typography.body,
-    fontWeight: "600",
-    color: colors.textPrimary,
+    ...typography.h4,
+    color: colors.accent,
+    fontWeight: "700",
   },
-  imageContainer: {
-    width: 100,
-    height: 100,
+  prepTime: {
+    ...typography.caption,
+    color: colors.textTertiary,
+  },
+  rightSection: {
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  itemImage: {
+    width: 90,
+    height: 90,
     borderRadius: borderRadius.md,
-    overflow: "hidden",
-  },
-  image: {
-    width: "100%",
-    height: "100%",
     resizeMode: "cover",
   },
   addButton: {
     position: "absolute",
-    bottom: spacing.xs,
-    right: spacing.xs,
-    width: 28,
-    height: 28,
-    borderRadius: borderRadius.sm,
+    bottom: -spacing.sm,
+    right: spacing.sm,
     backgroundColor: colors.primary,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+    borderRadius: borderRadius.md,
+    borderWidth: 2,
+    borderColor: colors.primary,
+    ...shadows.glow,
+  },
+  addButtonText: {
+    ...typography.small,
+    color: colors.white,
+    fontWeight: "700",
+    letterSpacing: 0.5,
+  },
+  unavailableOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    width: 90,
+    height: 90,
+    borderRadius: borderRadius.md,
+    backgroundColor: "rgba(0,0,0,0.6)",
     alignItems: "center",
     justifyContent: "center",
   },
-  addButtonText: {
-    color: colors.white,
-    fontSize: 20,
-    fontWeight: "bold",
+  unavailableText: {
+    ...typography.small,
+    color: colors.textSecondary,
+    fontWeight: "500",
+    textAlign: "center",
   },
   addButtonLarge: {
-    alignSelf: "flex-start",
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.xs,
-    borderRadius: borderRadius.sm,
-    borderWidth: 1,
+    alignItems: "center",
+    justifyContent: "center",
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.md,
+    borderRadius: borderRadius.md,
+    borderWidth: 1.5,
     borderColor: colors.primary,
-    marginTop: spacing.xs,
+    backgroundColor: "rgba(124, 58, 237, 0.15)",
+    minWidth: 90,
   },
   addButtonTextLarge: {
+    ...typography.bodyBold,
     color: colors.primary,
-    ...typography.bodySmall,
-    fontWeight: "600",
+    fontSize: 14,
   },
-  unavailable: {
-    alignSelf: "flex-start",
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.xs,
-    borderRadius: borderRadius.sm,
-    backgroundColor: colors.gray200,
-  },
-  unavailableText: {
-    color: colors.textLight,
+  addButtonPriceLarge: {
     ...typography.caption,
+    color: colors.primary,
+    marginTop: 2,
+  },
+  unavailableLarge: {
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.md,
+    borderRadius: borderRadius.md,
+    backgroundColor: colors.backgroundElevated,
+    borderWidth: 1,
+    borderColor: colors.border,
+    minWidth: 90,
+    alignItems: "center",
+  },
+  unavailableTextLarge: {
+    ...typography.bodySmall,
+    color: colors.textTertiary,
   },
 });

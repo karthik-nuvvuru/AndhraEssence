@@ -1,7 +1,36 @@
 import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { Platform } from "react-native";
 import type { User, Address } from "@/types/api";
+
+// Web-specific storage adapter using localStorage
+const webStorage = {
+  getItem: (name: string): string | null => {
+    if (typeof window !== 'undefined' && window.localStorage) {
+      return window.localStorage.getItem(name);
+    }
+    return null;
+  },
+  setItem: (name: string, value: string): void => {
+    if (typeof window !== 'undefined' && window.localStorage) {
+      window.localStorage.setItem(name, value);
+    }
+  },
+  removeItem: (name: string): void => {
+    if (typeof window !== 'undefined' && window.localStorage) {
+      window.localStorage.removeItem(name);
+    }
+  },
+};
+
+// Get the appropriate storage adapter based on platform
+const getStorage = () => {
+  if (Platform.OS === 'web') {
+    return createJSONStorage(() => webStorage);
+  }
+  return createJSONStorage(() => AsyncStorage);
+};
 
 // Auth Store
 interface AuthState {
@@ -53,7 +82,7 @@ export const useAuthStore = create<AuthState>()(
     }),
     {
       name: "auth-storage",
-      storage: createJSONStorage(() => AsyncStorage),
+      storage: getStorage(),
     }
   )
 );
@@ -86,54 +115,62 @@ interface CartState {
   getItemCount: () => number;
 }
 
-export const useCartStore = create<CartState>((set, get) => ({
-  items: [],
-  restaurantId: null,
-  restaurantName: null,
+export const useCartStore = create<CartState>()(
+  persist(
+    (set, get) => ({
+      items: [],
+      restaurantId: null,
+      restaurantName: null,
 
-  addItem: (menuItem, quantity = 1, instructions = "") => {
-    const items = get().items;
-    const existingIndex = items.findIndex(
-      (i) => i.menuItem.id === menuItem.id && i.specialInstructions === instructions
-    );
+      addItem: (menuItem, quantity = 1, instructions = "") => {
+        const items = get().items;
+        const existingIndex = items.findIndex(
+          (i) => i.menuItem.id === menuItem.id && i.specialInstructions === instructions
+        );
 
-    if (existingIndex >= 0) {
-      const newItems = [...items];
-      newItems[existingIndex].quantity += quantity;
-      set({ items: newItems });
-    } else {
-      set({
-        items: [...items, { menuItem, quantity, specialInstructions: instructions }],
-      });
-    }
-  },
+        if (existingIndex >= 0) {
+          const newItems = [...items];
+          newItems[existingIndex].quantity += quantity;
+          set({ items: newItems });
+        } else {
+          set({
+            items: [...items, { menuItem, quantity, specialInstructions: instructions }],
+          });
+        }
+      },
 
-  updateQuantity: (itemId, quantity) => {
-    if (quantity <= 0) {
-      set({ items: get().items.filter((i) => i.menuItem.id !== itemId) });
-    } else {
-      set({
-        items: get().items.map((i) =>
-          i.menuItem.id === itemId ? { ...i, quantity } : i
+      updateQuantity: (itemId, quantity) => {
+        if (quantity <= 0) {
+          set({ items: get().items.filter((i) => i.menuItem.id !== itemId) });
+        } else {
+          set({
+            items: get().items.map((i) =>
+              i.menuItem.id === itemId ? { ...i, quantity } : i
+            ),
+          });
+        }
+      },
+
+      removeItem: (itemId) =>
+        set({ items: get().items.filter((i) => i.menuItem.id !== itemId) }),
+
+      clearCart: () => set({ items: [], restaurantId: null, restaurantName: null }),
+
+      getSubtotal: () =>
+        get().items.reduce(
+          (sum, item) => sum + item.menuItem.price * item.quantity,
+          0
         ),
-      });
+
+      getItemCount: () =>
+        get().items.reduce((sum, item) => sum + item.quantity, 0),
+    }),
+    {
+      name: "cart-storage",
+      storage: getStorage(),
     }
-  },
-
-  removeItem: (itemId) =>
-    set({ items: get().items.filter((i) => i.menuItem.id !== itemId) }),
-
-  clearCart: () => set({ items: [], restaurantId: null, restaurantName: null }),
-
-  getSubtotal: () =>
-    get().items.reduce(
-      (sum, item) => sum + item.menuItem.price * item.quantity,
-      0
-    ),
-
-  getItemCount: () =>
-    get().items.reduce((sum, item) => sum + item.quantity, 0),
-}));
+  )
+);
 
 // Order Store
 interface Order {

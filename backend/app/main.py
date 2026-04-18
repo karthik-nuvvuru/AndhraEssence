@@ -1,9 +1,13 @@
 from contextlib import asynccontextmanager
 import logging
-from fastapi import FastAPI, HTTPException
+import redis.asyncio as aioredis
+from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.gzip import GZipMiddleware
 from fastapi.responses import JSONResponse
+from slowapi import _rate_limit_exceeded_handler
+from slowapi.errors import RateLimitExceeded
+from slowapi.middleware import SlowAPIMiddleware
 
 from app.config import get_settings
 from app.api.v1.router import api_router as api_v1_router
@@ -13,12 +17,26 @@ logger = logging.getLogger(__name__)
 settings = get_settings()
 
 
+async def check_redis_health() -> bool:
+    """Check Redis connectivity at startup."""
+    try:
+        redis = await aioredis.from_url(settings.redis_url)
+        await redis.ping()
+        await redis.close()
+        logger.info("Redis connection: healthy")
+        return True
+    except Exception as e:
+        logger.warning(f"Redis connection: unavailable ({e})")
+        return False
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """Application lifespan events."""
     # Startup
     print(f"Starting {settings.app_name} API v{settings.api_version}")
     print(f"Environment: {settings.environment}")
+    await check_redis_health()
     yield
     # Shutdown
     print(f"Shutting down {settings.app_name} API")
@@ -33,6 +51,10 @@ app = FastAPI(
     openapi_url="/openapi.json",
     lifespan=lifespan,
 )
+
+# Add SlowAPI middleware for rate limiting
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
+app.add_middleware(SlowAPIMiddleware)
 
 # Add middleware
 app.add_middleware(GZipMiddleware, minimum_size=1000)
@@ -60,7 +82,11 @@ async def root():
 @app.get("/health")
 async def health_check():
     """Health check endpoint."""
-    return {"status": "healthy"}
+    redis_healthy = await check_redis_health()
+    return {
+        "status": "healthy",
+        "redis": "connected" if redis_healthy else "disconnected"
+    }
 
 
 # Include API v1 routes

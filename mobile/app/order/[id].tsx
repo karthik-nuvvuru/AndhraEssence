@@ -1,30 +1,33 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import {
   View,
   Text,
   StyleSheet,
   ScrollView,
+  TouchableOpacity,
+  Linking,
+  Animated,
+  Dimensions,
 } from "react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { Card } from "@/components/ui/Card";
-import { Badge } from "@/components/ui/Badge";
-import { Button } from "@/components/ui/Button";
-import { LoadingSpinner } from "@/components/ui/LoadingSpinner";
-import { colors, typography, spacing } from "@/theme";
+import { colors, typography, spacing, borderRadius, shadows } from "@/theme";
 import { orderApi } from "@/services/api/endpoints";
 import { useOrderStore, useAuthStore } from "@/store";
 import { socketService } from "@/services/websocket/socketService";
 import { formatCurrency, formatDateTime } from "@/utils/formatters";
-import type { Order } from "@/types/api";
+import type { OrderStatus } from "@/types/api";
 
-const statusSteps = [
-  { status: "pending", label: "Placed" },
-  { status: "confirmed", label: "Confirmed" },
-  { status: "preparing", label: "Preparing" },
-  { status: "ready", label: "Ready" },
-  { status: "picked_up", label: "Picked Up" },
-  { status: "delivered", label: "Delivered" },
+const { width: SCREEN_WIDTH } = Dimensions.get("window");
+
+// Status flow for timeline
+const statusSteps: { status: OrderStatus; label: string; icon: string }[] = [
+  { status: "pending", label: "Order Placed", icon: "📋" },
+  { status: "confirmed", label: "Confirmed", icon: "✓" },
+  { status: "preparing", label: "Preparing", icon: "👨‍🍳" },
+  { status: "ready", label: "Ready for Pickup", icon: "📦" },
+  { status: "picked_up", label: "Out for Delivery", icon: "🚴" },
+  { status: "delivered", label: "Delivered", icon: "✅" },
 ];
 
 const statusIndex: Record<string, number> = {
@@ -33,16 +36,57 @@ const statusIndex: Record<string, number> = {
   preparing: 2,
   ready: 3,
   picked_up: 4,
+  in_transit: 4,
   delivered: 5,
   cancelled: -1,
   refunded: -1,
 };
+
+const statusDisplayColors: Record<string, { bg: string; text: string; border: string }> = {
+  pending: { bg: "rgba(245, 158, 11, 0.15)", text: "#F59E0B", border: "#F59E0B" },
+  confirmed: { bg: "rgba(59, 130, 246, 0.15)", text: "#3B82F6", border: "#3B82F6" },
+  preparing: { bg: "rgba(139, 92, 246, 0.15)", text: "#8B5CF6", border: "#8B5CF6" },
+  ready: { bg: "rgba(239, 68, 68, 0.15)", text: "#EF4444", border: "#EF4444" },
+  picked_up: { bg: "rgba(6, 182, 212, 0.15)", text: "#06B6D4", border: "#06B6D4" },
+  in_transit: { bg: "rgba(6, 182, 212, 0.15)", text: "#06B6D4", border: "#06B6D4" },
+  delivered: { bg: "rgba(16, 185, 129, 0.15)", text: "#10B981", border: "#10B981" },
+  cancelled: { bg: "rgba(239, 68, 68, 0.15)", text: "#EF4444", border: "#EF4444" },
+};
+
+interface RiderInfo {
+  id: string;
+  name: string;
+  phone: string;
+  photo_url?: string;
+}
 
 export default function OrderTrackingScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
   const { currentOrder, setCurrentOrder, updateOrder } = useOrderStore();
   const [loading, setLoading] = useState(true);
+  const [riderInfo, setRiderInfo] = useState<RiderInfo | null>(null);
+  const pulseAnim = useRef(new Animated.Value(1)).current;
+
+  // Pulse animation for active step
+  useEffect(() => {
+    const animation = Animated.loop(
+      Animated.sequence([
+        Animated.timing(pulseAnim, {
+          toValue: 1.2,
+          duration: 800,
+          useNativeDriver: true,
+        }),
+        Animated.timing(pulseAnim, {
+          toValue: 1,
+          duration: 800,
+          useNativeDriver: true,
+        }),
+      ])
+    );
+    animation.start();
+    return () => animation.stop();
+  }, []);
 
   useEffect(() => {
     fetchOrder();
@@ -59,8 +103,14 @@ export default function OrderTrackingScreen() {
       socketService.onOrderStatusUpdate((data) => {
         if (data.order_id === id) {
           updateOrder(id!, { status: data.status });
+          if (data.rider) {
+            setRiderInfo(data.rider);
+          }
         }
       });
+      return () => {
+        socketService.removeOrderStatusListener();
+      };
     }
   }, [currentOrder]);
 
@@ -69,6 +119,14 @@ export default function OrderTrackingScreen() {
       setLoading(true);
       const response = await orderApi.getById(id!);
       setCurrentOrder(response.data);
+      // Mock rider info for demo if order is in transit
+      if (response.data.status === "picked_up" || response.data.status === "in_transit") {
+        setRiderInfo({
+          id: "rider-1",
+          name: "Rajesh Kumar",
+          phone: "+919876543210",
+        });
+      }
     } catch (error) {
       console.error("Failed to fetch order:", error);
     } finally {
@@ -76,149 +134,256 @@ export default function OrderTrackingScreen() {
     }
   };
 
-  const handleCancel = async () => {
-    try {
-      await orderApi.cancel(id!);
-      updateOrder(id!, { status: "cancelled" });
-    } catch (error) {
-      console.error("Failed to cancel order:", error);
+  const handleCallRider = () => {
+    if (riderInfo?.phone) {
+      Linking.openURL(`tel:${riderInfo.phone}`);
     }
   };
 
   if (loading || !currentOrder) {
-    return <LoadingSpinner fullScreen text="Loading order..." />;
+    return (
+      <SafeAreaView style={styles.container} edges={["bottom"]}>
+        <View style={styles.loadingContainer}>
+          <View style={styles.loadingSpinner} />
+          <Text style={styles.loadingText}>Loading order...</Text>
+        </View>
+      </SafeAreaView>
+    );
   }
 
   const orderStatus = currentOrder.status || "pending";
-  const currentStep = statusIndex[orderStatus] || 0;
+  const currentStep = statusIndex[orderStatus] ?? 0;
+  const statusStyle = statusDisplayColors[orderStatus] || statusDisplayColors.pending;
+  const isCancelled = orderStatus === "cancelled" || orderStatus === "refunded";
+
+  // Get ETA based on status
+  const getETA = () => {
+    if (orderStatus === "delivered") return "Delivered";
+    if (orderStatus === "cancelled") return "Cancelled";
+    switch (currentStep) {
+      case 0: return "25-35 min";
+      case 1: return "20-30 min";
+      case 2: return "15-25 min";
+      case 3: return "10-15 min";
+      case 4: return "5-10 min";
+      default: return "25-35 min";
+    }
+  };
 
   return (
     <SafeAreaView style={styles.container} edges={["bottom"]}>
-      <ScrollView contentContainerStyle={styles.content}>
-        {/* Order Header */}
+      <ScrollView
+        contentContainerStyle={styles.content}
+        showsVerticalScrollIndicator={false}
+        bounces={false}
+      >
+        {/* Header */}
         <View style={styles.header}>
-          <Text style={styles.orderNumber}>{currentOrder.order_number}</Text>
-          <Badge
-            text={orderStatus.replace("_", " ").toUpperCase()}
-            variant={orderStatus === "delivered" ? "success" : "info"}
-          />
+          <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
+            <Text style={styles.backIcon}>←</Text>
+          </TouchableOpacity>
+          <View>
+            <Text style={styles.headerTitle}>Track Order</Text>
+            <Text style={styles.headerSubtitle}>{currentOrder.order_number}</Text>
+          </View>
+          <View style={styles.headerSpacer} />
         </View>
 
-        {/* Status Timeline */}
-        <Card style={styles.timelineCard}>
-          <Text style={styles.sectionTitle}>Order Status</Text>
-          <View style={styles.timeline}>
-            {statusSteps.map((step, index) => (
-              <View
-                key={step.status}
-                style={[
-                  styles.timelineStep,
-                  index <= currentStep && styles.timelineStepCompleted,
-                  index === currentStep && styles.timelineStepCurrent,
-                ]}
-              >
-                <View
-                  style={[
-                    styles.timelineDot,
-                    index <= currentStep && styles.timelineDotCompleted,
-                  ]}
-                />
-                <Text
-                  style={[
-                    styles.timelineLabel,
-                    index <= currentStep && styles.timelineLabelCompleted,
-                  ]}
-                >
-                  {step.label}
-                </Text>
+        {/* Status Banner */}
+        <View style={[styles.statusBanner, { backgroundColor: statusStyle.bg, borderColor: statusStyle.border }]}>
+          <View style={styles.statusBannerContent}>
+            <Text style={[styles.statusBannerText, { color: statusStyle.text }]}>
+              {orderStatus.replace("_", " ").toUpperCase()}
+            </Text>
+            {!isCancelled && (
+              <View style={styles.etaContainer}>
+                <Text style={styles.etaLabel}>ETA</Text>
+                <Text style={[styles.etaValue, { color: statusStyle.text }]}>{getETA()}</Text>
               </View>
-            ))}
+            )}
           </View>
-        </Card>
+        </View>
 
-        {/* Order Details */}
-        <Card style={styles.detailsCard}>
-          <Text style={styles.sectionTitle}>Order Details</Text>
-
-          <View style={styles.detailRow}>
-            <Text style={styles.detailLabel}>Restaurant</Text>
-            <Text style={styles.detailValue}>
-              {currentOrder.restaurant_name || "Restaurant"}
-            </Text>
-          </View>
-
-          <View style={styles.detailRow}>
-            <Text style={styles.detailLabel}>Placed At</Text>
-            <Text style={styles.detailValue}>
-              {formatDateTime(currentOrder.placed_at || "")}
-            </Text>
-          </View>
-
-          {currentOrder.items?.map((item: any, index: number) => (
-            <View key={item.id || index} style={styles.itemRow}>
-              <Text style={styles.itemName}>
-                {item.quantity}x {item.item_name}
-              </Text>
-              <Text style={styles.itemPrice}>
-                {formatCurrency(item.subtotal)}
-              </Text>
+        {/* Map Placeholder */}
+        <View style={styles.mapCard}>
+          <View style={styles.mapContent}>
+            <View style={styles.mapGradient}>
+              <View style={styles.mapPinContainer}>
+                <Text style={styles.mapPin}>📍</Text>
+              </View>
+              <View style={styles.mapOverlay}>
+                <Text style={styles.mapLabel}>Live Tracking</Text>
+                <Text style={styles.mapSubtext}>Real-time location updates</Text>
+              </View>
             </View>
-          ))}
-        </Card>
-
-        {/* Payment Summary */}
-        <Card style={styles.summaryCard}>
-          <Text style={styles.sectionTitle}>Payment Summary</Text>
-
-          <View style={styles.summaryRow}>
-            <Text style={styles.summaryLabel}>Subtotal</Text>
-            <Text style={styles.summaryValue}>
-              {formatCurrency(currentOrder.subtotal || 0)}
-            </Text>
-          </View>
-
-          <View style={styles.summaryRow}>
-            <Text style={styles.summaryLabel}>Tax</Text>
-            <Text style={styles.summaryValue}>
-              {formatCurrency(currentOrder.tax_amount || 0)}
-            </Text>
-          </View>
-
-          <View style={styles.summaryRow}>
-            <Text style={styles.summaryLabel}>Delivery Fee</Text>
-            <Text style={styles.summaryValue}>
-              {formatCurrency(currentOrder.delivery_fee || 0)}
-            </Text>
-          </View>
-
-          {(currentOrder.discount_amount || 0) > 0 && (
-            <View style={styles.summaryRow}>
-              <Text style={styles.summaryLabel}>Discount</Text>
-              <Text style={[styles.summaryValue, { color: colors.success }]}>
-                -{formatCurrency(currentOrder.discount_amount || 0)}
-              </Text>
+            <View style={styles.mapRouteLines}>
+              <View style={styles.routeLine} />
+              <View style={[styles.routeLine, styles.routeLineActive]} />
             </View>
-          )}
-
-          <View style={[styles.summaryRow, styles.totalRow]}>
-            <Text style={styles.totalLabel}>Total</Text>
-            <Text style={styles.totalValue}>
-              {formatCurrency(currentOrder.total_amount || 0)}
-            </Text>
           </View>
-        </Card>
+        </View>
 
-        {/* Actions */}
-        {currentOrder.status === "pending" && (
-          <View style={styles.actions}>
-            <Button
-              title="Cancel Order"
-              onPress={() => handleCancel()}
-              variant="outline"
-              fullWidth
-            />
+        {/* Delivery Timeline - Vertical Stepper */}
+        <View style={styles.timelineCard}>
+          <Text style={styles.timelineTitle}>Delivery Progress</Text>
+          <View style={styles.timeline}>
+            {statusSteps.map((step, index) => {
+              const isCompleted = index < currentStep;
+              const isCurrent = index === currentStep;
+              const isPending = index > currentStep;
+              const isLast = index === statusSteps.length - 1;
+
+              return (
+                <View key={step.status} style={styles.timelineStep}>
+                  {/* Connector Line */}
+                  {!isLast && (
+                    <View style={styles.timelineConnectorContainer}>
+                      <View
+                        style={[
+                          styles.timelineConnector,
+                          isCompleted && styles.timelineConnectorCompleted,
+                          isCurrent && styles.timelineConnectorActive,
+                        ]}
+                      />
+                    </View>
+                  )}
+
+                  {/* Step Content */}
+                  <View style={styles.timelineStepContent}>
+                    {/* Dot */}
+                    <View style={styles.timelineDotContainer}>
+                      <Animated.View
+                        style={[
+                          styles.timelineDot,
+                          isCompleted && styles.timelineDotCompleted,
+                          isCurrent && styles.timelineDotCurrent,
+                          isPending && styles.timelineDotPending,
+                          isCurrent && {
+                            transform: [{ scale: pulseAnim }],
+                          },
+                        ]}
+                      >
+                        {isCompleted ? (
+                          <Text style={styles.timelineCheck}>✓</Text>
+                        ) : isCurrent ? (
+                          <View style={styles.timelinePulse} />
+                        ) : null}
+                      </Animated.View>
+                    </View>
+
+                    {/* Label */}
+                    <View style={styles.timelineLabelContainer}>
+                      <Text
+                        style={[
+                          styles.timelineLabel,
+                          isCompleted && styles.timelineLabelCompleted,
+                          isCurrent && styles.timelineLabelCurrent,
+                          isPending && styles.timelineLabelPending,
+                        ]}
+                      >
+                        {step.label}
+                      </Text>
+                      {isCurrent && (
+                        <Text style={styles.timelineTime}>Now</Text>
+                      )}
+                      {isCompleted && index === 0 && currentOrder.placed_at && (
+                        <Text style={styles.timelineTime}>
+                          {formatDateTime(currentOrder.placed_at).split(",")[1]?.trim() || ""}
+                        </Text>
+                      )}
+                    </View>
+                  </View>
+                </View>
+              );
+            })}
+          </View>
+        </View>
+
+        {/* Rider Info Card */}
+        {(orderStatus === "picked_up" || orderStatus === "in_transit") && riderInfo && (
+          <View style={styles.riderCard}>
+            <View style={styles.riderCardGlass}>
+              <View style={styles.riderInfo}>
+                <View style={styles.riderAvatar}>
+                  <Text style={styles.riderEmoji}>🏍️</Text>
+                </View>
+                <View style={styles.riderDetails}>
+                  <Text style={styles.riderLabel}>Your Rider</Text>
+                  <Text style={styles.riderName}>{riderInfo.name}</Text>
+                </View>
+              </View>
+              <View style={styles.riderActions}>
+                <TouchableOpacity style={styles.callButton} onPress={handleCallRider}>
+                  <Text style={styles.callIcon}>📞</Text>
+                  <Text style={styles.callText}>Call</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
           </View>
         )}
+
+        {/* Order Details Card */}
+        <View style={styles.detailsCard}>
+          <View style={styles.detailsCardGlass}>
+            <View style={styles.restaurantHeader}>
+              <Text style={styles.restaurantEmoji}>🍽️</Text>
+              <View>
+                <Text style={styles.restaurantName}>
+                  {currentOrder.restaurant_name || "Restaurant Name"}
+                </Text>
+                <Text style={styles.orderIdText}>Order #{currentOrder.order_number}</Text>
+              </View>
+            </View>
+
+            <View style={styles.divider} />
+
+            <Text style={styles.itemsHeader}>Order Items</Text>
+            <View style={styles.itemsSection}>
+              {currentOrder.items?.map((item: any, index: number) => (
+                <View
+                  key={item.id || index}
+                  style={[styles.itemRow, index > 0 && styles.itemBorder]}
+                >
+                  <View style={styles.itemLeft}>
+                    <View
+                      style={[
+                        styles.itemDot,
+                        { backgroundColor: item.is_veg ? colors.veg : colors.nonVeg },
+                      ]}
+                    />
+                    <Text style={styles.itemQuantity}>{item.quantity}x</Text>
+                    <Text style={styles.itemName}>{item.item_name}</Text>
+                  </View>
+                  <Text style={styles.itemPrice}>{formatCurrency(item.subtotal)}</Text>
+                </View>
+              ))}
+            </View>
+
+            <View style={styles.divider} />
+
+            <View style={styles.totalRow}>
+              <Text style={styles.totalLabel}>Total Amount</Text>
+              <Text style={styles.totalAmount}>
+                {formatCurrency(currentOrder.total_amount || 0)}
+              </Text>
+            </View>
+          </View>
+        </View>
+
+        {/* Payment Info */}
+        <View style={styles.paymentCard}>
+          <View style={styles.paymentRow}>
+            <Text style={styles.paymentLabel}>Payment</Text>
+            <View style={styles.paymentBadge}>
+              <Text style={styles.paymentMethod}>
+                {currentOrder.payment_method?.toUpperCase() || "Razorpay"}
+              </Text>
+            </View>
+          </View>
+        </View>
+
+        {/* Spacer for bottom safe area */}
+        <View style={styles.bottomSpacer} />
       </ScrollView>
     </SafeAreaView>
   );
@@ -227,122 +392,434 @@ export default function OrderTrackingScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.backgroundSecondary,
+    backgroundColor: colors.background,
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  loadingSpinner: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    borderWidth: 3,
+    borderColor: colors.primary,
+    borderTopColor: "transparent",
+  },
+  loadingText: {
+    ...typography.body,
+    color: colors.textSecondary,
+    marginTop: spacing.md,
   },
   content: {
     padding: spacing.md,
   },
   header: {
     flexDirection: "row",
-    justifyContent: "space-between",
     alignItems: "center",
-    marginBottom: spacing.md,
+    justifyContent: "space-between",
+    marginBottom: spacing.lg,
+    paddingHorizontal: spacing.xs,
   },
-  orderNumber: {
+  backButton: {
+    width: 44,
+    height: 44,
+    borderRadius: borderRadius.md,
+    backgroundColor: colors.backgroundCard,
+    justifyContent: "center",
+    alignItems: "center",
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  backIcon: {
+    fontSize: 24,
+    color: colors.textPrimary,
+  },
+  headerTitle: {
     ...typography.h3,
     color: colors.textPrimary,
+    textAlign: "center",
   },
-  timelineCard: {
-    marginBottom: spacing.md,
-  },
-  sectionTitle: {
-    ...typography.h4,
-    color: colors.textPrimary,
-    marginBottom: spacing.md,
-  },
-  timeline: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-  },
-  timelineStep: {
-    alignItems: "center",
-    flex: 1,
-  },
-  timelineStepCompleted: {},
-  timelineStepCurrent: {},
-  timelineDot: {
-    width: 16,
-    height: 16,
-    borderRadius: 8,
-    backgroundColor: colors.gray300,
-    marginBottom: spacing.xs,
-  },
-  timelineDotCompleted: {
-    backgroundColor: colors.success,
-  },
-  timelineLabel: {
+  headerSubtitle: {
     ...typography.caption,
     color: colors.textSecondary,
     textAlign: "center",
+  },
+  headerSpacer: {
+    width: 44,
+  },
+  statusBanner: {
+    borderRadius: borderRadius.lg,
+    borderWidth: 1,
+    padding: spacing.md,
+    marginBottom: spacing.md,
+  },
+  statusBannerContent: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+  },
+  statusBannerText: {
+    ...typography.h4,
+    fontWeight: "700",
+    letterSpacing: 1,
+  },
+  etaContainer: {
+    alignItems: "flex-end",
+  },
+  etaLabel: {
+    ...typography.caption,
+    color: colors.textSecondary,
+  },
+  etaValue: {
+    ...typography.h4,
+    fontWeight: "700",
+  },
+  mapCard: {
+    height: 200,
+    borderRadius: borderRadius.xl,
+    overflow: "hidden",
+    marginBottom: spacing.md,
+    backgroundColor: colors.backgroundCard,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  mapContent: {
+    flex: 1,
+    backgroundColor: colors.backgroundCard,
+  },
+  mapGradient: {
+    flex: 1,
+    backgroundColor: colors.backgroundElevated,
+    justifyContent: "center",
+    alignItems: "center",
+    position: "relative",
+  },
+  mapPinContainer: {
+    marginBottom: spacing.md,
+  },
+  mapPin: {
+    fontSize: 48,
+  },
+  mapOverlay: {
+    alignItems: "center",
+  },
+  mapLabel: {
+    ...typography.h4,
+    color: colors.textPrimary,
+  },
+  mapSubtext: {
+    ...typography.caption,
+    color: colors.textSecondary,
+    marginTop: spacing.xs,
+  },
+  mapRouteLines: {
+    position: "absolute",
+    bottom: 40,
+    left: 40,
+    right: 40,
+    height: 4,
+    flexDirection: "row",
+    gap: spacing.xs,
+  },
+  routeLine: {
+    flex: 1,
+    height: 4,
+    backgroundColor: colors.border,
+    borderRadius: 2,
+  },
+  routeLineActive: {
+    backgroundColor: colors.primary,
+  },
+  timelineCard: {
+    borderRadius: borderRadius.xl,
+    padding: spacing.lg,
+    marginBottom: spacing.md,
+    backgroundColor: colors.backgroundCard,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  timelineTitle: {
+    ...typography.h4,
+    color: colors.textPrimary,
+    marginBottom: spacing.lg,
+  },
+  timeline: {
+    paddingLeft: spacing.xs,
+  },
+  timelineStep: {
+    flexDirection: "row",
+    minHeight: 60,
+  },
+  timelineConnectorContainer: {
+    width: 24,
+    alignItems: "center",
+    marginRight: spacing.md,
+  },
+  timelineConnector: {
+    width: 2,
+    flex: 1,
+    backgroundColor: colors.border,
+    borderRadius: 1,
+  },
+  timelineConnectorCompleted: {
+    backgroundColor: colors.success,
+  },
+  timelineConnectorActive: {
+    backgroundColor: colors.primary,
+  },
+  timelineStepContent: {
+    flex: 1,
+    flexDirection: "row",
+    alignItems: "flex-start",
+  },
+  timelineDotContainer: {
+    marginRight: spacing.md,
+    marginTop: 4,
+  },
+  timelineDot: {
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    backgroundColor: colors.backgroundElevated,
+    borderWidth: 2,
+    borderColor: colors.border,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  timelineDotCompleted: {
+    backgroundColor: colors.success,
+    borderColor: colors.success,
+  },
+  timelineDotCurrent: {
+    backgroundColor: colors.primary,
+    borderColor: colors.primary,
+    shadowColor: colors.primary,
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.5,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+  timelineDotPending: {
+    backgroundColor: colors.backgroundElevated,
+    borderColor: colors.border,
+  },
+  timelineCheck: {
+    color: colors.white,
+    fontSize: 10,
+    fontWeight: "bold",
+  },
+  timelinePulse: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: colors.white,
+  },
+  timelineLabelContainer: {
+    flex: 1,
+    paddingTop: 2,
+    paddingBottom: spacing.md,
+  },
+  timelineLabel: {
+    ...typography.body,
+    color: colors.textTertiary,
   },
   timelineLabelCompleted: {
     color: colors.success,
     fontWeight: "600",
   },
-  detailsCard: {
+  timelineLabelCurrent: {
+    color: colors.primary,
+    fontWeight: "700",
+  },
+  timelineLabelPending: {
+    color: colors.textTertiary,
+  },
+  timelineTime: {
+    ...typography.caption,
+    color: colors.textSecondary,
+    marginTop: 2,
+  },
+  riderCard: {
     marginBottom: spacing.md,
+    borderRadius: borderRadius.xl,
+    overflow: "hidden",
   },
-  detailRow: {
+  riderCardGlass: {
+    backgroundColor: colors.backgroundCard,
+    borderRadius: borderRadius.xl,
+    borderWidth: 1,
+    borderColor: colors.border,
+    padding: spacing.md,
     flexDirection: "row",
+    alignItems: "center",
     justifyContent: "space-between",
-    marginBottom: spacing.sm,
   },
-  detailLabel: {
-    ...typography.body,
+  riderInfo: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  riderAvatar: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: colors.backgroundElevated,
+    justifyContent: "center",
+    alignItems: "center",
+    marginRight: spacing.md,
+    borderWidth: 1,
+    borderColor: colors.borderLight,
+  },
+  riderEmoji: {
+    fontSize: 28,
+  },
+  riderDetails: {},
+  riderLabel: {
+    ...typography.caption,
     color: colors.textSecondary,
   },
-  detailValue: {
-    ...typography.body,
+  riderName: {
+    ...typography.h4,
     color: colors.textPrimary,
-    fontWeight: "500",
   },
+  riderActions: {},
+  callButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: colors.primary,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+    borderRadius: borderRadius.full,
+    gap: spacing.xs,
+  },
+  callIcon: {
+    fontSize: 16,
+  },
+  callText: {
+    ...typography.button,
+    color: colors.white,
+  },
+  detailsCard: {
+    marginBottom: spacing.md,
+    borderRadius: borderRadius.xl,
+    overflow: "hidden",
+  },
+  detailsCardGlass: {
+    backgroundColor: colors.backgroundCard,
+    borderRadius: borderRadius.xl,
+    borderWidth: 1,
+    borderColor: colors.border,
+    padding: spacing.md,
+  },
+  restaurantHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: spacing.md,
+  },
+  restaurantEmoji: {
+    fontSize: 32,
+    marginRight: spacing.md,
+  },
+  restaurantName: {
+    ...typography.h4,
+    color: colors.textPrimary,
+  },
+  orderIdText: {
+    ...typography.caption,
+    color: colors.textSecondary,
+  },
+  divider: {
+    height: 1,
+    backgroundColor: colors.border,
+    marginVertical: spacing.md,
+  },
+  itemsHeader: {
+    ...typography.bodySmall,
+    color: colors.textSecondary,
+    marginBottom: spacing.sm,
+    textTransform: "uppercase",
+    letterSpacing: 1,
+  },
+  itemsSection: {},
   itemRow: {
     flexDirection: "row",
     justifyContent: "space-between",
-    paddingVertical: spacing.xs,
+    alignItems: "center",
+    paddingVertical: spacing.sm,
+  },
+  itemBorder: {
     borderTopWidth: 1,
-    borderTopColor: colors.gray100,
-    marginTop: spacing.sm,
+    borderTopColor: colors.border,
+  },
+  itemLeft: {
+    flexDirection: "row",
+    alignItems: "center",
+    flex: 1,
+  },
+  itemDot: {
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+    marginRight: spacing.sm,
+  },
+  itemQuantity: {
+    ...typography.bodyBold,
+    color: colors.primary,
+    marginRight: spacing.xs,
+    minWidth: 30,
   },
   itemName: {
     ...typography.body,
     color: colors.textPrimary,
   },
   itemPrice: {
-    ...typography.body,
-    color: colors.textSecondary,
-  },
-  summaryCard: {
-    marginBottom: spacing.md,
-  },
-  summaryRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    marginBottom: spacing.xs,
+    ...typography.bodyBold,
+    color: colors.textPrimary,
   },
   totalRow: {
-    borderTopWidth: 1,
-    borderTopColor: colors.gray200,
-    paddingTop: spacing.sm,
-    marginTop: spacing.sm,
-  },
-  summaryLabel: {
-    ...typography.body,
-    color: colors.textSecondary,
-  },
-  summaryValue: {
-    ...typography.body,
-    color: colors.textPrimary,
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
   },
   totalLabel: {
     ...typography.h4,
     color: colors.textPrimary,
   },
-  totalValue: {
-    ...typography.h4,
+  totalAmount: {
+    ...typography.h3,
     color: colors.primary,
+    fontWeight: "700",
   },
-  actions: {
-    marginTop: spacing.sm,
+  paymentCard: {
+    backgroundColor: colors.backgroundCard,
+    borderRadius: borderRadius.lg,
+    borderWidth: 1,
+    borderColor: colors.border,
+    padding: spacing.md,
+    marginBottom: spacing.md,
+  },
+  paymentRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+  },
+  paymentLabel: {
+    ...typography.body,
+    color: colors.textSecondary,
+  },
+  paymentBadge: {
+    backgroundColor: colors.backgroundElevated,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.xs,
+    borderRadius: borderRadius.sm,
+  },
+  paymentMethod: {
+    ...typography.bodySmall,
+    color: colors.textPrimary,
+    fontWeight: "600",
+  },
+  bottomSpacer: {
+    height: spacing.xl,
   },
 });

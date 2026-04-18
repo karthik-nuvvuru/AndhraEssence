@@ -1,38 +1,308 @@
-import React from "react";
-import { View, Text, StyleSheet, FlatList } from "react-native";
+import React, { useState, useCallback } from "react";
+import {
+  View,
+  Text,
+  StyleSheet,
+  FlatList,
+  Alert,
+  TouchableOpacity,
+  Image,
+  TextInput,
+  KeyboardAvoidingView,
+  Platform,
+} from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
+import { GlassCard } from "@/components/ui/GlassCard";
 import { Button } from "@/components/ui/Button";
-import { LoadingSpinner } from "@/components/ui/LoadingSpinner";
-import { colors, typography, spacing } from "@/theme";
+import { QuantityStepper } from "@/components/ui/QuantityStepper";
+import { colors, typography, spacing, borderRadius, shadows } from "@/theme";
 import { useCartStore } from "@/store";
 import { formatCurrency } from "@/utils/formatters";
 import type { CartItem } from "@/store";
 
+const TAX_RATE = 0.05; // 5% GST
+const DELIVERY_FEE = 40;
+const PLATFORM_FEE = 5;
+
 export default function CartScreen() {
   const router = useRouter();
-  const { items, getSubtotal, clearCart } = useCartStore();
+  const {
+    items,
+    restaurantName,
+    removeItem,
+    updateQuantity,
+    clearCart,
+    getSubtotal,
+  } = useCartStore();
+
+  const [promoCode, setPromoCode] = useState("");
+  const [appliedPromo, setAppliedPromo] = useState<string | null>(null);
+  const [discountAmount, setDiscountAmount] = useState(0);
+
   const subtotal = getSubtotal();
+  const taxAmount = subtotal * TAX_RATE;
+  const total = subtotal + taxAmount + DELIVERY_FEE + PLATFORM_FEE - discountAmount;
+
+  const handleApplyPromo = useCallback(() => {
+    if (!promoCode.trim()) {
+      Alert.alert("Error", "Please enter a promo code");
+      return;
+    }
+    // Demo: accept any code starting with "SAVE"
+    if (promoCode.toUpperCase().startsWith("SAVE")) {
+      const discount = Math.round(subtotal * 0.1); // 10% off
+      setDiscountAmount(discount);
+      setAppliedPromo(promoCode.toUpperCase());
+      Alert.alert("Success", `Promo code applied! You save ${formatCurrency(discount)}`);
+    } else {
+      Alert.alert("Invalid Code", "This promo code is not valid");
+    }
+  }, [promoCode, subtotal]);
+
+  const handleRemovePromo = useCallback(() => {
+    setAppliedPromo(null);
+    setDiscountAmount(0);
+    setPromoCode("");
+  }, []);
+
+  const handleIncrease = (itemId: string) => {
+    const item = items.find((i) => i.menuItem.id === itemId);
+    if (item) {
+      updateQuantity(itemId, item.quantity + 1);
+    }
+  };
+
+  const handleDecrease = (itemId: string) => {
+    const item = items.find((i) => i.menuItem.id === itemId);
+    if (item) {
+      const newQty = item.quantity - 1;
+      if (newQty <= 0) {
+        Alert.alert(
+          "Remove Item",
+          `Remove ${item.menuItem.name} from cart?`,
+          [
+            { text: "Cancel", style: "cancel" },
+            {
+              text: "Remove",
+              style: "destructive",
+              onPress: () => removeItem(itemId),
+            },
+          ]
+        );
+      } else {
+        updateQuantity(itemId, newQty);
+      }
+    }
+  };
+
+  const handleRemoveItem = (item: CartItem) => {
+    Alert.alert(
+      "Remove Item",
+      `Remove ${item.menuItem.name} from cart?`,
+      [
+        { text: "Cancel", style: "cancel" },
+        {
+          text: "Remove",
+          style: "destructive",
+          onPress: () => removeItem(item.menuItem.id),
+        },
+      ]
+    );
+  };
+
+  const handleClearCart = () => {
+    Alert.alert(
+      "Clear Cart",
+      "Remove all items from your cart?",
+      [
+        { text: "Cancel", style: "cancel" },
+        {
+          text: "Clear All",
+          style: "destructive",
+          onPress: clearCart,
+        },
+      ]
+    );
+  };
+
+  const handleCheckout = () => {
+    router.push("/checkout");
+  };
+
+  const handleExplore = () => {
+    router.push("/(tabs)/");
+  };
 
   const renderCartItem = ({ item }: { item: CartItem }) => (
-    <View style={styles.cartItem}>
-      <View style={styles.itemInfo}>
-        <Text style={styles.itemName}>{item.menuItem.name}</Text>
-        <Text style={styles.itemPrice}>
-          {formatCurrency(item.menuItem.price * item.quantity)}
-        </Text>
+    <GlassCard style={styles.cartItem} variant="elevated" padding="md">
+      <View style={styles.cartItemInner}>
+        {/* Food Image */}
+        <View style={styles.imageContainer}>
+          {item.menuItem.image_url ? (
+            <Image
+              source={{ uri: item.menuItem.image_url }}
+              style={styles.foodImage}
+              resizeMode="cover"
+            />
+          ) : (
+            <View style={styles.imagePlaceholder}>
+              <Text style={styles.placeholderEmoji}>🍽</Text>
+            </View>
+          )}
+          {/* Veg/Non-veg Badge */}
+          <View
+            style={[
+              styles.vegBadge,
+              {
+                borderColor: item.menuItem.is_veg ? colors.veg : colors.nonVeg,
+                backgroundColor: item.menuItem.is_veg
+                  ? "rgba(16, 185, 129, 0.15)"
+                  : "rgba(239, 68, 68, 0.15)",
+              },
+            ]}
+          >
+            <View
+              style={[
+                styles.vegDot,
+                {
+                  backgroundColor: item.menuItem.is_veg ? colors.veg : colors.nonVeg,
+                },
+              ]}
+            />
+          </View>
+        </View>
+
+        {/* Item Details */}
+        <View style={styles.itemDetails}>
+          <Text style={styles.itemName} numberOfLines={2}>
+            {item.menuItem.name}
+          </Text>
+          <Text style={styles.itemVariant}>
+            {item.menuItem.is_veg ? "Vegetarian" : "Non-Vegetarian"}
+          </Text>
+          <Text style={styles.itemPrice}>{formatCurrency(item.menuItem.price)}</Text>
+        </View>
+
+        {/* Actions */}
+        <View style={styles.itemActions}>
+          <QuantityStepper
+            value={item.quantity}
+            onIncrease={() => handleIncrease(item.menuItem.id)}
+            onDecrease={() => handleDecrease(item.menuItem.id)}
+            size="sm"
+          />
+          <TouchableOpacity
+            style={styles.removeButton}
+            onPress={() => handleRemoveItem(item)}
+            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+          >
+            <Text style={styles.removeIcon}>✕</Text>
+          </TouchableOpacity>
+        </View>
       </View>
-      <Text style={styles.itemQuantity}>x{item.quantity}</Text>
-    </View>
+    </GlassCard>
+  );
+
+  const renderBillBreakdown = () => (
+    <GlassCard style={styles.billCard} variant="default" padding="md">
+      <Text style={styles.billTitle}>Bill Details</Text>
+
+      <View style={styles.billRow}>
+        <Text style={styles.billLabel}>Item Total</Text>
+        <Text style={styles.billValue}>{formatCurrency(subtotal)}</Text>
+      </View>
+
+      <View style={styles.billRow}>
+        <Text style={styles.billLabel}>Taxes & GST (5%)</Text>
+        <Text style={styles.billValue}>{formatCurrency(taxAmount)}</Text>
+      </View>
+
+      <View style={styles.billRow}>
+        <Text style={styles.billLabel}>Delivery Fee</Text>
+        <Text style={styles.billValue}>{formatCurrency(DELIVERY_FEE)}</Text>
+      </View>
+
+      <View style={styles.billRow}>
+        <Text style={styles.billLabel}>Platform Fee</Text>
+        <Text style={styles.billValue}>{formatCurrency(PLATFORM_FEE)}</Text>
+      </View>
+
+      {discountAmount > 0 && (
+        <View style={[styles.billRow, styles.discountRow]}>
+          <Text style={styles.discountLabel}>
+            <Text style={styles.discountTag}>{appliedPromo}</Text> Discount
+          </Text>
+          <Text style={styles.discountValue}>-{formatCurrency(discountAmount)}</Text>
+        </View>
+      )}
+
+      <View style={styles.divider} />
+
+      <View style={styles.totalRow}>
+        <Text style={styles.totalLabel}>Total</Text>
+        <Text style={styles.totalValue}>{formatCurrency(total)}</Text>
+      </View>
+    </GlassCard>
+  );
+
+  const renderPromoCode = () => (
+    <GlassCard style={styles.promoCard} variant="default" padding="md">
+      {appliedPromo ? (
+        <View style={styles.appliedPromo}>
+          <View style={styles.appliedPromoInfo}>
+            <Text style={styles.promoIcon}>🎟</Text>
+            <View>
+              <Text style={styles.appliedPromoText}>{appliedPromo}</Text>
+              <Text style={styles.appliedPromoSubtext}>Promo applied</Text>
+            </View>
+          </View>
+          <TouchableOpacity onPress={handleRemovePromo} style={styles.removePromoBtn}>
+            <Text style={styles.removePromoText}>Remove</Text>
+          </TouchableOpacity>
+        </View>
+      ) : (
+        <View style={styles.promoInputRow}>
+          <View style={styles.promoInputContainer}>
+            <Text style={styles.promoInputIcon}>🎟</Text>
+            <TextInput
+              style={styles.promoInput}
+              placeholder="Enter promo code"
+              placeholderTextColor={colors.textTertiary}
+              value={promoCode}
+              onChangeText={setPromoCode}
+              autoCapitalize="characters"
+              returnKeyType="done"
+            />
+          </View>
+          <Button
+            title="Apply"
+            onPress={handleApplyPromo}
+            variant="primary"
+            size="sm"
+            style={styles.applyButton}
+          />
+        </View>
+      )}
+    </GlassCard>
   );
 
   const renderEmpty = () => (
     <View style={styles.emptyContainer}>
-      <Text style={styles.emptyIcon}>🛒</Text>
-      <Text style={styles.emptyText}>Your cart is empty</Text>
+      <View style={styles.emptyIconContainer}>
+        <Text style={styles.emptyIcon}>🛒</Text>
+      </View>
+      <Text style={styles.emptyTitle}>Your cart is empty</Text>
       <Text style={styles.emptySubtext}>
         Add items from a restaurant to get started
       </Text>
+      <Button
+        title="Explore Restaurants"
+        onPress={handleExplore}
+        variant="primary"
+        size="lg"
+        style={styles.exploreButton}
+      />
     </View>
   );
 
@@ -40,7 +310,7 @@ export default function CartScreen() {
     return (
       <SafeAreaView style={styles.container} edges={["top"]}>
         <View style={styles.header}>
-          <Text style={styles.title}>Cart</Text>
+          <Text style={styles.headerTitle}>Your Cart</Text>
         </View>
         {renderEmpty()}
       </SafeAreaView>
@@ -49,35 +319,57 @@ export default function CartScreen() {
 
   return (
     <SafeAreaView style={styles.container} edges={["top"]}>
-      <View style={styles.header}>
-        <Text style={styles.title}>Cart</Text>
-      </View>
-
-      <FlatList
-        data={items}
-        keyExtractor={(item) => item.menuItem.id}
-        renderItem={renderCartItem}
-        contentContainerStyle={styles.list}
-      />
-
-      <View style={styles.footer}>
-        <View style={styles.summary}>
-          <View style={styles.summaryRow}>
-            <Text style={styles.summaryLabel}>Subtotal</Text>
-            <Text style={styles.summaryValue}>{formatCurrency(subtotal)}</Text>
+      <KeyboardAvoidingView
+        style={styles.keyboardView}
+        behavior={Platform.OS === "ios" ? "padding" : undefined}
+      >
+        {/* Header */}
+        <View style={styles.header}>
+          <View>
+            <Text style={styles.headerTitle}>Your Cart</Text>
+            {restaurantName && (
+              <Text style={styles.restaurantName}>from {restaurantName}</Text>
+            )}
           </View>
-          <View style={styles.summaryRow}>
-            <Text style={styles.summaryLabel}>Delivery Fee</Text>
-            <Text style={styles.summaryValue}>Calculated at checkout</Text>
-          </View>
+          <TouchableOpacity onPress={handleClearCart} style={styles.clearButton}>
+            <Text style={styles.clearText}>Clear All</Text>
+          </TouchableOpacity>
         </View>
 
-        <Button
-          title="Proceed to Checkout"
-          onPress={() => router.push("/checkout")}
-          fullWidth
+        {/* Cart Items */}
+        <FlatList
+          data={items}
+          keyExtractor={(item) => item.menuItem.id}
+          renderItem={renderCartItem}
+          contentContainerStyle={styles.list}
+          showsVerticalScrollIndicator={false}
+          ListFooterComponent={
+            <View style={styles.footer}>
+              {renderPromoCode()}
+              {renderBillBreakdown()}
+              {/* Spacer for sticky button */}
+              <View style={styles.footerSpacer} />
+            </View>
+          }
         />
-      </View>
+
+        {/* Sticky Checkout Button */}
+        <View style={styles.stickyFooter}>
+          <View style={styles.stickyContent}>
+            <View style={styles.totalInfo}>
+              <Text style={styles.stickyTotalLabel}>Total</Text>
+              <Text style={styles.stickyTotalValue}>{formatCurrency(total)}</Text>
+            </View>
+            <Button
+              title={`Checkout • ${formatCurrency(total)}`}
+              onPress={handleCheckout}
+              variant="gradient"
+              size="lg"
+              style={styles.checkoutButton}
+            />
+          </View>
+        </View>
+      </KeyboardAvoidingView>
     </SafeAreaView>
   );
 }
@@ -87,40 +379,275 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: colors.background,
   },
-  header: {
-    padding: spacing.md,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.gray200,
-  },
-  title: {
-    ...typography.h3,
-    color: colors.textPrimary,
-  },
-  list: {
-    padding: spacing.md,
-  },
-  cartItem: {
-    flexDirection: "row",
-    alignItems: "center",
-    paddingVertical: spacing.md,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.gray100,
-  },
-  itemInfo: {
+  keyboardView: {
     flex: 1,
   },
-  itemName: {
-    ...typography.body,
-    color: colors.textPrimary,
-    marginBottom: spacing.xs / 2,
+  header: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "flex-start",
+    paddingHorizontal: spacing.md,
+    paddingTop: spacing.md,
+    paddingBottom: spacing.sm,
   },
-  itemPrice: {
+  headerTitle: {
+    ...typography.h1,
+    color: colors.textPrimary,
+  },
+  restaurantName: {
     ...typography.bodySmall,
     color: colors.textSecondary,
+    marginTop: 2,
   },
-  itemQuantity: {
+  clearButton: {
+    paddingVertical: spacing.xs,
+    paddingHorizontal: spacing.sm,
+  },
+  clearText: {
+    ...typography.body,
+    color: colors.error,
+    fontWeight: "500",
+  },
+  list: {
+    paddingHorizontal: spacing.md,
+    paddingBottom: spacing.md,
+  },
+  cartItem: {
+    marginBottom: spacing.sm,
+  },
+  cartItemInner: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  imageContainer: {
+    position: "relative",
+    marginRight: spacing.md,
+  },
+  foodImage: {
+    width: 80,
+    height: 80,
+    borderRadius: borderRadius.md,
+  },
+  imagePlaceholder: {
+    width: 80,
+    height: 80,
+    borderRadius: borderRadius.md,
+    backgroundColor: colors.backgroundSecondary,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  placeholderEmoji: {
+    fontSize: 32,
+  },
+  vegBadge: {
+    position: "absolute",
+    top: -4,
+    left: -4,
+    width: 20,
+    height: 20,
+    borderRadius: 4,
+    borderWidth: 1.5,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  vegDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+  },
+  itemDetails: {
+    flex: 1,
+    justifyContent: "center",
+  },
+  itemName: {
+    ...typography.bodyBold,
+    color: colors.textPrimary,
+    marginBottom: 2,
+  },
+  itemVariant: {
+    ...typography.caption,
+    color: colors.textSecondary,
+    marginBottom: 4,
+  },
+  itemPrice: {
+    ...typography.body,
+    color: colors.accent,
+    fontWeight: "600",
+  },
+  itemActions: {
+    alignItems: "flex-end",
+    justifyContent: "space-between",
+    height: 80,
+  },
+  removeButton: {
+    padding: spacing.xs,
+    marginTop: spacing.xs,
+  },
+  removeIcon: {
+    fontSize: 16,
+    color: colors.textTertiary,
+    fontWeight: "500",
+  },
+  footer: {
+    marginTop: spacing.sm,
+  },
+  promoCard: {
+    marginBottom: spacing.md,
+  },
+  promoInputRow: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  promoInputContainer: {
+    flex: 1,
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: colors.backgroundSecondary,
+    borderRadius: borderRadius.sm,
+    borderWidth: 1,
+    borderColor: colors.border,
+    paddingHorizontal: spacing.sm,
+    marginRight: spacing.sm,
+  },
+  promoInputIcon: {
+    fontSize: 16,
+    marginRight: spacing.xs,
+  },
+  promoInput: {
+    flex: 1,
+    ...typography.body,
+    color: colors.textPrimary,
+    paddingVertical: spacing.sm,
+  },
+  applyButton: {
+    minWidth: 80,
+  },
+  appliedPromo: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+  },
+  appliedPromoInfo: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  promoIcon: {
+    fontSize: 20,
+    marginRight: spacing.sm,
+  },
+  appliedPromoText: {
+    ...typography.bodyBold,
+    color: colors.success,
+  },
+  appliedPromoSubtext: {
+    ...typography.caption,
+    color: colors.textSecondary,
+  },
+  removePromoBtn: {
+    paddingVertical: spacing.xs,
+    paddingHorizontal: spacing.sm,
+  },
+  removePromoText: {
+    ...typography.bodySmall,
+    color: colors.error,
+    fontWeight: "500",
+  },
+  billCard: {
+    marginBottom: spacing.md,
+  },
+  billTitle: {
+    ...typography.h4,
+    color: colors.textPrimary,
+    marginBottom: spacing.md,
+  },
+  billRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: spacing.sm,
+  },
+  billLabel: {
     ...typography.body,
     color: colors.textSecondary,
+  },
+  billValue: {
+    ...typography.body,
+    color: colors.textPrimary,
+  },
+  discountRow: {
+    marginTop: spacing.xs,
+  },
+  discountLabel: {
+    ...typography.body,
+    color: colors.success,
+  },
+  discountTag: {
+    ...typography.caption,
+    backgroundColor: colors.successBg,
+    color: colors.success,
+    paddingHorizontal: spacing.xs,
+    borderRadius: 4,
+    overflow: "hidden",
+  },
+  discountValue: {
+    ...typography.body,
+    color: colors.success,
+    fontWeight: "600",
+  },
+  divider: {
+    height: 1,
+    backgroundColor: colors.border,
+    marginVertical: spacing.sm,
+  },
+  totalRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+  },
+  totalLabel: {
+    ...typography.h4,
+    color: colors.textPrimary,
+  },
+  totalValue: {
+    ...typography.h3,
+    color: colors.textPrimary,
+    fontWeight: "700",
+  },
+  footerSpacer: {
+    height: 100,
+  },
+  stickyFooter: {
+    position: "absolute",
+    bottom: 0,
+    left: 0,
+    right: 0,
+    backgroundColor: colors.backgroundCard,
+    borderTopWidth: 1,
+    borderTopColor: colors.border,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.md,
+    paddingBottom: Platform.OS === "ios" ? spacing.xl : spacing.md,
+    ...shadows.glass,
+  },
+  stickyContent: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+  },
+  totalInfo: {
+    flex: 1,
+  },
+  stickyTotalLabel: {
+    ...typography.caption,
+    color: colors.textSecondary,
+  },
+  stickyTotalValue: {
+    ...typography.h3,
+    color: colors.textPrimary,
+    fontWeight: "700",
+  },
+  checkoutButton: {
+    flex: 1.5,
     marginLeft: spacing.md,
   },
   emptyContainer: {
@@ -129,41 +656,32 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     padding: spacing.xl,
   },
-  emptyIcon: {
-    fontSize: 64,
-    marginBottom: spacing.md,
+  emptyIconContainer: {
+    width: 120,
+    height: 120,
+    borderRadius: 60,
+    backgroundColor: colors.backgroundCard,
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: spacing.lg,
+    borderWidth: 1,
+    borderColor: colors.border,
   },
-  emptyText: {
-    ...typography.h4,
-    color: colors.textSecondary,
+  emptyIcon: {
+    fontSize: 56,
+  },
+  emptyTitle: {
+    ...typography.h2,
+    color: colors.textPrimary,
     marginBottom: spacing.xs,
   },
   emptySubtext: {
     ...typography.body,
-    color: colors.textLight,
-    textAlign: "center",
-  },
-  footer: {
-    padding: spacing.md,
-    borderTopWidth: 1,
-    borderTopColor: colors.gray200,
-    backgroundColor: colors.white,
-  },
-  summary: {
-    marginBottom: spacing.md,
-  },
-  summaryRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    marginBottom: spacing.xs,
-  },
-  summaryLabel: {
-    ...typography.body,
     color: colors.textSecondary,
+    textAlign: "center",
+    marginBottom: spacing.lg,
   },
-  summaryValue: {
-    ...typography.body,
-    color: colors.textPrimary,
-    fontWeight: "500",
+  exploreButton: {
+    minWidth: 220,
   },
 });

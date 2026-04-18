@@ -6,19 +6,22 @@ import {
   ActivityIndicator,
   ViewStyle,
   TextStyle,
+  Platform,
+  View,
 } from "react-native";
-import { colors, typography, borderRadius, spacing } from "@/theme";
+import { colors, typography, borderRadius, spacing, shadows } from "@/theme";
 
 interface ButtonProps {
   title: string;
   onPress: () => void;
-  variant?: "primary" | "secondary" | "outline" | "ghost";
+  variant?: "primary" | "secondary" | "outline" | "ghost" | "gradient";
   size?: "sm" | "md" | "lg";
   disabled?: boolean;
   loading?: boolean;
   style?: ViewStyle;
   textStyle?: TextStyle;
   fullWidth?: boolean;
+  leftIcon?: React.ReactNode;
 }
 
 export const Button: React.FC<ButtonProps> = ({
@@ -31,10 +34,14 @@ export const Button: React.FC<ButtonProps> = ({
   style,
   textStyle,
   fullWidth = false,
+  leftIcon,
 }) => {
+  const isGradient = variant === "gradient";
+
   const buttonStyles = [
     styles.base,
-    styles[variant],
+    !isGradient && styles[variant],
+    isGradient && styles.gradient,
     styles[size],
     fullWidth && styles.fullWidth,
     disabled && styles.disabled,
@@ -49,19 +56,44 @@ export const Button: React.FC<ButtonProps> = ({
     textStyle,
   ];
 
+  // On web, use onClick in addition to onPress for React Native Web compatibility
+  const handlePress = Platform.OS === 'web' ? (e: any) => {
+    e?.persist?.();
+    onPress();
+  } : onPress;
+
   return (
     <TouchableOpacity
       style={buttonStyles}
-      onPress={onPress}
+      onPress={handlePress}
+      onClick={Platform.OS === 'web' ? handlePress : undefined}
       disabled={disabled || loading}
-      activeOpacity={0.7}
+      activeOpacity={0.85}
     >
-      {loading ? (
+      {isGradient ? (
+        <View style={styles.gradientInner}>
+          <View style={styles.gradientOverlay} />
+          <View style={styles.gradientContent}>
+            {loading ? (
+              <ActivityIndicator color={colors.white} size="small" />
+            ) : (
+              <>
+                {leftIcon && <Text style={styles.icon}>{leftIcon}</Text>}
+                <Text style={[textStyles, styles.gradientText]}>{title}</Text>
+              </>
+            )}
+          </View>
+        </View>
+      ) : loading ? (
         <ActivityIndicator
           color={variant === "primary" ? colors.white : colors.primary}
+          size="small"
         />
       ) : (
-        <Text style={textStyles}>{title}</Text>
+        <>
+          {leftIcon && <Text style={styles.icon}>{leftIcon}</Text>}
+          <Text style={textStyles}>{title}</Text>
+        </>
       )}
     </TouchableOpacity>
   );
@@ -76,9 +108,10 @@ const styles = StyleSheet.create({
   },
   primary: {
     backgroundColor: colors.primary,
+    ...shadows.glow,
   },
   secondary: {
-    backgroundColor: colors.secondary,
+    backgroundColor: colors.backgroundElevated,
   },
   outline: {
     backgroundColor: "transparent",
@@ -88,26 +121,31 @@ const styles = StyleSheet.create({
   ghost: {
     backgroundColor: "transparent",
   },
+  gradient: {
+    backgroundColor: colors.primary,
+    overflow: "hidden",
+    ...shadows.glow,
+  },
   sm: {
-    paddingVertical: spacing.xs,
+    paddingVertical: spacing.xs + 2,
     paddingHorizontal: spacing.sm,
-    minHeight: 32,
+    minHeight: 36,
   },
   md: {
-    paddingVertical: spacing.sm,
+    paddingVertical: spacing.sm + 2,
     paddingHorizontal: spacing.md,
-    minHeight: 44,
+    minHeight: 46,
   },
   lg: {
     paddingVertical: spacing.md,
     paddingHorizontal: spacing.lg,
-    minHeight: 52,
+    minHeight: 54,
   },
   fullWidth: {
     width: "100%",
   },
   disabled: {
-    opacity: 0.5,
+    opacity: 0.4,
   },
   text: {
     ...typography.button,
@@ -116,7 +154,7 @@ const styles = StyleSheet.create({
     color: colors.white,
   },
   secondaryText: {
-    color: colors.white,
+    color: colors.textPrimary,
   },
   outlineText: {
     color: colors.primary,
@@ -128,12 +166,41 @@ const styles = StyleSheet.create({
     fontSize: 14,
   },
   mdText: {
-    fontSize: 16,
+    fontSize: 15,
   },
   lgText: {
     fontSize: 18,
   },
   disabledText: {
-    opacity: 0.7,
+    opacity: 0.6,
+  },
+  icon: {
+    marginRight: spacing.xs,
+    fontSize: 16,
+  },
+  gradientInner: {
+    position: "relative",
+    width: "100%",
+    height: "100%",
+  },
+  gradientOverlay: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: "rgba(255,255,255,0.1)",
+    borderRadius: borderRadius.md,
+  },
+  gradientContent: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    paddingVertical: 17,
+    paddingHorizontal: spacing.lg,
+  },
+  gradientText: {
+    color: colors.white,
+    fontWeight: "700",
   },
 });

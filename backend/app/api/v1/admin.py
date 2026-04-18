@@ -5,6 +5,7 @@ from sqlalchemy.orm import selectinload
 from typing import List, Optional
 from uuid import UUID
 from datetime import datetime, timedelta
+import asyncio
 
 from app.database import get_db
 from app.config import get_settings
@@ -56,34 +57,39 @@ async def get_dashboard_stats(
     db: AsyncSession = Depends(get_db)
 ):
     """Get admin dashboard statistics."""
-    # Total users
-    total_users = (await db.execute(select(func.count()).select_from(User))).scalar()
-
-    # Total restaurants
-    total_restaurants = (await db.execute(select(func.count()).select_from(Restaurant))).scalar()
-
-    # Active riders
-    active_riders = (await db.execute(
-        select(func.count()).select_from(Rider).where(Rider.is_online == True)
-    )).scalar()
-
-    # Orders today
     today = datetime.utcnow().date()
-    orders_today = (await db.execute(
-        select(func.count()).select_from(Order).where(
-            func.date(Order.created_at) == today
-        )
-    )).scalar()
 
-    # Revenue today
-    revenue_today = (await db.execute(
-        select(func.coalesce(func.sum(Order.total_amount), 0)).select_from(Order).where(
-            func.date(Order.created_at) == today,
-            Order.payment_status == PaymentStatus.COMPLETED
-        )
-    )).scalar()
+    # Run independent queries in parallel
+    (
+        total_users_result,
+        total_restaurants_result,
+        active_riders_result,
+        orders_today_result,
+        revenue_today_result,
+    ) = await asyncio.gather(
+        db.execute(select(func.count()).select_from(User)),
+        db.execute(select(func.count()).select_from(Restaurant)),
+        db.execute(select(func.count()).select_from(Rider).where(Rider.is_online == True)),
+        db.execute(
+            select(func.count()).select_from(Order).where(
+                func.date(Order.created_at) == today
+            )
+        ),
+        db.execute(
+            select(func.coalesce(func.sum(Order.total_amount), 0)).select_from(Order).where(
+                func.date(Order.created_at) == today,
+                Order.payment_status == PaymentStatus.COMPLETED
+            )
+        ),
+    )
 
-    # Recent orders
+    total_users = total_users_result.scalar()
+    total_restaurants = total_restaurants_result.scalar()
+    active_riders = active_riders_result.scalar()
+    orders_today = orders_today_result.scalar()
+    revenue_today = revenue_today_result.scalar()
+
+    # Recent orders (depends on nothing, but runs after for clarity)
     recent_orders_result = await db.execute(
         select(Order)
         .options(selectinload(Order.restaurant))

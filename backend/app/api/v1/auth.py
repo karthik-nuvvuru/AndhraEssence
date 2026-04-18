@@ -1,10 +1,15 @@
 from datetime import datetime
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, Request
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
+from slowapi import Limiter
+from slowapi.util import get_remote_address
 import logging
 
 logger = logging.getLogger(__name__)
+
+# Rate limiter instance
+limiter = Limiter(key_func=get_remote_address)
 
 from app.database import get_db
 from app.config import get_settings
@@ -28,12 +33,14 @@ from app.core.security import (
 )
 from app.core.exceptions import UnauthorizedException, BadRequestException, NotFoundException
 from app.core.enums import UserRole
+from app.api.v1.deps import get_current_user
 
 router = APIRouter()
 
 
 @router.post("/register", response_model=TokenResponse)
-async def register(user_data: UserRegister, db: AsyncSession = Depends(get_db)):
+@limiter.limit("5/minute")
+async def register(request: Request, user_data: UserRegister, db: AsyncSession = Depends(get_db)):
     """Register a new user."""
     result = await db.execute(select(User).where(User.email == user_data.email))
     if result.scalar_one_or_none():
@@ -63,7 +70,8 @@ async def register(user_data: UserRegister, db: AsyncSession = Depends(get_db)):
 
 
 @router.post("/login", response_model=TokenResponse)
-async def login(credentials: UserLogin, db: AsyncSession = Depends(get_db)):
+@limiter.limit("10/minute")
+async def login(request: Request, credentials: UserLogin, db: AsyncSession = Depends(get_db)):
     result = await db.execute(select(User).where(User.email == credentials.email))
     user = result.scalar_one_or_none()
 
@@ -101,7 +109,8 @@ async def refresh_token(request: RefreshTokenRequest, db: AsyncSession = Depends
             refresh_token=create_refresh_token(token_data),
             expires_in=settings.access_token_expire_minutes * 60
         )
-    except Exception:
+    except Exception as e:
+        logger.warning(f"Token refresh failed: {e}")
         raise UnauthorizedException("Invalid refresh token")
 
 
@@ -119,8 +128,11 @@ async def logout(token: str = Depends(oauth2_scheme)):
             ttl = int((exp_time - datetime.utcnow()).total_seconds())
             if ttl > 0:
                 await blacklist_token(token, ttl)
-    except Exception:
-        pass  # If token is invalid, just return success
+    except HTTPException:
+        # Token is invalid - that's okay, just return success
+        pass
+    except Exception as e:
+        logger.warning(f"Error during logout (continuing anyway): {e}")
 
     return {"message": "Logged out successfully"}
 
@@ -128,7 +140,6 @@ async def logout(token: str = Depends(oauth2_scheme)):
 @router.post("/password-reset")
 async def password_reset_request(request: PasswordResetRequest, db: AsyncSession = Depends(get_db)):
     """Request password reset."""
-    from app.config import get_settings
     import redis.asyncio as aioredis
     import json
     import uuid
@@ -139,8 +150,6 @@ async def password_reset_request(request: PasswordResetRequest, db: AsyncSession
     if not user:
         # Don't reveal if email exists
         return {"message": "If the email exists, a reset link has been sent"}
-
-    settings = get_settings()
 
     # Generate reset token
     reset_token = str(uuid.uuid4())
@@ -159,13 +168,11 @@ async def password_reset_request(request: PasswordResetRequest, db: AsyncSession
             json.dumps(token_data)
         )
         await redis.close()
-    except Exception:
-        pass  # Redis not available, continue anyway
+    except Exception as e:
+        logger.warning(f"Failed to store password reset token in Redis: {e}")
 
     # TODO: Send reset email with token via SMTP
     # For now, log the token for development
-    import logging
-    logger = logging.getLogger(__name__)
     logger.info(f"Password reset token for {user.email}: {reset_token}")
 
     return {"message": "If the email exists, a reset link has been sent"}
@@ -174,11 +181,8 @@ async def password_reset_request(request: PasswordResetRequest, db: AsyncSession
 @router.post("/password-reset/confirm")
 async def password_reset_confirm(request: PasswordResetConfirm, db: AsyncSession = Depends(get_db)):
     """Confirm password reset with token."""
-    from app.config import get_settings
     import redis.asyncio as aioredis
     import json
-
-    settings = get_settings()
 
     # Verify token from Redis
     try:
@@ -191,7 +195,10 @@ async def password_reset_confirm(request: PasswordResetConfirm, db: AsyncSession
 
         data = json.loads(token_data)
         user_id = data.get("user_id")
-    except Exception:
+    except BadRequestException:
+        raise
+    except Exception as e:
+        logger.warning(f"Failed to retrieve password reset token from Redis: {e}")
         raise BadRequestException("Invalid or expired reset token")
 
     # Find user
@@ -210,28 +217,13 @@ async def password_reset_confirm(request: PasswordResetConfirm, db: AsyncSession
         redis = await aioredis.from_url(settings.redis_url)
         await redis.delete(f"password_reset:{request.token}")
         await redis.close()
-    except Exception:
-        pass
+    except Exception as e:
+        logger.warning(f"Failed to delete password reset token from Redis: {e}")
 
     return {"message": "Password reset successfully"}
 
 
 @router.get("/me", response_model=UserResponse)
-async def get_current_user(
-    token: str = Depends(oauth2_scheme),
-    db: AsyncSession = Depends(get_db)
-):
+async def get_me(current_user: User = Depends(get_current_user)):
     """Get current authenticated user."""
-    if not token:
-        raise UnauthorizedException()
-
-    payload = decode_token(token)
-    user_id = payload.get("sub")
-
-    result = await db.execute(select(User).where(User.id == user_id))
-    user = result.scalar_one_or_none()
-
-    if not user:
-        raise NotFoundException("User not found")
-
-    return user
+    return current_user

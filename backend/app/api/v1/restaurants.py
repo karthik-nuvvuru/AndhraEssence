@@ -25,23 +25,9 @@ from app.schemas.common import PaginatedResponse
 from app.core.security import decode_token, oauth2_scheme
 from app.core.exceptions import NotFoundException, ForbiddenException, UnauthorizedException, BadRequestException
 from app.core.enums import UserRole
+from app.api.v1.deps import get_current_user
 
 router = APIRouter()
-
-
-async def get_current_user_dependency(
-    token: str = Depends(oauth2_scheme),
-    db: AsyncSession = Depends(get_db)
-) -> User:
-    if not token:
-        raise UnauthorizedException("Not authenticated")
-    payload = decode_token(token)
-    user_id = payload.get("sub")
-    result = await db.execute(select(User).where(User.id == user_id))
-    user = result.scalar_one_or_none()
-    if not user:
-        raise NotFoundException("User not found")
-    return user
 
 
 @router.get("", response_model=PaginatedResponse)
@@ -106,7 +92,7 @@ async def get_restaurant(
 @router.post("", response_model=RestaurantResponse)
 async def create_restaurant(
     restaurant_data: RestaurantCreate,
-    current_user: User = Depends(get_current_user_dependency),
+    current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db)
 ):
     """Create a new restaurant (restaurant owners only)."""
@@ -136,7 +122,7 @@ async def create_restaurant(
 async def update_restaurant(
     restaurant_id: UUID,
     restaurant_data: RestaurantUpdate,
-    current_user: User = Depends(get_current_user_dependency),
+    current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db)
 ):
     """Update a restaurant (owner only)."""
@@ -163,7 +149,7 @@ async def update_restaurant(
 @router.delete("/{restaurant_id}")
 async def delete_restaurant(
     restaurant_id: UUID,
-    current_user: User = Depends(get_current_user_dependency),
+    current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db)
 ):
     """Delete a restaurant (owner only)."""

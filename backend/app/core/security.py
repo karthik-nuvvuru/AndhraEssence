@@ -6,10 +6,12 @@ from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
 import redis.asyncio as aioredis
 import anyio
+import logging
 
 from app.config import get_settings
 
 settings = get_settings()
+logger = logging.getLogger(__name__)
 
 
 async def is_token_blacklisted(token: str) -> bool:
@@ -19,7 +21,8 @@ async def is_token_blacklisted(token: str) -> bool:
         result = await redis.exists(f"blacklist:{token}")
         await redis.close()
         return result > 0
-    except Exception:
+    except Exception as e:
+        logger.warning(f"Failed to check token blacklist in Redis: {e}")
         return False
 
 
@@ -29,8 +32,8 @@ async def blacklist_token(token: str, expires_in: int) -> None:
         redis = await aioredis.from_url(settings.redis_url)
         await redis.setex(f"blacklist:{token}", expires_in, "1")
         await redis.close()
-    except Exception:
-        pass  # Redis not available, continue anyway
+    except Exception as e:
+        logger.warning(f"Failed to blacklist token in Redis (continuing anyway): {e}")
 
 # Password hashing
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
@@ -108,8 +111,8 @@ def decode_token(token: str, check_blacklist: bool = True) -> dict:
                     )
             except HTTPException:
                 raise
-            except Exception:
-                pass  # Redis unavailable or other error - skip check
+            except Exception as e:
+                logger.warning(f"Failed to check token blacklist in Redis (skipping check): {e}")
         return payload
     except JWTError:
         raise HTTPException(

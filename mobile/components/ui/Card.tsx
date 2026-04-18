@@ -7,6 +7,7 @@ interface CardProps {
   onPress?: () => void;
   style?: ViewStyle;
   padding?: keyof typeof spacing;
+  variant?: "default" | "elevated";
 }
 
 export const Card: React.FC<CardProps> = ({
@@ -14,17 +15,19 @@ export const Card: React.FC<CardProps> = ({
   onPress,
   style,
   padding = "md",
+  variant = "default",
 }) => {
   const cardStyle = [
     styles.card,
+    variant === "elevated" && styles.elevated,
     { padding: spacing[padding] },
-    shadows.sm,
+    variant === "elevated" ? shadows.md : shadows.sm,
     style,
   ];
 
   if (onPress) {
     return (
-      <TouchableOpacity style={cardStyle} onPress={onPress} activeOpacity={0.7}>
+      <TouchableOpacity style={cardStyle} onPress={onPress} activeOpacity={0.8}>
         {children}
       </TouchableOpacity>
     );
@@ -55,9 +58,15 @@ export const CardTitle: React.FC<CardTitleProps> = ({
 
 const styles = StyleSheet.create({
   card: {
-    backgroundColor: colors.white,
-    borderRadius: borderRadius.lg,
+    backgroundColor: colors.backgroundCard,
+    borderRadius: borderRadius.md,
+    borderWidth: 1,
+    borderColor: colors.border,
     overflow: "hidden",
+  },
+  elevated: {
+    backgroundColor: colors.backgroundElevated,
+    borderColor: colors.borderLight,
   },
   titleContainer: {
     flexDirection: "row",

@@ -23,23 +23,9 @@ from app.schemas.restaurant import (
 from app.core.security import decode_token, oauth2_scheme
 from app.core.exceptions import NotFoundException, ForbiddenException, UnauthorizedException, BadRequestException
 from app.core.enums import UserRole
+from app.api.v1.deps import get_current_user
 
 router = APIRouter()
-
-
-async def get_current_user_dependency(
-    token: str = Depends(oauth2_scheme),
-    db: AsyncSession = Depends(get_db)
-) -> User:
-    if not token:
-        raise UnauthorizedException("Not authenticated")
-    payload = decode_token(token)
-    user_id = payload.get("sub")
-    result = await db.execute(select(User).where(User.id == user_id))
-    user = result.scalar_one_or_none()
-    if not user:
-        raise NotFoundException("User not found")
-    return user
 
 
 async def get_restaurant_or_404(restaurant_id: UUID, db: AsyncSession) -> Restaurant:
@@ -64,7 +50,7 @@ async def verify_restaurant_owner(restaurant: Restaurant, user: User):
 async def create_category(
     restaurant_id: UUID,
     category_data: MenuCategoryCreate,
-    current_user: User = Depends(get_current_user_dependency),
+    current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db)
 ):
     """Create a menu category."""
@@ -85,7 +71,7 @@ async def create_category(
 async def update_category(
     category_id: UUID,
     category_data: MenuCategoryUpdate,
-    current_user: User = Depends(get_current_user_dependency),
+    current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db)
 ):
     """Update a menu category."""
@@ -112,7 +98,7 @@ async def update_category(
 @router.delete("/categories/{category_id}")
 async def delete_category(
     category_id: UUID,
-    current_user: User = Depends(get_current_user_dependency),
+    current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db)
 ):
     """Delete a menu category."""
@@ -134,11 +120,30 @@ async def delete_category(
 
 
 # Menu Item endpoints
+@router.get("/restaurants/{restaurant_id}/items", response_model=List[MenuItemResponse])
+async def get_menu_items(
+    restaurant_id: UUID,
+    db: AsyncSession = Depends(get_db)
+):
+    """Get all menu items for a restaurant (public endpoint)."""
+    # Verify restaurant exists
+    await get_restaurant_or_404(restaurant_id, db)
+
+    result = await db.execute(
+        select(MenuItem).where(
+            MenuItem.restaurant_id == restaurant_id,
+            MenuItem.is_available == True
+        )
+    )
+    items = result.scalars().all()
+    return items
+
+
 @router.post("/restaurants/{restaurant_id}/items", response_model=MenuItemResponse)
 async def create_menu_item(
     restaurant_id: UUID,
     item_data: MenuItemCreate,
-    current_user: User = Depends(get_current_user_dependency),
+    current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db)
 ):
     """Create a menu item."""
@@ -170,7 +175,7 @@ async def create_menu_item(
 async def update_menu_item(
     item_id: UUID,
     item_data: MenuItemUpdate,
-    current_user: User = Depends(get_current_user_dependency),
+    current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db)
 ):
     """Update a menu item."""
@@ -209,7 +214,7 @@ async def update_menu_item(
 @router.delete("/items/{item_id}")
 async def delete_menu_item(
     item_id: UUID,
-    current_user: User = Depends(get_current_user_dependency),
+    current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db)
 ):
     """Delete a menu item."""

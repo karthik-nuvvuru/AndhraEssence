@@ -74,7 +74,7 @@ export const restaurantApi = {
     apiClient.get<Restaurant>(`/restaurants/${restaurantId}`),
 
   getMenu: (restaurantId: string) =>
-    apiClient.get<MenuItem[]>(`/restaurants/${restaurantId}/menu`),
+    apiClient.get<MenuItem[]>(`/menu/restaurants/${restaurantId}/items`),
 
   create: (data: Partial<Restaurant>) =>
     apiClient.post<Restaurant>("/restaurants", data),

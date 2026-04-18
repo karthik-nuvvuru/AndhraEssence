@@ -9,7 +9,8 @@ type BadgeVariant =
   | "warning"
   | "error"
   | "info"
-  | "gray";
+  | "gray"
+  | "glow";
 
 interface BadgeProps {
   text: string;
@@ -18,14 +19,21 @@ interface BadgeProps {
   style?: ViewStyle;
 }
 
-const variantColors: Record<BadgeVariant, { bg: string; text: string }> = {
-  primary: { bg: colors.primary + "20", text: colors.primary },
-  secondary: { bg: colors.secondary + "20", text: colors.secondary },
-  success: { bg: colors.success + "20", text: colors.success },
-  warning: { bg: colors.warning + "20", text: colors.warning },
-  error: { bg: colors.error + "20", text: colors.error },
-  info: { bg: colors.info + "20", text: colors.info },
-  gray: { bg: colors.gray200, text: colors.gray600 },
+const variantStyles: Record<BadgeVariant, { bg: string; text: string; border?: string }> = {
+  primary: { bg: colors.primaryBg, text: colors.primary, border: colors.primary },
+  secondary: { bg: colors.backgroundElevated, text: colors.textSecondary, border: colors.border },
+  success: { bg: colors.successBg, text: colors.success, border: colors.success },
+  warning: { bg: colors.warningBg, text: colors.warning, border: colors.warning },
+  error: { bg: colors.errorBg, text: colors.error, border: colors.error },
+  info: { bg: colors.infoBg, text: colors.info, border: colors.info },
+  gray: { bg: colors.backgroundElevated, text: colors.textTertiary, border: colors.border },
+  glow: { bg: colors.primaryGlow, text: colors.primary, border: colors.primary },
+};
+
+// Add missing color aliases that theme doesn't have
+const extendedColors = {
+  primaryBg: "rgba(255, 107, 53, 0.15)",
+  ...colors,
 };
 
 export const Badge: React.FC<BadgeProps> = ({
@@ -34,14 +42,17 @@ export const Badge: React.FC<BadgeProps> = ({
   size = "md",
   style,
 }) => {
-  const { bg, text: textColor } = variantColors[variant];
+  const variantStyle = variantStyles[variant];
 
   return (
     <View
       style={[
         styles.badge,
         size === "sm" && styles.sm,
-        { backgroundColor: bg },
+        {
+          backgroundColor: variantStyle.bg,
+          borderColor: variantStyle.border,
+        },
         style,
       ]}
     >
@@ -49,7 +60,7 @@ export const Badge: React.FC<BadgeProps> = ({
         style={[
           styles.text,
           size === "sm" && styles.smText,
-          { color: textColor },
+          { color: variantStyle.text },
         ]}
       >
         {text}
@@ -63,6 +74,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.sm,
     paddingVertical: spacing.xs,
     borderRadius: borderRadius.full,
+    borderWidth: 1,
     alignSelf: "flex-start",
   },
   sm: {
@@ -70,8 +82,9 @@ const styles = StyleSheet.create({
     paddingVertical: 2,
   },
   text: {
-    ...typography.caption,
+    ...typography.small,
     fontWeight: "600",
+    letterSpacing: 0.3,
   },
   smText: {
     fontSize: 10,

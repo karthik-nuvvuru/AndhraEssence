@@ -1,6 +1,5 @@
 import { io, Socket } from "socket.io-client";
 import { WS_BASE_URL, TIMEOUTS } from "@/utils/constants";
-import { useAuthStore } from "@/store";
 import { Platform } from "react-native";
 
 // Get appropriate WebSocket URL based on platform
@@ -116,6 +115,14 @@ class SocketService {
 
   removeRiderLocationListener() {
     this.socket?.off("rider_location");
+  }
+
+  subscribe(event: string, callback: (data: any) => void) {
+    this.socket?.on(event, callback);
+  }
+
+  unsubscribe(event: string) {
+    this.socket?.off(event);
   }
 }
 

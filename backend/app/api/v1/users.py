@@ -18,28 +18,13 @@ from app.schemas.user import (
 )
 from app.core.security import decode_token, oauth2_scheme
 from app.core.exceptions import NotFoundException, ForbiddenException, UnauthorizedException
+from app.api.v1.deps import get_current_user
 
 router = APIRouter()
 
 
-async def get_current_user_dependency(
-    token: str = Depends(oauth2_scheme),
-    db: AsyncSession = Depends(get_db)
-) -> User:
-    """Dependency to get current authenticated user."""
-    if not token:
-        raise UnauthorizedException("Not authenticated")
-    payload = decode_token(token)
-    user_id = payload.get("sub")
-    result = await db.execute(select(User).where(User.id == user_id))
-    user = result.scalar_one_or_none()
-    if not user:
-        raise NotFoundException("User not found")
-    return user
-
-
 @router.get("/me", response_model=UserResponse)
-async def get_me(current_user: User = Depends(get_current_user_dependency)):
+async def get_me(current_user: User = Depends(get_current_user)):
     """Get current user profile."""
     return current_user
 
@@ -47,7 +32,7 @@ async def get_me(current_user: User = Depends(get_current_user_dependency)):
 @router.put("/me", response_model=UserResponse)
 async def update_me(
     user_data: UserUpdate,
-    current_user: User = Depends(get_current_user_dependency),
+    current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db)
 ):
     """Update current user profile."""
@@ -64,20 +49,21 @@ async def update_me(
 # Address endpoints
 @router.get("/me/addresses", response_model=List[AddressResponse])
 async def get_addresses(
-    current_user: User = Depends(get_current_user_dependency),
+    current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db)
 ):
     """Get user's addresses."""
     result = await db.execute(
         select(Address).where(Address.user_id == current_user.id)
     )
-    return result.scalars().all()
+    addresses = await result.scalars().all()
+    return addresses
 
 
 @router.post("/me/addresses", response_model=AddressResponse)
 async def create_address(
     address_data: AddressCreate,
-    current_user: User = Depends(get_current_user_dependency),
+    current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db)
 ):
     """Create a new address."""
@@ -105,7 +91,7 @@ async def create_address(
 @router.get("/me/addresses/{address_id}", response_model=AddressResponse)
 async def get_address(
     address_id: str,
-    current_user: User = Depends(get_current_user_dependency),
+    current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db)
 ):
     """Get a specific address."""
@@ -125,7 +111,7 @@ async def get_address(
 async def update_address(
     address_id: str,
     address_data: AddressUpdate,
-    current_user: User = Depends(get_current_user_dependency),
+    current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db)
 ):
     """Update an address."""
@@ -164,7 +150,7 @@ async def update_address(
 @router.delete("/me/addresses/{address_id}")
 async def delete_address(
     address_id: str,
-    current_user: User = Depends(get_current_user_dependency),
+    current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db)
 ):
     """Delete an address."""

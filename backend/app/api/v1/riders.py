@@ -36,23 +36,9 @@ from app.utils.distance import (
     calculate_earnings
 )
 from app.config import get_settings
+from app.api.v1.deps import get_current_user
 
 router = APIRouter()
-
-
-async def get_current_user_dependency(
-    token: str = Depends(oauth2_scheme),
-    db: AsyncSession = Depends(get_db)
-) -> User:
-    if not token:
-        raise UnauthorizedException("Not authenticated")
-    payload = decode_token(token)
-    user_id = payload.get("sub")
-    result = await db.execute(select(User).where(User.id == user_id))
-    user = result.scalar_one_or_none()
-    if not user:
-        raise NotFoundException("User not found")
-    return user
 
 
 async def get_rider_or_create(user: User, db: AsyncSession) -> Rider:
@@ -74,7 +60,7 @@ async def get_rider_or_create(user: User, db: AsyncSession) -> Rider:
 
 @router.post("/register", response_model=RiderResponse)
 async def register_as_rider(
-    current_user: User = Depends(get_current_user_dependency),
+    current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db)
 ):
     """Register current user as a rider."""
@@ -96,7 +82,7 @@ async def register_as_rider(
 
 @router.get("/me", response_model=RiderResponse)
 async def get_rider_profile(
-    current_user: User = Depends(get_current_user_dependency),
+    current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db)
 ):
     """Get current rider's profile."""
@@ -107,7 +93,7 @@ async def get_rider_profile(
 @router.put("/me", response_model=RiderResponse)
 async def update_rider_profile(
     update_data: RiderUpdate,
-    current_user: User = Depends(get_current_user_dependency),
+    current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db)
 ):
     """Update rider profile."""
@@ -125,7 +111,7 @@ async def update_rider_profile(
 @router.put("/location", response_model=RiderLocationUpdate)
 async def update_location(
     location_data: RiderLocationUpdate,
-    current_user: User = Depends(get_current_user_dependency),
+    current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db)
 ):
     """Update rider's current location."""
@@ -151,7 +137,7 @@ async def update_location(
 
 @router.get("/orders/available", response_model=List[AvailableOrderResponse])
 async def get_available_orders(
-    current_user: User = Depends(get_current_user_dependency),
+    current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db)
 ):
     """Get available orders for rider to accept."""
@@ -215,7 +201,7 @@ async def get_available_orders(
 @router.post("/orders/{order_id}/accept", response_model=OrderResponse)
 async def accept_order(
     order_id: UUID,
-    current_user: User = Depends(get_current_user_dependency),
+    current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db)
 ):
     """Accept an order for delivery."""
@@ -248,7 +234,7 @@ async def accept_order(
 @router.get("/orders", response_model=List[OrderResponse])
 async def get_rider_orders(
     status: Optional[OrderStatus] = Query(None),
-    current_user: User = Depends(get_current_user_dependency),
+    current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db)
 ):
     """Get rider's assigned orders."""

@@ -1,7 +1,7 @@
 import React from "react";
 import { Tabs } from "expo-router";
 import { View, Text, StyleSheet } from "react-native";
-import { colors, typography } from "@/theme";
+import { colors, typography, spacing, shadows } from "@/theme";
 import { useCartStore } from "@/store";
 
 function TabBarIcon({ name, focused }: { name: string; focused: boolean }) {
@@ -9,20 +9,17 @@ function TabBarIcon({ name, focused }: { name: string; focused: boolean }) {
     home: "🏠",
     search: "🔍",
     cart: "🛒",
-    orders: "📋",
+    orders: "📦",
     profile: "👤",
   };
 
   return (
-    <View style={styles.iconContainer}>
-      <Text style={[styles.icon, focused && styles.iconFocused]}>
-        {icons[name] || "•"}
-      </Text>
+    <View style={styles.iconWrapper}>
+      <Text style={[styles.icon, focused && styles.iconActive]}>{icons[name] || "•"}</Text>
+      {focused && <View style={styles.activeIndicator} />}
       {name === "cart" && useCartStore.getState().getItemCount() > 0 && (
         <View style={styles.badge}>
-          <Text style={styles.badgeText}>
-            {useCartStore.getState().getItemCount()}
-          </Text>
+          <Text style={styles.badgeText}>{useCartStore.getState().getItemCount()}</Text>
         </View>
       )}
     </View>
@@ -33,13 +30,12 @@ export default function TabsLayout() {
   return (
     <Tabs
       screenOptions={{
-        tabBarActiveTintColor: colors.primary,
-        tabBarInactiveTintColor: colors.textSecondary,
+        tabBarActiveTintColor: "#7C3AED",
+        tabBarInactiveTintColor: "#71717A",
         tabBarStyle: styles.tabBar,
         tabBarLabelStyle: styles.tabLabel,
-        headerStyle: styles.header,
-        headerTitleStyle: styles.headerTitle,
         headerShown: false,
+        tabBarShowLabel: true,
       }}
     >
       <Tabs.Screen
@@ -83,45 +79,49 @@ export default function TabsLayout() {
 
 const styles = StyleSheet.create({
   tabBar: {
-    backgroundColor: colors.white,
+    backgroundColor: "#141419",
     borderTopWidth: 1,
-    borderTopColor: colors.gray200,
-    paddingTop: 8,
-    paddingBottom: 8,
-    height: 60,
+    borderTopColor: "rgba(255,255,255,0.08)",
+    paddingTop: spacing.sm,
+    paddingBottom: spacing.lg,
+    height: 80,
   },
   tabLabel: {
-    ...typography.caption,
+    ...typography.small,
     marginTop: 4,
   },
-  header: {
-    backgroundColor: colors.white,
-    elevation: 0,
-    shadowOpacity: 0,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.gray200,
-  },
-  headerTitle: {
-    ...typography.h4,
-    color: colors.textPrimary,
-  },
-  iconContainer: {
+  iconWrapper: {
     position: "relative",
+    alignItems: "center",
+    justifyContent: "center",
   },
   icon: {
-    fontSize: 20,
+    fontSize: 24,
   },
-  iconFocused: {
+  iconActive: {
     transform: [{ scale: 1.1 }],
+  },
+  activeIndicator: {
+    position: "absolute",
+    bottom: -8,
+    width: 4,
+    height: 4,
+    borderRadius: 2,
+    backgroundColor: colors.primary,
+    shadowColor: colors.primary,
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.8,
+    shadowRadius: 4,
+    elevation: 4,
   },
   badge: {
     position: "absolute",
-    top: -4,
-    right: -8,
+    top: -6,
+    right: -12,
     backgroundColor: colors.primary,
     borderRadius: 10,
-    minWidth: 16,
-    height: 16,
+    minWidth: 18,
+    height: 18,
     alignItems: "center",
     justifyContent: "center",
     paddingHorizontal: 4,
@@ -129,6 +129,6 @@ const styles = StyleSheet.create({
   badgeText: {
     color: colors.white,
     fontSize: 10,
-    fontWeight: "bold",
+    fontWeight: "700",
   },
 });

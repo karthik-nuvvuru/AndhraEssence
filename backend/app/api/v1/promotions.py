@@ -21,25 +21,11 @@ from app.schemas.payment import ApplyPromoCode, PromotionResponse
 from app.core.security import decode_token, oauth2_scheme
 from app.core.exceptions import NotFoundException, BadRequestException
 from app.core.enums import UserRole
+from app.api.v1.deps import get_current_user
 
 logger = logging.getLogger(__name__)
 
 router = APIRouter()
-
-
-async def get_current_user_dependency(
-    token: str = Depends(oauth2_scheme),
-    db: AsyncSession = Depends(get_db)
-) -> User:
-    if not token:
-        raise BadRequestException("Not authenticated")
-    payload = decode_token(token)
-    user_id = payload.get("sub")
-    result = await db.execute(select(User).where(User.id == user_id))
-    user = result.scalar_one_or_none()
-    if not user:
-        raise NotFoundException("User not found")
-    return user
 
 
 def calculate_discount(promotion: Promotion, order_amount: float) -> float:
@@ -58,7 +44,7 @@ def calculate_discount(promotion: Promotion, order_amount: float) -> float:
 @router.post("/validate", response_model=dict)
 async def validate_promo_code(
     promo_data: ApplyPromoCode,
-    current_user: User = Depends(get_current_user_dependency),
+    current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db)
 ):
     """
@@ -119,7 +105,7 @@ async def validate_promo_code(
 @router.get("/{code}", response_model=PromotionResponse)
 async def get_promotion_details(
     code: str,
-    current_user: User = Depends(get_current_user_dependency),
+    current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db)
 ):
     """Get promotion details by code (for admin/display purposes)."""

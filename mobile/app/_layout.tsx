@@ -2,56 +2,45 @@ import React, { useEffect, useRef } from "react";
 import { Stack } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import { SafeAreaProvider } from "react-native-safe-area-context";
+import { Platform } from "react-native";
 import { AuthProvider, useAuth } from "@/context/AuthContext";
-import {
-  initializeNotifications,
-  setupNotificationTapHandler,
-  handleNotificationTap,
-  removeNotificationSubscription,
-  registerDeviceToken,
-  getStoredPushToken,
-  type Notifications,
-} from "@/services/notifications/notificationService";
-import * as Notifications from "expo-notifications";
+import { ToastProvider } from "@/components/ui/Toast";
+import { OfflineBanner } from "@/components/ui/OfflineBanner";
 
 function RootLayoutNav() {
   const { user, isAuthenticated } = useAuth();
   const role = user?.role;
-  const notificationTapSubscription = useRef<Notifications.EventSubscription | null>(null);
-  const hasRegisteredToken = useRef(false);
 
   // Initialize notifications on app startup - request permissions
+  // Only run on native platforms (not web)
   useEffect(() => {
-    initializeNotifications();
-  }, []);
+    if (Platform.OS === "web") return;
 
-  // Setup notification tap handler for deep linking
-  useEffect(() => {
-    notificationTapSubscription.current = setupNotificationTapHandler(
-      (response: Notifications.NotificationResponse) => {
-        handleNotificationTap(response);
+    async function init() {
+      try {
+        const notificationModule = await import("@/services/notifications/notificationService");
+        await notificationModule.initializeNotifications();
+      } catch (error) {
+        console.warn("Failed to initialize notifications:", error);
       }
-    );
+    }
 
-    return () => {
-      removeNotificationSubscription(notificationTapSubscription.current);
-    };
+    init();
   }, []);
 
   // Register device token when user logs in
   useEffect(() => {
     const registerTokenOnLogin = async () => {
-      if (isAuthenticated && !hasRegisteredToken.current) {
-        hasRegisteredToken.current = true;
-        // Get the stored push token - in production this should be retrieved
-        // from AsyncStorage or a global state after initializeNotifications sets it
-        const token = await getStoredPushToken();
-        if (token) {
-          await registerDeviceToken(token);
+      if (isAuthenticated) {
+        try {
+          const notificationModule = await import("@/services/notifications/notificationService");
+          const token = notificationModule.getStoredPushToken();
+          if (token) {
+            await notificationModule.registerDeviceToken(token);
+          }
+        } catch (error) {
+          console.warn("Failed to register device token:", error);
         }
-      } else if (!isAuthenticated) {
-        // Reset on logout so token can be re-registered on next login
-        hasRegisteredToken.current = false;
       }
     };
 
@@ -93,8 +82,11 @@ export default function RootLayout() {
   return (
     <SafeAreaProvider>
       <AuthProvider>
-        <StatusBar style="dark" />
-        <RootLayoutNav />
+        <ToastProvider>
+          <OfflineBanner />
+          <StatusBar style="dark" />
+          <RootLayoutNav />
+        </ToastProvider>
       </AuthProvider>
     </SafeAreaProvider>
   );
