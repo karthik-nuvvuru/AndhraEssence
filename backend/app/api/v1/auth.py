@@ -1,46 +1,57 @@
+import logging
 from datetime import datetime
-from fastapi import APIRouter, Depends, HTTPException, status, Request
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select
+
+from fastapi import APIRouter, Depends, HTTPException, Request
 from slowapi import Limiter
 from slowapi.util import get_remote_address
-import logging
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 logger = logging.getLogger(__name__)
 
 # Rate limiter instance
 limiter = Limiter(key_func=get_remote_address)
 
-from app.database import get_db
 from app.config import get_settings
+from app.database import get_db
 
 settings = get_settings()
 
 # Use demo_models when in demo mode, otherwise regular models
 if settings.demo_mode:
-    from app.demo_models.user import User, Address
+    from app.demo_models.user import User
 else:
-    from app.models.user import User, Address
+    from app.models.user import User
 
+from app.api.v1.deps import get_current_user
+from app.core.enums import UserRole
+from app.core.exceptions import BadRequestException, UnauthorizedException
+from app.core.security import (
+    create_access_token,
+    create_refresh_token,
+    decode_token,
+    get_password_hash,
+    oauth2_scheme,
+    verify_password,
+)
 from app.schemas.auth import (
-    UserRegister, UserLogin, TokenResponse, RefreshTokenRequest,
-    PasswordResetRequest, PasswordResetConfirm, ChangePasswordRequest
+    PasswordResetConfirm,
+    PasswordResetRequest,
+    RefreshTokenRequest,
+    TokenResponse,
+    UserLogin,
+    UserRegister,
 )
 from app.schemas.user import UserResponse
-from app.core.security import (
-    get_password_hash, verify_password, create_access_token,
-    create_refresh_token, decode_token, oauth2_scheme
-)
-from app.core.exceptions import UnauthorizedException, BadRequestException, NotFoundException
-from app.core.enums import UserRole
-from app.api.v1.deps import get_current_user
 
 router = APIRouter()
 
 
 @router.post("/register", response_model=TokenResponse)
 @limiter.limit("5/minute")
-async def register(request: Request, user_data: UserRegister, db: AsyncSession = Depends(get_db)):
+async def register(
+    request: Request, user_data: UserRegister, db: AsyncSession = Depends(get_db)
+):
     """Register a new user."""
     result = await db.execute(select(User).where(User.email == user_data.email))
     if result.scalar_one_or_none():
@@ -55,7 +66,7 @@ async def register(request: Request, user_data: UserRegister, db: AsyncSession =
         phone=user_data.phone,
         password_hash=get_password_hash(user_data.password),
         full_name=user_data.full_name,
-        role=UserRole(user_data.role)
+        role=UserRole(user_data.role),
     )
     db.add(user)
     await db.commit()
@@ -65,13 +76,15 @@ async def register(request: Request, user_data: UserRegister, db: AsyncSession =
     return TokenResponse(
         access_token=create_access_token(token_data),
         refresh_token=create_refresh_token(token_data),
-        expires_in=settings.access_token_expire_minutes * 60
+        expires_in=settings.access_token_expire_minutes * 60,
     )
 
 
 @router.post("/login", response_model=TokenResponse)
 @limiter.limit("10/minute")
-async def login(request: Request, credentials: UserLogin, db: AsyncSession = Depends(get_db)):
+async def login(
+    request: Request, credentials: UserLogin, db: AsyncSession = Depends(get_db)
+):
     result = await db.execute(select(User).where(User.email == credentials.email))
     user = result.scalar_one_or_none()
 
@@ -85,12 +98,14 @@ async def login(request: Request, credentials: UserLogin, db: AsyncSession = Dep
     return TokenResponse(
         access_token=create_access_token(token_data),
         refresh_token=create_refresh_token(token_data),
-        expires_in=settings.access_token_expire_minutes * 60
+        expires_in=settings.access_token_expire_minutes * 60,
     )
 
 
 @router.post("/refresh", response_model=TokenResponse)
-async def refresh_token(request: RefreshTokenRequest, db: AsyncSession = Depends(get_db)):
+async def refresh_token(
+    request: RefreshTokenRequest, db: AsyncSession = Depends(get_db)
+):
     """Refresh access token."""
     try:
         payload = decode_token(request.refresh_token)
@@ -107,11 +122,11 @@ async def refresh_token(request: RefreshTokenRequest, db: AsyncSession = Depends
         return TokenResponse(
             access_token=create_access_token(token_data),
             refresh_token=create_refresh_token(token_data),
-            expires_in=settings.access_token_expire_minutes * 60
+            expires_in=settings.access_token_expire_minutes * 60,
         )
     except Exception as e:
         logger.warning(f"Token refresh failed: {e}")
-        raise UnauthorizedException("Invalid refresh token")
+        raise UnauthorizedException("Invalid refresh token") from e
 
 
 @router.post("/logout")
@@ -138,11 +153,14 @@ async def logout(token: str = Depends(oauth2_scheme)):
 
 
 @router.post("/password-reset")
-async def password_reset_request(request: PasswordResetRequest, db: AsyncSession = Depends(get_db)):
+async def password_reset_request(
+    request: PasswordResetRequest, db: AsyncSession = Depends(get_db)
+):
     """Request password reset."""
-    import redis.asyncio as aioredis
     import json
     import uuid
+
+    import redis.asyncio as aioredis
 
     result = await db.execute(select(User).where(User.email == request.email))
     user = result.scalar_one_or_none()
@@ -156,7 +174,7 @@ async def password_reset_request(request: PasswordResetRequest, db: AsyncSession
     token_data = {
         "user_id": str(user.id),
         "email": user.email,
-        "type": "password_reset"
+        "type": "password_reset",
     }
 
     # Store token in Redis with TTL from settings
@@ -165,7 +183,7 @@ async def password_reset_request(request: PasswordResetRequest, db: AsyncSession
         await redis.setex(
             f"password_reset:{reset_token}",
             settings.redis_cache_ttl,
-            json.dumps(token_data)
+            json.dumps(token_data),
         )
         await redis.close()
     except Exception as e:
@@ -179,10 +197,13 @@ async def password_reset_request(request: PasswordResetRequest, db: AsyncSession
 
 
 @router.post("/password-reset/confirm")
-async def password_reset_confirm(request: PasswordResetConfirm, db: AsyncSession = Depends(get_db)):
+async def password_reset_confirm(
+    request: PasswordResetConfirm, db: AsyncSession = Depends(get_db)
+):
     """Confirm password reset with token."""
-    import redis.asyncio as aioredis
     import json
+
+    import redis.asyncio as aioredis
 
     # Verify token from Redis
     try:
@@ -199,7 +220,7 @@ async def password_reset_confirm(request: PasswordResetConfirm, db: AsyncSession
         raise
     except Exception as e:
         logger.warning(f"Failed to retrieve password reset token from Redis: {e}")
-        raise BadRequestException("Invalid or expired reset token")
+        raise BadRequestException("Invalid or expired reset token") from e
 
     # Find user
     result = await db.execute(select(User).where(User.id == user_id))

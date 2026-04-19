@@ -1,6 +1,4 @@
 import {
-  ExpoPushToken,
-  ExpoPushMessage,
   getDevicePushTokenAsync,
 } from "expo-notifications";
 import * as Notifications from "expo-notifications";
@@ -76,11 +74,11 @@ export async function requestNotificationPermissions(): Promise<string | null> {
 /**
  * Get the push token string from the token data
  */
-function getPushTokenString(tokenData: ExpoPushToken | string): string {
+function getPushTokenString(tokenData: any): string {
   if (typeof tokenData === "string") {
     return tokenData;
   }
-  return tokenData.data;
+  return tokenData?.data || "";
 }
 
 /**
@@ -139,7 +137,12 @@ export function setupNotificationTapHandler(
 export function parseNotificationData(
   notification: Notifications.Notification | Notifications.NotificationResponse
 ): NotificationData {
-  const data = notification.request.content.data as NotificationData;
+  // NotificationResponse has notification.request.content.data
+  // Notification has request.content.data
+  const content = 'notification' in notification
+    ? notification.notification.request.content
+    : notification.request.content;
+  const data = content.data as NotificationData;
   return {
     type: data?.type,
     orderId: data?.orderId,
@@ -206,14 +209,6 @@ export async function sendLocalNotification(
   body: string,
   data?: NotificationData
 ): Promise<void> {
-  const message: ExpoPushMessage = {
-    to: "",
-    sound: "default",
-    title,
-    body,
-    data: data as Record<string, unknown>,
-  };
-
   try {
     await Notifications.scheduleNotificationAsync({
       content: {

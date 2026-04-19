@@ -1,11 +1,13 @@
 import uuid
 from datetime import datetime
-from sqlalchemy import Column, String, DateTime, Float, Integer, Boolean, ForeignKey, Enum as SQLEnum
+
+from sqlalchemy import Boolean, Column, DateTime, Float, ForeignKey, Integer, String
+from sqlalchemy import Enum as SQLEnum
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
 
-from app.database import Base
 from app.core.enums import PaymentStatus
+from app.database import Base
 
 
 class Payment(Base):
@@ -14,11 +16,16 @@ class Payment(Base):
     __tablename__ = "payments"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    order_id = Column(UUID(as_uuid=True), ForeignKey("orders.id", ondelete="SET NULL"), nullable=True)
+    order_id = Column(
+        UUID(as_uuid=True), ForeignKey("orders.id", ondelete="SET NULL"), nullable=True
+    )
     user_id = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=False)
     amount = Column(Float, nullable=False)
     currency = Column(String(10), default="INR")
-    status = Column(SQLEnum(PaymentStatus, name="payment_status", create_type=True), default=PaymentStatus.PENDING)
+    status = Column(
+        SQLEnum(PaymentStatus, name="payment_status", create_type=True),
+        default=PaymentStatus.PENDING,
+    )
     payment_method = Column(String(50), nullable=True)
     razorpay_order_id = Column(String(255), nullable=True)
     razorpay_payment_id = Column(String(255), nullable=True)

@@ -1,12 +1,15 @@
 """Demo payment models using cross-database compatible types."""
+
 import uuid
 from datetime import datetime
-from sqlalchemy import Column, String, DateTime, Float, Integer, Boolean, Enum as SQLEnum, ForeignKey
+
+from sqlalchemy import Boolean, Column, DateTime, Float, ForeignKey, Integer, String
+from sqlalchemy import Enum as SQLEnum
 from sqlalchemy.orm import relationship
 
+from app.core.enums import PaymentStatus
 from app.database import Base
 from app.db_types import GUID
-from app.core.enums import PaymentStatus
 
 
 class Payment(Base):
@@ -15,11 +18,16 @@ class Payment(Base):
     __tablename__ = "payments"
 
     id = Column(GUID(), primary_key=True, default=uuid.uuid4)
-    order_id = Column(GUID(), ForeignKey("orders.id", ondelete="SET NULL"), nullable=True)
+    order_id = Column(
+        GUID(), ForeignKey("orders.id", ondelete="SET NULL"), nullable=True
+    )
     user_id = Column(GUID(), ForeignKey("users.id"), nullable=False)
     amount = Column(Float, nullable=False)
     currency = Column(String(10), default="INR")
-    status = Column(SQLEnum(PaymentStatus, name="payment_status", create_type=True), default=PaymentStatus.PENDING)
+    status = Column(
+        SQLEnum(PaymentStatus, name="payment_status", create_type=True),
+        default=PaymentStatus.PENDING,
+    )
     payment_method = Column(String(50), nullable=True)
     razorpay_order_id = Column(String(255), nullable=True)
     razorpay_payment_id = Column(String(255), nullable=True)

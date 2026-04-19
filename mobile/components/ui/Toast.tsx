@@ -1,6 +1,16 @@
 import React, { createContext, useContext, useState, useCallback, useEffect, useRef } from "react";
-import { View, Text, StyleSheet, Animated, Platform } from "react-native";
+import { View, Text, StyleSheet, Platform, Dimensions } from "react-native";
+import { Gesture, GestureDetector } from "react-native-gesture-handler";
+import Animated, {
+  useSharedValue,
+  useAnimatedStyle,
+  withSpring,
+  withTiming,
+  runOnJS,
+} from "react-native-reanimated";
 import { colors, typography, spacing, borderRadius } from "@/theme";
+
+const { width: SCREEN_WIDTH } = Dimensions.get("window");
 
 type ToastType = "success" | "error" | "info";
 
@@ -31,63 +41,90 @@ interface ToastProviderProps {
 
 export function ToastProvider({ children }: ToastProviderProps) {
   const [toast, setToast] = useState<Toast | null>(null);
-  const fadeAnim = useRef(new Animated.Value(0)).current;
-  const slideAnim = useRef(new Animated.Value(50)).current;
+  const translateX = useSharedValue(0);
+  const translateY = useSharedValue(0);
+  const opacity = useSharedValue(0);
+  const progress = useSharedValue(1);
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const progressIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
-  const hideToast = useCallback(() => {
-    Animated.parallel([
-      Animated.timing(fadeAnim, {
-        toValue: 0,
-        duration: 200,
-        useNativeDriver: true,
-      }),
-      Animated.timing(slideAnim, {
-        toValue: 50,
-        duration: 200,
-        useNativeDriver: true,
-      }),
-    ]).start(() => {
-      setToast(null);
-    });
-  }, [fadeAnim, slideAnim]);
+  const hideToastInternal = useCallback(() => {
+    opacity.value = withTiming(0, { duration: 200 });
+    translateY.value = withTiming(50, { duration: 200 });
+    setTimeout(() => setToast(null), 200);
+  }, []);
 
   const showToast = useCallback((message: string, type: ToastType = "info") => {
-    if (timeoutRef.current) {
-      clearTimeout(timeoutRef.current);
-    }
+    if (timeoutRef.current) clearTimeout(timeoutRef.current);
+    if (progressIntervalRef.current) clearInterval(progressIntervalRef.current);
 
-    // Reset animations
-    fadeAnim.setValue(0);
-    slideAnim.setValue(50);
+    // Reset values
+    translateX.value = 0;
+    translateY.value = 50;
+    opacity.value = 0;
+    progress.value = 1;
 
     setToast({ id: Date.now().toString(), message, type });
 
-    // Start entrance animation
-    Animated.parallel([
-      Animated.timing(fadeAnim, {
-        toValue: 1,
-        duration: 300,
-        useNativeDriver: true,
-      }),
-      Animated.timing(slideAnim, {
-        toValue: 0,
-        duration: 300,
-        useNativeDriver: true,
-      }),
-    ]).start();
+    // Entrance animation
+    opacity.value = withTiming(1, { duration: 300 });
+    translateY.value = withSpring(0, { damping: 15, stiffness: 200 });
+
+    // Progress countdown
+    const startTime = Date.now();
+    const duration = 3000;
+    progressIntervalRef.current = setInterval(() => {
+      const elapsed = Date.now() - startTime;
+      progress.value = Math.max(0, 1 - elapsed / duration);
+      if (elapsed >= duration) {
+        if (progressIntervalRef.current) clearInterval(progressIntervalRef.current);
+      }
+    }, 50);
 
     // Auto dismiss after 3 seconds
     timeoutRef.current = setTimeout(() => {
-      hideToast();
+      hideToastInternal();
     }, 3000);
-  }, [fadeAnim, slideAnim, hideToast]);
+  }, [hideToastInternal]);
+
+  const hideToast = useCallback(() => {
+    if (timeoutRef.current) clearTimeout(timeoutRef.current);
+    if (progressIntervalRef.current) clearInterval(progressIntervalRef.current);
+    hideToastInternal();
+  }, [hideToastInternal]);
+
+  // Swipe gesture
+  const panGesture = Gesture.Pan()
+    .onUpdate((e) => {
+      translateX.value = e.translationX;
+      translateY.value = e.translationY * 0.3;
+    })
+    .onEnd((e) => {
+      if (Math.abs(e.translationX) > 100 || Math.abs(e.translationY) > 80) {
+        translateX.value = withTiming(e.translationX > 0 ? SCREEN_WIDTH : -SCREEN_WIDTH, { duration: 200 });
+        runOnJS(hideToast)();
+      } else {
+        translateX.value = withSpring(0);
+        translateY.value = withSpring(0);
+      }
+    });
+
+  const animatedStyle = useAnimatedStyle(() => ({
+    opacity: opacity.value,
+    transform: [
+      { translateX: translateX.value },
+      { translateY: translateY.value },
+    ],
+  }));
+
+  const progressStyle = useAnimatedStyle(() => ({
+    width: `${progress.value * 100}%`,
+  }));
 
   useEffect(() => {
     return () => {
-      if (timeoutRef.current) {
-        clearTimeout(timeoutRef.current);
-      }
+      if (timeoutRef.current) clearTimeout(timeoutRef.current);
+      if (progressIntervalRef.current) clearInterval(progressIntervalRef.current);
     };
   }, []);
 
@@ -101,23 +138,30 @@ export function ToastProvider({ children }: ToastProviderProps) {
     <ToastContext.Provider value={{ showToast, hideToast }}>
       {children}
       {toast && (
-        <Animated.View
-          style={[
-            styles.container,
-            {
-              opacity: fadeAnim,
-              transform: [{ translateY: slideAnim }],
-            },
-          ]}
-          pointerEvents="box-none"
-        >
-          <View style={[styles.toast, { backgroundColor: toastConfig[toast.type].bg }]}>
-            <View style={[styles.iconContainer, { backgroundColor: toastConfig[toast.type].iconColor }]}>
-              <Text style={styles.icon}>{toastConfig[toast.type].icon}</Text>
+        <GestureDetector gesture={panGesture}>
+          <Animated.View
+            style={[styles.container, animatedStyle]}
+            pointerEvents="box-none"
+          >
+            <View style={[styles.toast, { backgroundColor: toastConfig[toast.type].bg }]}>
+              <View style={[styles.progressBar, { backgroundColor: toastConfig[toast.type].iconColor + "30" }]}>
+                <Animated.View
+                  style={[
+                    styles.progressFill,
+                    { backgroundColor: toastConfig[toast.type].iconColor },
+                    progressStyle,
+                  ]}
+                />
+              </View>
+              <View style={styles.content}>
+                <View style={[styles.iconContainer, { backgroundColor: toastConfig[toast.type].iconColor }]}>
+                  <Text style={styles.icon}>{toastConfig[toast.type].icon}</Text>
+                </View>
+                <Text style={styles.message}>{toast.message}</Text>
+              </View>
             </View>
-            <Text style={styles.message}>{toast.message}</Text>
-          </View>
-        </Animated.View>
+          </Animated.View>
+        </GestureDetector>
       )}
     </ToastContext.Provider>
   );
@@ -132,13 +176,11 @@ const styles = StyleSheet.create({
     zIndex: 9999,
   },
   toast: {
-    flexDirection: "row",
-    alignItems: "center",
-    padding: spacing.md,
     borderRadius: borderRadius.md,
     backgroundColor: colors.backgroundCard,
     borderWidth: 1,
     borderColor: colors.border,
+    overflow: "hidden",
     ...Platform.select({
       web: {
         boxShadow: "0 4px 12px rgba(0, 0, 0, 0.5)",
@@ -151,6 +193,19 @@ const styles = StyleSheet.create({
         elevation: 8,
       },
     }),
+  },
+  progressBar: {
+    height: 3,
+    width: "100%",
+  },
+  progressFill: {
+    height: "100%",
+    borderRadius: 1.5,
+  },
+  content: {
+    flexDirection: "row",
+    alignItems: "center",
+    padding: spacing.md,
   },
   iconContainer: {
     width: 28,

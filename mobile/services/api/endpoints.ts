@@ -118,6 +118,7 @@ export const orderApi = {
     payment_method: PaymentMethod;
     promo_code?: string;
     delivery_instructions?: string;
+    tip_amount?: number;
   }) => apiClient.post<Order>("/orders", data),
 
   list: (params?: { status?: string; page?: number; limit?: number }) =>

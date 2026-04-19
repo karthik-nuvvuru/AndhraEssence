@@ -2,23 +2,16 @@
 
 import math
 from datetime import datetime, timedelta
-from typing import Optional, Tuple
+
 import httpx
+
 from app.config import get_settings
 
-
-# Constants for earnings calculation
-BASE_EARNINGS = 30.0  # Base fee in currency units
-PER_KM_RATE = 10.0    # Earnings per kilometer
-MIN_EARNINGS = 40.0   # Minimum earnings per delivery
-
-# Average delivery speed in km/h (accounting for traffic, stops, etc.)
-AVERAGE_DELIVERY_SPEED_KMH = 25.0
+settings = get_settings()
 
 
 def calculate_haversine_distance(
-    lat1: float, lon1: float,
-    lat2: float, lon2: float
+    lat1: float, lon1: float, lat2: float, lon2: float
 ) -> float:
     """
     Calculate the geodesic distance between two points using the Haversine formula.
@@ -39,19 +32,22 @@ def calculate_haversine_distance(
     delta_lat = math.radians(lat2 - lat1)
     delta_lon = math.radians(lon2 - lon1)
 
-    a = (math.sin(delta_lat / 2) ** 2 +
-         math.cos(lat1_rad) * math.cos(lat2_rad) *
-         math.sin(delta_lon / 2) ** 2)
+    a = (
+        math.sin(delta_lat / 2) ** 2
+        + math.cos(lat1_rad) * math.cos(lat2_rad) * math.sin(delta_lon / 2) ** 2
+    )
     c = 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a))
 
     return R * c
 
 
 async def calculate_distance_with_google_maps(
-    origin_lat: float, origin_lon: float,
-    dest_lat: float, dest_lon: float,
-    api_key: Optional[str] = None
-) -> Tuple[float, Optional[str]]:
+    origin_lat: float,
+    origin_lon: float,
+    dest_lat: float,
+    dest_lon: float,
+    api_key: str | None = None,
+) -> tuple[float, str | None]:
     """
     Calculate distance using Google Maps Distance Matrix API.
 
@@ -75,7 +71,7 @@ async def calculate_distance_with_google_maps(
                 "origins": f"{origin_lat},{origin_lon}",
                 "destinations": f"{dest_lat},{dest_lon}",
                 "key": api_key,
-                "mode": "driving"
+                "mode": "driving",
             }
             response = await client.get(url, params=params, timeout=10.0)
             data = response.json()
@@ -93,10 +89,12 @@ async def calculate_distance_with_google_maps(
 
 
 def calculate_distance(
-    origin_lat: float, origin_lon: float,
-    dest_lat: float, dest_lon: float,
+    origin_lat: float,
+    origin_lon: float,
+    dest_lat: float,
+    dest_lon: float,
     use_google_maps: bool = False,
-    api_key: Optional[str] = None
+    api_key: str | None = None,
 ) -> float:
     """
     Calculate distance between two points.
@@ -117,11 +115,12 @@ def calculate_distance(
         # In an async context, use calculate_distance_with_google_maps
         try:
             import googlemaps
+
             gmaps = googlemaps.Client(key=api_key)
             result = gmaps.distance_matrix(
                 origins=(origin_lat, origin_lon),
                 destinations=(dest_lat, dest_lon),
-                mode="driving"
+                mode="driving",
             )
             if result["status"] == "OK":
                 element = result["rows"][0]["elements"][0]
@@ -134,7 +133,7 @@ def calculate_distance(
     return calculate_haversine_distance(origin_lat, origin_lon, dest_lat, dest_lon)
 
 
-def calculate_eta(distance_km: float, speed_kmh: float = AVERAGE_DELIVERY_SPEED_KMH) -> datetime:
+def calculate_eta(distance_km: float, speed_kmh: float | None = None) -> datetime:
     """
     Calculate estimated time of arrival.
 
@@ -145,6 +144,8 @@ def calculate_eta(distance_km: float, speed_kmh: float = AVERAGE_DELIVERY_SPEED_
     Returns:
         Estimated arrival time as datetime
     """
+    if speed_kmh is None:
+        speed_kmh = settings.average_delivery_speed_kmh
     if distance_km <= 0:
         return datetime.utcnow()
 
@@ -167,7 +168,7 @@ def calculate_earnings(distance_km: float) -> float:
         Earnings in currency units
     """
     if distance_km <= 0:
-        return MIN_EARNINGS
+        return settings.min_earnings
 
-    earnings = BASE_EARNINGS + (distance_km * PER_KM_RATE)
-    return max(earnings, MIN_EARNINGS)
+    earnings = settings.base_earnings + (distance_km * settings.per_km_rate)
+    return max(earnings, settings.min_earnings)

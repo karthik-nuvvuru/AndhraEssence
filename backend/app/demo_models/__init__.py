@@ -3,12 +3,13 @@
 This module provides SQLite-compatible versions of all models
 for use when demo_mode=True in settings.
 """
-from app.demo_models.user import User, Address
-from app.demo_models.restaurant import Restaurant, MenuCategory, MenuItem
+
 from app.demo_models.order import Order, OrderItem
-from app.demo_models.rider import Rider, RiderLocationHistory
 from app.demo_models.payment import Payment, Promotion
-from app.demo_models.review import Review, Notification
+from app.demo_models.restaurant import MenuCategory, MenuItem, Restaurant
+from app.demo_models.review import Notification, Review
+from app.demo_models.rider import Rider, RiderLocationHistory
+from app.demo_models.user import Address, User
 
 __all__ = [
     "User",

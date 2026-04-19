@@ -1,10 +1,7 @@
-from fastapi import APIRouter, WebSocket, WebSocketDisconnect, Depends, Query
-from typing import Dict, Set
 import json
-import asyncio
 import uuid
 
-from app.core.security import decode_token
+from fastapi import APIRouter, WebSocket, WebSocketDisconnect
 
 VALID_MESSAGE_TYPES = {"subscribe_order", "unsubscribe_order", "rider_location", "ping"}
 
@@ -41,6 +38,7 @@ def validate_message(message: dict) -> tuple[bool, str]:
 
     return True, ""
 
+
 router = APIRouter()
 
 
@@ -49,9 +47,9 @@ class ConnectionManager:
 
     def __init__(self):
         # user_id -> WebSocket
-        self.active_connections: Dict[str, WebSocket] = {}
+        self.active_connections: dict[str, WebSocket] = {}
         # order_id -> set of user_ids subscribed
-        self.order_subscriptions: Dict[str, Set[str]] = {}
+        self.order_subscriptions: dict[str, set[str]] = {}
 
     async def connect(self, websocket: WebSocket, user_id: str):
         await websocket.accept()
@@ -101,33 +99,29 @@ async def websocket_endpoint(websocket: WebSocket, user_id: str):
             try:
                 message = json.loads(data)
             except json.JSONDecodeError:
-                await manager.send_personal_message({
-                    "type": "error",
-                    "message": "Invalid JSON format"
-                }, user_id)
+                await manager.send_personal_message(
+                    {"type": "error", "message": "Invalid JSON format"}, user_id
+                )
                 continue
 
             is_valid, error_msg = validate_message(message)
             if not is_valid:
-                await manager.send_personal_message({
-                    "type": "error",
-                    "message": error_msg
-                }, user_id)
+                await manager.send_personal_message(
+                    {"type": "error", "message": error_msg}, user_id
+                )
                 continue
 
             if message["type"] == "subscribe_order":
                 manager.subscribe_to_order(message["order_id"], user_id)
-                await manager.send_personal_message({
-                    "type": "subscribed",
-                    "order_id": message["order_id"]
-                }, user_id)
+                await manager.send_personal_message(
+                    {"type": "subscribed", "order_id": message["order_id"]}, user_id
+                )
 
             elif message["type"] == "unsubscribe_order":
                 manager.unsubscribe_from_order(message["order_id"], user_id)
-                await manager.send_personal_message({
-                    "type": "unsubscribed",
-                    "order_id": message["order_id"]
-                }, user_id)
+                await manager.send_personal_message(
+                    {"type": "unsubscribed", "order_id": message["order_id"]}, user_id
+                )
 
             elif message["type"] == "rider_location":
                 # Update rider location (this would typically update Redis/cache)
@@ -138,8 +132,8 @@ async def websocket_endpoint(websocket: WebSocket, user_id: str):
                         "type": "rider_location",
                         "lat": message["lat"],
                         "lng": message["lng"],
-                        "rider_id": user_id
-                    }
+                        "rider_id": user_id,
+                    },
                 )
 
             elif message["type"] == "ping":
@@ -148,29 +142,27 @@ async def websocket_endpoint(websocket: WebSocket, user_id: str):
     except WebSocketDisconnect:
         manager.disconnect(user_id)
     except Exception as e:
-        await manager.send_personal_message({
-            "type": "error",
-            "message": str(e)
-        }, user_id)
+        await manager.send_personal_message(
+            {"type": "error", "message": str(e)}, user_id
+        )
 
 
-async def emit_order_status_update(order_id: str, status: str, additional_data: dict = None):
+async def emit_order_status_update(
+    order_id: str, status: str, additional_data: dict = None
+):
     """Emit order status update to all subscribers."""
     message = {
         "type": "order_status_update",
         "order_id": order_id,
         "status": status,
-        **(additional_data or {})
+        **(additional_data or {}),
     }
     await manager.broadcast_order_update(order_id, message)
 
 
-async def emit_rider_location_update(order_id: str, lat: float, lng: float, rider_id: str):
+async def emit_rider_location_update(
+    order_id: str, lat: float, lng: float, rider_id: str
+):
     """Emit rider location update to all subscribers."""
-    message = {
-        "type": "rider_location",
-        "lat": lat,
-        "lng": lng,
-        "rider_id": rider_id
-    }
+    message = {"type": "rider_location", "lat": lat, "lng": lng, "rider_id": rider_id}
     await manager.broadcast_order_update(order_id, message)

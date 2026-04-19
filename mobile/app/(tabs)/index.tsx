@@ -1,27 +1,29 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import {
   View,
   Text,
   StyleSheet,
   FlatList,
   RefreshControl,
-  TextInput,
   TouchableOpacity,
   ScrollView,
   Image,
   StatusBar,
-  Dimensions,
 } from "react-native";
-import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
+import Animated, {
+  useAnimatedStyle,
+  withTiming,
+  withSpring,
+  withDelay,
+} from "react-native-reanimated";
 import { useRouter } from "expo-router";
+import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 import { RestaurantCard } from "@/components/restaurant/RestaurantCard";
-import { LoadingSpinner } from "@/components/ui/LoadingSpinner";
+import { ShimmerCard } from "@/components/ui/Shimmer";
 import { Button } from "@/components/ui/Button";
 import { colors, typography, spacing, borderRadius, shadows } from "@/theme";
 import { restaurantApi } from "@/services/api/endpoints";
 import type { Restaurant } from "@/types/api";
-
-const { width } = Dimensions.get("window");
 
 const CATEGORIES = [
   { id: "all", name: "All", emoji: "🔥" },
@@ -113,6 +115,21 @@ export default function HomeScreen() {
     router.push(`/restaurant/${restaurant.id}`);
   };
 
+  const AnimatedRestaurantCard: React.FC<{ restaurant: Restaurant; index: number; onPress: (r: Restaurant) => void }> = ({ restaurant, index, onPress }) => {
+    const entryStyle = useAnimatedStyle(() => ({
+      opacity: withDelay(index * 100, withTiming(1, { duration: 300 })),
+      transform: [
+        { translateY: withDelay(index * 100, withSpring(0)) },
+      ],
+    }));
+
+    return (
+      <Animated.View style={entryStyle}>
+        <RestaurantCard restaurant={restaurant} onPress={() => onPress(restaurant)} />
+      </Animated.View>
+    );
+  };
+
   const renderHeader = () => (
     <View style={styles.headerContent}>
       {/* Categories */}
@@ -188,8 +205,43 @@ export default function HomeScreen() {
     </View>
   );
 
+  const renderRestaurantItem = useCallback(({ item, index }: { item: Restaurant; index: number }) => (
+    <AnimatedRestaurantCard restaurant={item} index={index} onPress={handleRestaurantPress} />
+  ), [handleRestaurantPress]);
+
+  const renderSkeletonLoader = () => (
+    <View style={styles.skeletonContainer}>
+      {[1, 2, 3, 4].map((i) => (
+        <ShimmerCard key={i} />
+      ))}
+    </View>
+  );
+
   if (loading && page === 1) {
-    return <LoadingSpinner fullScreen text="Finding great food..." />;
+    return (
+      <SafeAreaView style={styles.container} edges={["top"]}>
+        <StatusBar barStyle="light-content" backgroundColor={colors.background} />
+        <View style={[styles.fixedHeader, { paddingTop: spacing.lg }]}>
+          <View style={styles.glassHeader}>
+            <TouchableOpacity style={styles.locationSelector} activeOpacity={0.7}>
+              <Text style={styles.locationIcon}>📍</Text>
+              <View style={styles.locationInfo}>
+                <Text style={styles.locationLabel}>Deliver to</Text>
+                <View style={styles.locationRow}>
+                  <Text style={styles.locationText}>Hyderabad</Text>
+                  <Text style={styles.locationArrow}>▼</Text>
+                </View>
+              </View>
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.searchBar} activeOpacity={0.8}>
+              <Text style={styles.searchIcon}>🔍</Text>
+              <Text style={styles.searchPlaceholder}>Search restaurants or cuisines...</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+        <View style={styles.skeletonContent}>{renderSkeletonLoader()}</View>
+      </SafeAreaView>
+    );
   }
 
   if (error && restaurants.length === 0) {
@@ -237,9 +289,7 @@ export default function HomeScreen() {
       <FlatList
         data={restaurants}
         keyExtractor={(item) => item.id}
-        renderItem={({ item }) => (
-          <RestaurantCard restaurant={item} onPress={() => handleRestaurantPress(item)} />
-        )}
+        renderItem={renderRestaurantItem}
         ListHeaderComponent={renderHeader}
         ListEmptyComponent={renderEmpty}
         contentContainerStyle={styles.listContent}
@@ -445,6 +495,14 @@ const styles = StyleSheet.create({
   listContent: {
     paddingHorizontal: spacing.md,
     paddingBottom: 120,
+  },
+  skeletonContent: {
+    flex: 1,
+    paddingTop: 140,
+    paddingHorizontal: spacing.md,
+  },
+  skeletonContainer: {
+    flex: 1,
   },
   emptyContainer: {
     alignItems: "center",

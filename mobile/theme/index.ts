@@ -49,6 +49,11 @@ export const colors = {
   // Neutral Colors
   white: "#FFFFFF",
   black: "#000000",
+  gray100: "#F4F4F5",
+  gray200: "#E4E4E7",
+  gray300: "#D4D4D8",
+  gray400: "#A1A1AA",
+  textLight: "#D4D4D8",
 
   // Order Status Colors
   orderPending: "#F59E0B",

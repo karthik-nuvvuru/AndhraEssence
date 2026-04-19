@@ -1,5 +1,6 @@
 import React from "react";
-import { View, StyleSheet, ViewStyle } from "react-native";
+import { View, StyleSheet, ViewStyle, Platform } from "react-native";
+import { BlurView } from "expo-blur";
 import { colors, borderRadius, shadows, spacing } from "@/theme";
 
 interface GlassCardProps {
@@ -7,6 +8,7 @@ interface GlassCardProps {
   style?: ViewStyle;
   variant?: "default" | "elevated" | "bordered";
   padding?: keyof typeof spacing;
+  blurAmount?: number;
 }
 
 export const GlassCard: React.FC<GlassCardProps> = ({
@@ -14,19 +16,38 @@ export const GlassCard: React.FC<GlassCardProps> = ({
   style,
   variant = "default",
   padding = "md",
+  blurAmount = 20,
 }) => {
+  if (Platform.OS === "web" || variant !== "default") {
+    // Web and non-default variants: use static styles
+    return (
+      <View
+        style={[
+          styles.card,
+          variant === "elevated" && styles.elevated,
+          variant === "bordered" && styles.bordered,
+          { padding: spacing[padding] },
+          style,
+        ]}
+      >
+        {children}
+      </View>
+    );
+  }
+
   return (
-    <View
+    <BlurView
+      intensity={blurAmount}
+      tint="dark"
       style={[
         styles.card,
-        variant === "elevated" && styles.elevated,
-        variant === "bordered" && styles.bordered,
         { padding: spacing[padding] },
         style,
       ]}
     >
+      <View style={styles.borderOverlay} />
       {children}
-    </View>
+    </BlurView>
   );
 };
 
@@ -36,7 +57,17 @@ const styles = StyleSheet.create({
     borderRadius: borderRadius.lg,
     borderWidth: 1,
     borderColor: colors.glassBorder,
-    ...shadows.glass,
+    overflow: "hidden",
+  },
+  borderOverlay: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    borderRadius: borderRadius.lg,
+    borderWidth: 1,
+    borderColor: colors.glassBorder,
   },
   elevated: {
     backgroundColor: colors.backgroundCard,

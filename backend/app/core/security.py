@@ -1,12 +1,11 @@
+import logging
 from datetime import datetime, timedelta
-from typing import Optional, Any
-from jose import JWTError, jwt
-from passlib.context import CryptContext
+
+import redis.asyncio as aioredis
 from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
-import redis.asyncio as aioredis
-import anyio
-import logging
+from jose import JWTError, jwt
+from passlib.context import CryptContext
 
 from app.config import get_settings
 
@@ -35,6 +34,7 @@ async def blacklist_token(token: str, expires_in: int) -> None:
     except Exception as e:
         logger.warning(f"Failed to blacklist token in Redis (continuing anyway): {e}")
 
+
 # Password hashing
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
@@ -52,54 +52,52 @@ def get_password_hash(password: str) -> str:
     return pwd_context.hash(password)
 
 
-def create_access_token(data: dict, expires_delta: Optional[timedelta] = None) -> str:
+def create_access_token(data: dict, expires_delta: timedelta | None = None) -> str:
     """Create a JWT access token."""
     to_encode = data.copy()
     expire = datetime.utcnow() + (
         expires_delta or timedelta(minutes=settings.access_token_expire_minutes)
     )
-    to_encode.update({
-        "exp": expire,
-        "type": "access",
-        "iat": datetime.utcnow()
-    })
-    return jwt.encode(to_encode, settings.jwt_secret_key, algorithm=settings.jwt_algorithm)
+    to_encode.update({"exp": expire, "type": "access", "iat": datetime.utcnow()})
+    return jwt.encode(
+        to_encode, settings.jwt_secret_key, algorithm=settings.jwt_algorithm
+    )
 
 
 def create_refresh_token(data: dict) -> str:
     """Create a JWT refresh token."""
     to_encode = data.copy()
     expire = datetime.utcnow() + timedelta(days=settings.refresh_token_expire_days)
-    to_encode.update({
-        "exp": expire,
-        "type": "refresh",
-        "iat": datetime.utcnow()
-    })
-    return jwt.encode(to_encode, settings.jwt_secret_key, algorithm=settings.jwt_algorithm)
+    to_encode.update({"exp": expire, "type": "refresh", "iat": datetime.utcnow()})
+    return jwt.encode(
+        to_encode, settings.jwt_secret_key, algorithm=settings.jwt_algorithm
+    )
 
 
 def decode_token(token: str, check_blacklist: bool = True) -> dict:
     """Decode and validate a JWT token."""
     try:
         payload = jwt.decode(
-            token,
-            settings.jwt_secret_key,
-            algorithms=[settings.jwt_algorithm]
+            token, settings.jwt_secret_key, algorithms=[settings.jwt_algorithm]
         )
         # Skip blacklist in demo mode
         if check_blacklist and not settings.demo_mode:
             try:
                 # Check blacklist synchronously using threading (non-blocking alternative)
                 import threading
+
                 result = [False]
+
                 def check():
                     try:
                         import asyncio
+
                         loop = asyncio.new_event_loop()
                         result[0] = loop.run_until_complete(is_token_blacklisted(token))
                         loop.close()
                     except Exception:
                         pass
+
                 t = threading.Thread(target=check)
                 t.start()
                 t.join(timeout=1)  # 1 second max wait
@@ -112,7 +110,9 @@ def decode_token(token: str, check_blacklist: bool = True) -> dict:
             except HTTPException:
                 raise
             except Exception as e:
-                logger.warning(f"Failed to check token blacklist in Redis (skipping check): {e}")
+                logger.warning(
+                    f"Failed to check token blacklist in Redis (skipping check): {e}"
+                )
         return payload
     except JWTError:
         raise HTTPException(
@@ -124,6 +124,7 @@ def decode_token(token: str, check_blacklist: bool = True) -> dict:
 
 class TokenData:
     """Token payload data."""
+
     def __init__(self, user_id: str, role: str, exp: datetime):
         self.user_id = user_id
         self.role = role
@@ -136,20 +137,15 @@ def get_token_data(token: str) -> TokenData:
     return TokenData(
         user_id=payload.get("sub"),
         role=payload.get("role"),
-        exp=datetime.fromtimestamp(payload.get("exp"))
+        exp=datetime.fromtimestamp(payload.get("exp")),
     )
 
 
 # Role hierarchy for authorization
-ROLE_HIERARCHY = {
-    "customer": 1,
-    "restaurant_owner": 2,
-    "rider": 3,
-    "admin": 4
-}
+ROLE_HIERARCHY = {"customer": 1, "restaurant_owner": 2, "rider": 3, "admin": 4}
 
 
-async def get_current_user_id(token: str = Depends(oauth2_scheme)) -> Optional[str]:
+async def get_current_user_id(token: str = Depends(oauth2_scheme)) -> str | None:
     """Get current user ID from token."""
     if not token:
         return None
@@ -162,6 +158,7 @@ async def get_current_user_id(token: str = Depends(oauth2_scheme)) -> Optional[s
 
 def require_roles(*allowed_roles: str):
     """Dependency factory for role-based access control."""
+
     async def role_checker(
         token: str = Depends(oauth2_scheme),
     ) -> dict:
@@ -178,13 +175,13 @@ def require_roles(*allowed_roles: str):
         if user_role not in allowed_roles:
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
-                detail=f"Access denied. Required roles: {allowed_roles}"
+                detail=f"Access denied. Required roles: {allowed_roles}",
             )
 
         return {
             "user_id": payload.get("sub"),
             "role": user_role,
-            "email": payload.get("email")
+            "email": payload.get("email"),
         }
 
     return role_checker

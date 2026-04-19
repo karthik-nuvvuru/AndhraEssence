@@ -1,7 +1,7 @@
 import React from "react";
 import { Tabs } from "expo-router";
 import { View, Text, StyleSheet } from "react-native";
-import { colors, typography, spacing, shadows } from "@/theme";
+import { colors, typography, spacing } from "@/theme";
 import { useCartStore } from "@/store";
 
 function TabBarIcon({ name, focused }: { name: string; focused: boolean }) {

@@ -1,12 +1,23 @@
 """Demo order models using cross-database compatible types."""
+
 import uuid
 from datetime import datetime
-from sqlalchemy import Column, String, Boolean, DateTime, Text, Float, Integer, ForeignKey, Enum as SQLEnum
+
+from sqlalchemy import (
+    Column,
+    DateTime,
+    Float,
+    ForeignKey,
+    Integer,
+    String,
+    Text,
+)
+from sqlalchemy import Enum as SQLEnum
 from sqlalchemy.orm import relationship
 
+from app.core.enums import OrderStatus, PaymentMethod, PaymentStatus
 from app.database import Base
 from app.db_types import GUID
-from app.core.enums import OrderStatus, PaymentStatus, PaymentMethod
 
 
 class Order(Base):
@@ -30,11 +41,19 @@ class Order(Base):
     total_amount = Column(Float, nullable=False)
 
     # Status
-    status = Column(SQLEnum(OrderStatus, name="order_status", create_type=True), default=OrderStatus.PENDING)
+    status = Column(
+        SQLEnum(OrderStatus, name="order_status", create_type=True),
+        default=OrderStatus.PENDING,
+    )
 
     # Payment
-    payment_method = Column(SQLEnum(PaymentMethod, name="payment_method", create_type=True), nullable=False)
-    payment_status = Column(SQLEnum(PaymentStatus, name="payment_status", create_type=True), default=PaymentStatus.PENDING)
+    payment_method = Column(
+        SQLEnum(PaymentMethod, name="payment_method", create_type=True), nullable=False
+    )
+    payment_status = Column(
+        SQLEnum(PaymentStatus, name="payment_status", create_type=True),
+        default=PaymentStatus.PENDING,
+    )
     payment_id = Column(String(255), nullable=True)
     razorpay_order_id = Column(String(255), nullable=True)
     razorpay_payment_id = Column(String(255), nullable=True)
@@ -60,7 +79,9 @@ class Order(Base):
     restaurant = relationship("Restaurant", back_populates="orders")
     rider = relationship("User", foreign_keys=[rider_id])
     delivery_address = relationship("Address", back_populates="orders")
-    items = relationship("OrderItem", back_populates="order", cascade="all, delete-orphan")
+    items = relationship(
+        "OrderItem", back_populates="order", cascade="all, delete-orphan"
+    )
     payment = relationship("Payment", back_populates="order", uselist=False)
     review = relationship("Review", back_populates="order", uselist=False)
 
@@ -74,7 +95,9 @@ class OrderItem(Base):
     __tablename__ = "order_items"
 
     id = Column(GUID(), primary_key=True, default=uuid.uuid4)
-    order_id = Column(GUID(), ForeignKey("orders.id", ondelete="CASCADE"), nullable=False)
+    order_id = Column(
+        GUID(), ForeignKey("orders.id", ondelete="CASCADE"), nullable=False
+    )
     menu_item_id = Column(GUID(), ForeignKey("menu_items.id"), nullable=True)
     item_name = Column(String(255), nullable=False)
     item_price = Column(Float, nullable=False)

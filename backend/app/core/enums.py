@@ -3,6 +3,7 @@ from enum import Enum
 
 class UserRole(str, Enum):
     """User roles in the system."""
+
     CUSTOMER = "customer"
     RESTAURANT_OWNER = "restaurant_owner"
     RIDER = "rider"
@@ -11,6 +12,7 @@ class UserRole(str, Enum):
 
 class OrderStatus(str, Enum):
     """Order status states."""
+
     PENDING = "pending"
     CONFIRMED = "confirmed"
     PREPARING = "preparing"
@@ -24,6 +26,7 @@ class OrderStatus(str, Enum):
 
 class PaymentStatus(str, Enum):
     """Payment status states."""
+
     PENDING = "pending"
     PROCESSING = "processing"
     COMPLETED = "completed"
@@ -33,6 +36,7 @@ class PaymentStatus(str, Enum):
 
 class PaymentMethod(str, Enum):
     """Payment methods."""
+
     RAZORPAY = "razorpay"
     WALLET = "wallet"
     COD = "cod"

@@ -1,12 +1,13 @@
 """Shared dependencies for API routes."""
-from fastapi import Depends
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select
 
-from app.database import get_db
-from app.core.security import decode_token, oauth2_scheme
-from app.core.exceptions import NotFoundException, UnauthorizedException
+from fastapi import Depends
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
+
 from app.config import get_settings
+from app.core.exceptions import NotFoundException, UnauthorizedException
+from app.core.security import decode_token, oauth2_scheme
+from app.database import get_db
 
 settings = get_settings()
 
@@ -18,8 +19,7 @@ else:
 
 
 async def get_current_user(
-    token: str = Depends(oauth2_scheme),
-    db: AsyncSession = Depends(get_db)
+    token: str = Depends(oauth2_scheme), db: AsyncSession = Depends(get_db)
 ) -> User:
     """Get current authenticated user from JWT token."""
     if not token:

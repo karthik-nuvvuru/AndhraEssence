@@ -1,16 +1,13 @@
-from pydantic_settings import BaseSettings, SettingsConfigDict
 from functools import lru_cache
-from typing import List
+
+from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class Settings(BaseSettings):
     """Application settings loaded from environment variables."""
 
     model_config = SettingsConfigDict(
-        env_file=".env",
-        env_file_encoding="utf-8",
-        case_sensitive=False,
-        extra="ignore"
+        env_file=".env", env_file_encoding="utf-8", case_sensitive=False, extra="ignore"
     )
 
     # Application
@@ -20,7 +17,9 @@ class Settings(BaseSettings):
     api_version: str = "v1"
 
     # Database
-    database_url: str = "postgresql+asyncpg://postgres:postgres@localhost:5432/andhraessence"
+    database_url: str = (
+        "postgresql+asyncpg://postgres:postgres@localhost:5432/andhraessence"
+    )
     database_pool_size: int = 20
     database_max_overflow: int = 10
 
@@ -63,10 +62,18 @@ class Settings(BaseSettings):
     email_from: str = "noreply@andhraessence.com"
 
     # CORS
-    cors_origins: List[str] = ["http://localhost:3000", "http://localhost:8081"]
+    cors_origins: list[str] = ["http://localhost:3000", "http://localhost:8081"]
+
+    # Delivery calculations
+    gst_rate: float = 0.05  # 5% GST
+    order_payment_timeout_minutes: int = 15
+    base_earnings: float = 30.0  # Base fee for riders
+    per_km_rate: float = 10.0  # Earnings per kilometer for riders
+    min_earnings: float = 40.0  # Minimum earnings per delivery for riders
+    average_delivery_speed_kmh: float = 25.0  # Average delivery speed in km/h
 
     @property
-    def cors_origins_list(self) -> List[str]:
+    def cors_origins_list(self) -> list[str]:
         if isinstance(self.cors_origins, str):
             return [origin.strip() for origin in self.cors_origins.split(",")]
         return self.cors_origins
@@ -88,7 +95,7 @@ class Settings(BaseSettings):
         return self.database_url
 
 
-@lru_cache()
+@lru_cache
 def get_settings() -> Settings:
     """Get cached settings instance."""
     return Settings()

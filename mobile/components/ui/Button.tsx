@@ -9,7 +9,15 @@ import {
   Platform,
   View,
 } from "react-native";
+import Animated, {
+  useSharedValue,
+  useAnimatedStyle,
+  withSpring,
+} from "react-native-reanimated";
 import { colors, typography, borderRadius, spacing, shadows } from "@/theme";
+import * as Haptics from "expo-haptics";
+
+const AnimatedTouchable = Animated.createAnimatedComponent(TouchableOpacity);
 
 interface ButtonProps {
   title: string;
@@ -37,6 +45,24 @@ export const Button: React.FC<ButtonProps> = ({
   leftIcon,
 }) => {
   const isGradient = variant === "gradient";
+  const pressed = useSharedValue(0);
+
+  const animatedStyle = useAnimatedStyle(() => ({
+    transform: [
+      { scale: withSpring(pressed.value ? 0.96 : 1, { damping: 15, stiffness: 300 }) },
+    ],
+  }));
+
+  const handlePressIn = () => {
+    pressed.value = 1;
+    if (Platform.OS !== "web") {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    }
+  };
+
+  const handlePressOut = () => {
+    pressed.value = 0;
+  };
 
   const buttonStyles = [
     styles.base,
@@ -63,12 +89,13 @@ export const Button: React.FC<ButtonProps> = ({
   } : onPress;
 
   return (
-    <TouchableOpacity
-      style={buttonStyles}
+    <AnimatedTouchable
+      style={[buttonStyles, animatedStyle]}
       onPress={handlePress}
-      onClick={Platform.OS === 'web' ? handlePress : undefined}
+      onPressIn={handlePressIn}
+      onPressOut={handlePressOut}
       disabled={disabled || loading}
-      activeOpacity={0.85}
+      activeOpacity={1}
     >
       {isGradient ? (
         <View style={styles.gradientInner}>
@@ -95,7 +122,7 @@ export const Button: React.FC<ButtonProps> = ({
           <Text style={textStyles}>{title}</Text>
         </>
       )}
-    </TouchableOpacity>
+    </AnimatedTouchable>
   );
 };
 

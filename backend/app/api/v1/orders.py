@@ -1,41 +1,44 @@
-from fastapi import APIRouter, Depends, Query
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, func
-from sqlalchemy.orm import selectinload
-from typing import List, Optional
-from uuid import UUID, uuid4
 from datetime import datetime
+from uuid import UUID, uuid4
 
-# Constants
-GST_RATE = 0.05  # 5% GST
-ORDER_PAYMENT_TIMEOUT_MINUTES = 15
+from fastapi import APIRouter, Depends, Query
+from sqlalchemy import func, select
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
 
-from app.database import get_db
 from app.config import get_settings
+from app.database import get_db
+
 settings = get_settings()
 
 # Use demo_models in demo mode
 if settings.demo_mode:
-    from app.demo_models.user import User, Address
-    from app.demo_models.restaurant import Restaurant, MenuItem
     from app.demo_models.order import Order, OrderItem
     from app.demo_models.payment import Promotion
+    from app.demo_models.restaurant import MenuItem, Restaurant
+    from app.demo_models.user import Address, User
 else:
-    from app.models.user import User, Address
-    from app.models.restaurant import Restaurant, MenuItem
     from app.models.order import Order, OrderItem
     from app.models.payment import Promotion
+    from app.models.restaurant import MenuItem, Restaurant
+    from app.models.user import Address, User
 
-from app.schemas.order import (
-    OrderCreate, OrderUpdate, OrderResponse, OrderDetailResponse,
-    OrderStatusUpdate, OrderBrief, CartItem
+from app.api.v1.deps import get_current_user
+from app.api.v1.notifications import emit_order_status_update
+from app.core.enums import OrderStatus, OrderStatusTransitions, PaymentStatus, UserRole
+from app.core.exceptions import (
+    BadRequestException,
+    ForbiddenException,
+    NotFoundException,
 )
 from app.schemas.common import PaginatedResponse
-from app.core.security import decode_token, oauth2_scheme
-from app.core.exceptions import NotFoundException, ForbiddenException, UnauthorizedException, BadRequestException
-from app.core.enums import UserRole, OrderStatus, PaymentStatus, PaymentMethod, OrderStatusTransitions
-from app.api.v1.notifications import emit_order_status_update
-from app.api.v1.deps import get_current_user
+from app.schemas.order import (
+    OrderBrief,
+    OrderCreate,
+    OrderDetailResponse,
+    OrderResponse,
+    OrderStatusUpdate,
+)
 from app.workers.tasks import process_refund_requests
 
 router = APIRouter()
@@ -58,9 +61,7 @@ async def apply_promo_code(db: AsyncSession, code: str, order_amount: float) -> 
 
     code = code.upper().strip()
 
-    result = await db.execute(
-        select(Promotion).where(Promotion.code == code)
-    )
+    result = await db.execute(select(Promotion).where(Promotion.code == code))
     promotion = result.scalar_one_or_none()
 
     if not promotion:
@@ -76,7 +77,10 @@ async def apply_promo_code(db: AsyncSession, code: str, order_amount: float) -> 
         return 0.0
 
     # Check maximum uses
-    if promotion.maximum_uses is not None and promotion.current_uses >= promotion.maximum_uses:
+    if (
+        promotion.maximum_uses is not None
+        and promotion.current_uses >= promotion.maximum_uses
+    ):
         return 0.0
 
     # Check minimum order amount
@@ -98,7 +102,7 @@ async def apply_promo_code(db: AsyncSession, code: str, order_amount: float) -> 
 async def create_order(
     order_data: OrderCreate,
     current_user: User = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_db),
 ):
     """Create a new order."""
     result = await db.execute(
@@ -111,8 +115,7 @@ async def create_order(
     # Verify address belongs to user
     result = await db.execute(
         select(Address).where(
-            Address.id == order_data.address_id,
-            Address.user_id == current_user.id
+            Address.id == order_data.address_id, Address.user_id == current_user.id
         )
     )
     address = result.scalar_one_or_none()
@@ -130,22 +133,26 @@ async def create_order(
     for cart_item in order_data.items:
         menu_item = menu_items_map.get(cart_item.menu_item_id)
         if not menu_item or not menu_item.is_available:
-            raise BadRequestException(f"Item {menu_item.name if menu_item else cart_item.menu_item_id} not available")
+            raise BadRequestException(
+                f"Item {menu_item.name if menu_item else cart_item.menu_item_id} not available"
+            )
 
         item_subtotal = menu_item.price * cart_item.quantity
         subtotal += item_subtotal
 
-        order_items.append({
-            "menu_item_id": cart_item.menu_item_id,
-            "item_name": menu_item.name,
-            "item_price": menu_item.price,
-            "quantity": cart_item.quantity,
-            "subtotal": item_subtotal,
-            "special_instructions": cart_item.special_instructions
-        })
+        order_items.append(
+            {
+                "menu_item_id": cart_item.menu_item_id,
+                "item_name": menu_item.name,
+                "item_price": menu_item.price,
+                "quantity": cart_item.quantity,
+                "subtotal": item_subtotal,
+                "special_instructions": cart_item.special_instructions,
+            }
+        )
 
     # Calculate totals
-    tax_amount = round(subtotal * GST_RATE, 2)
+    tax_amount = round(subtotal * settings.gst_rate, 2)
     delivery_fee = restaurant.delivery_fee
     discount_amount = await apply_promo_code(db, order_data.promo_code, subtotal)
     total_amount = round(subtotal + tax_amount + delivery_fee - discount_amount, 2)
@@ -167,7 +174,7 @@ async def create_order(
         promo_code=order_data.promo_code,
         delivery_instructions=order_data.delivery_instructions,
         status=OrderStatus.PENDING.value,
-        payment_status=PaymentStatus.PENDING
+        payment_status=PaymentStatus.PENDING,
     )
     db.add(order)
     await db.flush()
@@ -184,11 +191,11 @@ async def create_order(
 
 @router.get("", response_model=PaginatedResponse)
 async def list_orders(
-    status: Optional[OrderStatus] = Query(None),
+    status: OrderStatus | None = Query(None),
     page: int = Query(1, ge=1),
     limit: int = Query(20, ge=1, le=100),
     current_user: User = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_db),
 ):
     """List user's orders."""
     query = select(Order).where(Order.customer_id == current_user.id)
@@ -201,7 +208,9 @@ async def list_orders(
     total = (await db.execute(count_query)).scalar()
 
     # Paginate
-    query = query.offset((page - 1) * limit).limit(limit).order_by(Order.created_at.desc())
+    query = (
+        query.offset((page - 1) * limit).limit(limit).order_by(Order.created_at.desc())
+    )
     result = await db.execute(query)
     orders = result.scalars().all()
 
@@ -210,7 +219,7 @@ async def list_orders(
         total=total,
         page=page,
         limit=limit,
-        pages=(total + limit - 1) // limit
+        pages=(total + limit - 1) // limit,
     )
 
 
@@ -218,13 +227,11 @@ async def list_orders(
 async def get_order(
     order_id: UUID,
     current_user: User = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_db),
 ):
     """Get order detail."""
     result = await db.execute(
-        select(Order)
-        .options(selectinload(Order.items))
-        .where(Order.id == order_id)
+        select(Order).options(selectinload(Order.items)).where(Order.id == order_id)
     )
     order = result.scalar_one_or_none()
 
@@ -232,9 +239,11 @@ async def get_order(
         raise NotFoundException("Order not found")
 
     # Check access
-    if (order.customer_id != current_user.id and
-        order.rider_id != current_user.id and
-        current_user.role != UserRole.ADMIN):
+    if (
+        order.customer_id != current_user.id
+        and order.rider_id != current_user.id
+        and current_user.role != UserRole.ADMIN
+    ):
         raise ForbiddenException("Access denied")
 
     return order
@@ -245,12 +254,10 @@ async def update_order_status(
     order_id: UUID,
     status_update: OrderStatusUpdate,
     current_user: User = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_db),
 ):
     """Update order status."""
-    result = await db.execute(
-        select(Order).where(Order.id == order_id)
-    )
+    result = await db.execute(select(Order).where(Order.id == order_id))
     order = result.scalar_one_or_none()
 
     if not order:
@@ -279,10 +286,14 @@ async def update_order_status(
     await db.refresh(order)
 
     # Emit WebSocket event to notify subscribers
-    await emit_order_status_update(str(order.id), status_update.status, {
-        "order_number": order.order_number,
-        "updated_at": datetime.utcnow().isoformat()
-    })
+    await emit_order_status_update(
+        str(order.id),
+        status_update.status,
+        {
+            "order_number": order.order_number,
+            "updated_at": datetime.utcnow().isoformat(),
+        },
+    )
 
     return order
 
@@ -290,14 +301,12 @@ async def update_order_status(
 @router.post("/{order_id}/cancel", response_model=OrderResponse)
 async def cancel_order(
     order_id: UUID,
-    reason: Optional[str] = None,
+    reason: str | None = None,
     current_user: User = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_db),
 ):
     """Cancel an order."""
-    result = await db.execute(
-        select(Order).where(Order.id == order_id)
-    )
+    result = await db.execute(select(Order).where(Order.id == order_id))
     order = result.scalar_one_or_none()
 
     if not order:
@@ -325,10 +334,14 @@ async def cancel_order(
     await db.refresh(order)
 
     # Emit WebSocket event for cancellation
-    await emit_order_status_update(str(order.id), OrderStatus.CANCELLED, {
-        "order_number": order.order_number,
-        "cancellation_reason": reason,
-        "updated_at": datetime.utcnow().isoformat()
-    })
+    await emit_order_status_update(
+        str(order.id),
+        OrderStatus.CANCELLED,
+        {
+            "order_number": order.order_number,
+            "cancellation_reason": reason,
+            "updated_at": datetime.utcnow().isoformat(),
+        },
+    )
 
     return order

@@ -6,7 +6,6 @@ import {
   FlatList,
   Alert,
   TouchableOpacity,
-  Image,
   TextInput,
   KeyboardAvoidingView,
   Platform,
@@ -15,11 +14,10 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
 import { GlassCard } from "@/components/ui/GlassCard";
 import { Button } from "@/components/ui/Button";
-import { QuantityStepper } from "@/components/ui/QuantityStepper";
+import { CartItem } from "@/components/ui/CartItem";
 import { colors, typography, spacing, borderRadius, shadows } from "@/theme";
 import { useCartStore } from "@/store";
 import { formatCurrency } from "@/utils/formatters";
-import type { CartItem } from "@/store";
 
 const TAX_RATE = 0.05; // 5% GST
 const DELIVERY_FEE = 40;
@@ -131,77 +129,16 @@ export default function CartScreen() {
   };
 
   const handleExplore = () => {
-    router.push("/(tabs)/");
+    router.push("/");
   };
 
   const renderCartItem = ({ item }: { item: CartItem }) => (
-    <GlassCard style={styles.cartItem} variant="elevated" padding="md">
-      <View style={styles.cartItemInner}>
-        {/* Food Image */}
-        <View style={styles.imageContainer}>
-          {item.menuItem.image_url ? (
-            <Image
-              source={{ uri: item.menuItem.image_url }}
-              style={styles.foodImage}
-              resizeMode="cover"
-            />
-          ) : (
-            <View style={styles.imagePlaceholder}>
-              <Text style={styles.placeholderEmoji}>🍽</Text>
-            </View>
-          )}
-          {/* Veg/Non-veg Badge */}
-          <View
-            style={[
-              styles.vegBadge,
-              {
-                borderColor: item.menuItem.is_veg ? colors.veg : colors.nonVeg,
-                backgroundColor: item.menuItem.is_veg
-                  ? "rgba(16, 185, 129, 0.15)"
-                  : "rgba(239, 68, 68, 0.15)",
-              },
-            ]}
-          >
-            <View
-              style={[
-                styles.vegDot,
-                {
-                  backgroundColor: item.menuItem.is_veg ? colors.veg : colors.nonVeg,
-                },
-              ]}
-            />
-          </View>
-        </View>
-
-        {/* Item Details */}
-        <View style={styles.itemDetails}>
-          <Text style={styles.itemName} numberOfLines={2}>
-            {item.menuItem.name}
-          </Text>
-          <Text style={styles.itemVariant}>
-            {item.menuItem.is_veg ? "Vegetarian" : "Non-Vegetarian"}
-          </Text>
-          <Text style={styles.itemPrice}>{formatCurrency(item.menuItem.price)}</Text>
-        </View>
-
-        {/* Actions */}
-        <View style={styles.itemActions}>
-          <QuantityStepper
-            value={item.quantity}
-            onIncrease={() => handleIncrease(item.menuItem.id)}
-            onDecrease={() => handleDecrease(item.menuItem.id)}
-            size="sm"
-          />
-          <TouchableOpacity
-            style={styles.removeButton}
-            onPress={() => handleRemoveItem(item)}
-            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-          >
-            <Text style={styles.removeIcon}>✕</Text>
-          </TouchableOpacity>
-        </View>
-      </View>
-    </GlassCard>
+    <CartItem
+      item={item}
+      onIncrease={handleIncrease}
+      onDecrease={handleDecrease}
+      onRemove={handleRemoveItem}
+    />
   );
 
   const renderBillBreakdown = () => (
@@ -412,8 +349,11 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.md,
     paddingBottom: spacing.md,
   },
-  cartItem: {
+  cartItemAnimated: {
     marginBottom: spacing.sm,
+  },
+  cartItem: {
+    marginBottom: 0,
   },
   cartItemInner: {
     flexDirection: "row",

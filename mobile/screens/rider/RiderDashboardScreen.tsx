@@ -197,7 +197,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.success,
   },
   toggleButtonInactive: {
-    backgroundColor: colors.gray300,
+    backgroundColor: colors.gray400,
   },
   toggleKnob: {
     width: 28,

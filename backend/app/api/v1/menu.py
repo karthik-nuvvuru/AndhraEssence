@@ -1,38 +1,44 @@
-from fastapi import APIRouter, Depends, Query
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select
-from typing import List
 from uuid import UUID
 
-from app.database import get_db
+from fastapi import APIRouter, Depends
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
+
 from app.config import get_settings
+from app.database import get_db
+
 settings = get_settings()
 
 # Use demo_models in demo mode
 if settings.demo_mode:
+    from app.demo_models.restaurant import MenuCategory, MenuItem, Restaurant
     from app.demo_models.user import User
-    from app.demo_models.restaurant import Restaurant, MenuCategory, MenuItem
 else:
+    from app.models.restaurant import MenuCategory, MenuItem, Restaurant
     from app.models.user import User
-    from app.models.restaurant import Restaurant, MenuCategory, MenuItem
 
-from app.schemas.restaurant import (
-    MenuCategoryCreate, MenuCategoryUpdate, MenuCategoryResponse,
-    MenuItemCreate, MenuItemUpdate, MenuItemResponse
-)
-from app.core.security import decode_token, oauth2_scheme
-from app.core.exceptions import NotFoundException, ForbiddenException, UnauthorizedException, BadRequestException
-from app.core.enums import UserRole
 from app.api.v1.deps import get_current_user
+from app.core.enums import UserRole
+from app.core.exceptions import (
+    BadRequestException,
+    ForbiddenException,
+    NotFoundException,
+)
+from app.schemas.restaurant import (
+    MenuCategoryCreate,
+    MenuCategoryResponse,
+    MenuCategoryUpdate,
+    MenuItemCreate,
+    MenuItemResponse,
+    MenuItemUpdate,
+)
 
 router = APIRouter()
 
 
 async def get_restaurant_or_404(restaurant_id: UUID, db: AsyncSession) -> Restaurant:
     """Get restaurant or raise 404."""
-    result = await db.execute(
-        select(Restaurant).where(Restaurant.id == restaurant_id)
-    )
+    result = await db.execute(select(Restaurant).where(Restaurant.id == restaurant_id))
     restaurant = result.scalar_one_or_none()
     if not restaurant:
         raise NotFoundException("Restaurant not found")
@@ -42,25 +48,26 @@ async def get_restaurant_or_404(restaurant_id: UUID, db: AsyncSession) -> Restau
 async def verify_restaurant_owner(restaurant: Restaurant, user: User):
     """Verify user is the restaurant owner."""
     if restaurant.owner_id != user.id and user.role != UserRole.ADMIN:
-        raise ForbiddenException("You don't have permission to manage this restaurant's menu")
+        raise ForbiddenException(
+            "You don't have permission to manage this restaurant's menu"
+        )
 
 
 # Category endpoints
-@router.post("/restaurants/{restaurant_id}/categories", response_model=MenuCategoryResponse)
+@router.post(
+    "/restaurants/{restaurant_id}/categories", response_model=MenuCategoryResponse
+)
 async def create_category(
     restaurant_id: UUID,
     category_data: MenuCategoryCreate,
     current_user: User = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_db),
 ):
     """Create a menu category."""
     restaurant = await get_restaurant_or_404(restaurant_id, db)
     await verify_restaurant_owner(restaurant, current_user)
 
-    category = MenuCategory(
-        restaurant_id=restaurant_id,
-        **category_data.model_dump()
-    )
+    category = MenuCategory(restaurant_id=restaurant_id, **category_data.model_dump())
     db.add(category)
     await db.commit()
     await db.refresh(category)
@@ -72,7 +79,7 @@ async def update_category(
     category_id: UUID,
     category_data: MenuCategoryUpdate,
     current_user: User = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_db),
 ):
     """Update a menu category."""
     result = await db.execute(
@@ -99,7 +106,7 @@ async def update_category(
 async def delete_category(
     category_id: UUID,
     current_user: User = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_db),
 ):
     """Delete a menu category."""
     result = await db.execute(
@@ -120,19 +127,15 @@ async def delete_category(
 
 
 # Menu Item endpoints
-@router.get("/restaurants/{restaurant_id}/items", response_model=List[MenuItemResponse])
-async def get_menu_items(
-    restaurant_id: UUID,
-    db: AsyncSession = Depends(get_db)
-):
+@router.get("/restaurants/{restaurant_id}/items", response_model=list[MenuItemResponse])
+async def get_menu_items(restaurant_id: UUID, db: AsyncSession = Depends(get_db)):
     """Get all menu items for a restaurant (public endpoint)."""
     # Verify restaurant exists
     await get_restaurant_or_404(restaurant_id, db)
 
     result = await db.execute(
         select(MenuItem).where(
-            MenuItem.restaurant_id == restaurant_id,
-            MenuItem.is_available == True
+            MenuItem.restaurant_id == restaurant_id, MenuItem.is_available == True
         )
     )
     items = result.scalars().all()
@@ -144,7 +147,7 @@ async def create_menu_item(
     restaurant_id: UUID,
     item_data: MenuItemCreate,
     current_user: User = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_db),
 ):
     """Create a menu item."""
     restaurant = await get_restaurant_or_404(restaurant_id, db)
@@ -155,16 +158,13 @@ async def create_menu_item(
         result = await db.execute(
             select(MenuCategory).where(
                 MenuCategory.id == item_data.category_id,
-                MenuCategory.restaurant_id == restaurant_id
+                MenuCategory.restaurant_id == restaurant_id,
             )
         )
         if not result.scalar_one_or_none():
             raise BadRequestException("Invalid category for this restaurant")
 
-    item = MenuItem(
-        restaurant_id=restaurant_id,
-        **item_data.model_dump()
-    )
+    item = MenuItem(restaurant_id=restaurant_id, **item_data.model_dump())
     db.add(item)
     await db.commit()
     await db.refresh(item)
@@ -176,12 +176,10 @@ async def update_menu_item(
     item_id: UUID,
     item_data: MenuItemUpdate,
     current_user: User = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_db),
 ):
     """Update a menu item."""
-    result = await db.execute(
-        select(MenuItem).where(MenuItem.id == item_id)
-    )
+    result = await db.execute(select(MenuItem).where(MenuItem.id == item_id))
     item = result.scalar_one_or_none()
 
     if not item:
@@ -197,7 +195,7 @@ async def update_menu_item(
         result = await db.execute(
             select(MenuCategory).where(
                 MenuCategory.id == update_data["category_id"],
-                MenuCategory.restaurant_id == item.restaurant_id
+                MenuCategory.restaurant_id == item.restaurant_id,
             )
         )
         if not result.scalar_one_or_none():
@@ -215,12 +213,10 @@ async def update_menu_item(
 async def delete_menu_item(
     item_id: UUID,
     current_user: User = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_db),
 ):
     """Delete a menu item."""
-    result = await db.execute(
-        select(MenuItem).where(MenuItem.id == item_id)
-    )
+    result = await db.execute(select(MenuItem).where(MenuItem.id == item_id))
     item = result.scalar_one_or_none()
 
     if not item:

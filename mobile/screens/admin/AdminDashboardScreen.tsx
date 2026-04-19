@@ -145,6 +145,11 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: colors.backgroundSecondary,
   },
+  loadingContainer: {
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
+  },
   header: {
     padding: spacing.md,
   },
@@ -221,7 +226,7 @@ const styles = StyleSheet.create({
   },
   activityItemBorder: {
     borderBottomWidth: 1,
-    borderBottomColor: colors.gray100,
+    borderBottomColor: colors.border,
   },
   activityMessage: {
     ...typography.body,
@@ -230,6 +235,6 @@ const styles = StyleSheet.create({
   },
   activityTime: {
     ...typography.caption,
-    color: colors.textLight,
+    color: colors.textTertiary,
   },
 });

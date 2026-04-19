@@ -1,14 +1,16 @@
 """Pytest configuration and shared fixtures."""
+
 import asyncio
 import os
+
 import pytest
-from httpx import AsyncClient, ASGITransport
+from httpx import ASGITransport, AsyncClient
 
 # Set demo mode before importing app
 os.environ["DEMO_MODE"] = "true"
 
-from app.main import app
 from app.config import get_settings
+from app.main import app
 
 settings = get_settings()
 
@@ -32,13 +34,16 @@ async def client():
 @pytest.fixture
 async def test_user(client):
     """Register a test user and return the response."""
-    response = await client.post("/api/v1/auth/register", json={
-        "email": "test@example.com",
-        "password": "testpass123",
-        "phone": "+1234567890",
-        "full_name": "Test User",
-        "role": "customer"
-    })
+    response = await client.post(
+        "/api/v1/auth/register",
+        json={
+            "email": "test@example.com",
+            "password": "testpass123",
+            "phone": "+1234567890",
+            "full_name": "Test User",
+            "role": "customer",
+        },
+    )
     return response.json()
 
 
@@ -54,14 +59,15 @@ async def db_session():
 @pytest.fixture
 async def seeded_db(db_session):
     """Ensure database is seeded with demo data."""
-    from app.database import engine, Base
-    from app.demo_models.user import User, Address
-    from app.demo_models.restaurant import Restaurant, MenuCategory, MenuItem
-    from app.demo_models.rider import Rider
-    from app.core.security import get_password_hash
-    from app.core.enums import UserRole
-    from datetime import time
     import uuid
+    from datetime import time
+
+    from app.core.enums import UserRole
+    from app.core.security import get_password_hash
+    from app.database import Base, engine
+    from app.demo_models.restaurant import MenuCategory, MenuItem, Restaurant
+    from app.demo_models.rider import Rider
+    from app.demo_models.user import Address, User
 
     # Drop and create tables fresh
     async with engine.begin() as conn:
@@ -150,14 +156,22 @@ async def seeded_db(db_session):
 
     # Create menu categories and items
     categories_data = [
-        ("Starters", "Appetizers and starters", [
-            ("Chicken 65", "Spicy deep-fried chicken", 250, True),
-            ("Paneer Tikka", "Grilled paneer cubes", 220, True),
-        ]),
-        ("Main Course", "Rice and curries", [
-            ("Chicken Curry", "Traditional Andhra chicken curry", 280, False),
-            ("Dal Fry", "Tempered lentil curry", 150, True),
-        ]),
+        (
+            "Starters",
+            "Appetizers and starters",
+            [
+                ("Chicken 65", "Spicy deep-fried chicken", 250, True),
+                ("Paneer Tikka", "Grilled paneer cubes", 220, True),
+            ],
+        ),
+        (
+            "Main Course",
+            "Rice and curries",
+            [
+                ("Chicken Curry", "Traditional Andhra chicken curry", 280, False),
+                ("Dal Fry", "Tempered lentil curry", 150, True),
+            ],
+        ),
     ]
 
     for name, desc, items in categories_data:
@@ -216,40 +230,40 @@ async def seeded_db(db_session):
 @pytest.fixture
 async def admin_token(client, seeded_db):
     """Get admin access token."""
-    response = await client.post("/api/v1/auth/login", json={
-        "email": "admin@andhraessence.com",
-        "password": "admin123"
-    })
+    response = await client.post(
+        "/api/v1/auth/login",
+        json={"email": "admin@andhraessence.com", "password": "admin123"},
+    )
     return response.json()["access_token"]
 
 
 @pytest.fixture
 async def customer_token(client, seeded_db):
     """Get customer access token."""
-    response = await client.post("/api/v1/auth/login", json={
-        "email": "customer@example.com",
-        "password": "customer123"
-    })
+    response = await client.post(
+        "/api/v1/auth/login",
+        json={"email": "customer@example.com", "password": "customer123"},
+    )
     return response.json()["access_token"]
 
 
 @pytest.fixture
 async def owner_token(client, seeded_db):
     """Get restaurant owner access token."""
-    response = await client.post("/api/v1/auth/login", json={
-        "email": "restaurant@example.com",
-        "password": "owner123"
-    })
+    response = await client.post(
+        "/api/v1/auth/login",
+        json={"email": "restaurant@example.com", "password": "owner123"},
+    )
     return response.json()["access_token"]
 
 
 @pytest.fixture
 async def rider_token(client, seeded_db):
     """Get rider access token."""
-    response = await client.post("/api/v1/auth/login", json={
-        "email": "rider@example.com",
-        "password": "rider123"
-    })
+    response = await client.post(
+        "/api/v1/auth/login",
+        json={"email": "rider@example.com", "password": "rider123"},
+    )
     return response.json()["access_token"]
 
 
@@ -309,12 +323,16 @@ async def create_test_order(client, token):
     if not address_id:
         return None
 
-    response = await client.post("/api/v1/orders", json={
-        "restaurant_id": restaurant_id,
-        "address_id": address_id,
-        "items": [{"menu_item_id": str(menu_item_id), "quantity": 1}],
-        "payment_method": "razorpay"
-    }, headers=auth_header(token))
+    response = await client.post(
+        "/api/v1/orders",
+        json={
+            "restaurant_id": restaurant_id,
+            "address_id": address_id,
+            "items": [{"menu_item_id": str(menu_item_id), "quantity": 1}],
+            "payment_method": "razorpay",
+        },
+        headers=auth_header(token),
+    )
 
     if response.status_code != 200:
         return None

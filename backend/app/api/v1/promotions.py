@@ -1,27 +1,26 @@
-from fastapi import APIRouter, Depends
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select
-from datetime import datetime
-from typing import Optional
 import logging
+from datetime import datetime
 
-from app.database import get_db
+from fastapi import APIRouter, Depends
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
+
 from app.config import get_settings
+from app.database import get_db
+
 settings = get_settings()
 
 # Use demo_models in demo mode
 if settings.demo_mode:
-    from app.demo_models.user import User
     from app.demo_models.payment import Promotion
+    from app.demo_models.user import User
 else:
-    from app.models.user import User
     from app.models.payment import Promotion
+    from app.models.user import User
 
-from app.schemas.payment import ApplyPromoCode, PromotionResponse
-from app.core.security import decode_token, oauth2_scheme
-from app.core.exceptions import NotFoundException, BadRequestException
-from app.core.enums import UserRole
 from app.api.v1.deps import get_current_user
+from app.core.exceptions import BadRequestException, NotFoundException
+from app.schemas.payment import ApplyPromoCode, PromotionResponse
 
 logger = logging.getLogger(__name__)
 
@@ -45,7 +44,7 @@ def calculate_discount(promotion: Promotion, order_amount: float) -> float:
 async def validate_promo_code(
     promo_data: ApplyPromoCode,
     current_user: User = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_db),
 ):
     """
     Validate a promo code and return the discount amount.
@@ -60,9 +59,7 @@ async def validate_promo_code(
     order_amount = promo_data.order_amount
 
     # Find the promotion by code
-    result = await db.execute(
-        select(Promotion).where(Promotion.code == code)
-    )
+    result = await db.execute(select(Promotion).where(Promotion.code == code))
     promotion = result.scalar_one_or_none()
 
     # Check if promotion exists
@@ -81,7 +78,10 @@ async def validate_promo_code(
         raise BadRequestException("This promo code has expired")
 
     # Check maximum uses
-    if promotion.maximum_uses is not None and promotion.current_uses >= promotion.maximum_uses:
+    if (
+        promotion.maximum_uses is not None
+        and promotion.current_uses >= promotion.maximum_uses
+    ):
         raise BadRequestException("This promo code has reached its maximum uses")
 
     # Check minimum order amount
@@ -98,7 +98,7 @@ async def validate_promo_code(
         "code": code,
         "discount_amount": discount_amount,
         "discount_type": promotion.discount_type,
-        "description": promotion.description
+        "description": promotion.description,
     }
 
 
@@ -106,14 +106,12 @@ async def validate_promo_code(
 async def get_promotion_details(
     code: str,
     current_user: User = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_db),
 ):
     """Get promotion details by code (for admin/display purposes)."""
     code = code.upper().strip()
 
-    result = await db.execute(
-        select(Promotion).where(Promotion.code == code)
-    )
+    result = await db.execute(select(Promotion).where(Promotion.code == code))
     promotion = result.scalar_one_or_none()
 
     if not promotion:

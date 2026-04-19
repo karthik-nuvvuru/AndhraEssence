@@ -1,6 +1,7 @@
 import uuid
 from datetime import datetime
-from sqlalchemy import Column, String, Boolean, DateTime, Float, Integer, ForeignKey
+
+from sqlalchemy import Boolean, Column, DateTime, Float, ForeignKey, String
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
 
@@ -13,7 +14,12 @@ class Rider(Base):
     __tablename__ = "riders"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    user_id = Column(UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), nullable=False, unique=True)
+    user_id = Column(
+        UUID(as_uuid=True),
+        ForeignKey("users.id", ondelete="CASCADE"),
+        nullable=False,
+        unique=True,
+    )
     vehicle_type = Column(String(50), nullable=True)  # bike, scooter, cycle
     vehicle_number = Column(String(50), nullable=True)
     license_number = Column(String(50), nullable=True)
@@ -27,7 +33,9 @@ class Rider(Base):
 
     # Relationships
     user = relationship("User", back_populates="rider")
-    location_history = relationship("RiderLocationHistory", back_populates="rider", cascade="all, delete-orphan")
+    location_history = relationship(
+        "RiderLocationHistory", back_populates="rider", cascade="all, delete-orphan"
+    )
     reviews = relationship("Review", back_populates="rider")
 
     def __repr__(self):
@@ -40,7 +48,9 @@ class RiderLocationHistory(Base):
     __tablename__ = "rider_location_history"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    rider_id = Column(UUID(as_uuid=True), ForeignKey("riders.id", ondelete="CASCADE"), nullable=False)
+    rider_id = Column(
+        UUID(as_uuid=True), ForeignKey("riders.id", ondelete="CASCADE"), nullable=False
+    )
     latitude = Column(Float, nullable=False)
     longitude = Column(Float, nullable=False)
     accuracy = Column(Float, nullable=True)

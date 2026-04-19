@@ -1,24 +1,25 @@
-import uuid
 import random
+import uuid
 from datetime import datetime, time
-from sqlalchemy.ext.asyncio import AsyncSession
+
 from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.config import get_settings
+from app.core.enums import OrderStatus, PaymentMethod, PaymentStatus, UserRole
 from app.core.security import get_password_hash
-from app.core.enums import UserRole, OrderStatus, PaymentMethod, PaymentStatus
 
 settings = get_settings()
 
 # Use demo_models when in demo mode, otherwise regular models
 if settings.demo_mode:
-    from app.demo_models.user import User, Address
-    from app.demo_models.restaurant import Restaurant, MenuCategory, MenuItem
-    from app.demo_models.order import Order, OrderItem
+    from app.demo_models.order import Order
+    from app.demo_models.restaurant import Restaurant
+    from app.demo_models.user import Address, User
 else:
-    from app.models.user import User, Address
-    from app.models.restaurant import Restaurant, MenuCategory, MenuItem
-    from app.models.order import Order, OrderItem
+    from app.models.order import Order
+    from app.models.restaurant import Restaurant
+    from app.models.user import Address, User
 
 
 async def create_user(

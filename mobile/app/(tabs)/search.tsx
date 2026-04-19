@@ -37,7 +37,7 @@ export default function SearchScreen() {
     setError(null);
     try {
       const response = await restaurantApi.list({
-        cuisine_type: query.trim(),
+        cuisine: query.trim(),
         page: 1,
         limit: 20,
       });

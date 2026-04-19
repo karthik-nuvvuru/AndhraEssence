@@ -10,12 +10,14 @@ Usage:
 Instead of:
     from sqlalchemy.dialects.postgresql import UUID, ARRAY, JSONB
 """
+
 import json
 import uuid as uuid_module
-from typing import Any, List, Optional
 
-from sqlalchemy import String, Text, TypeDecorator, JSON
-from sqlalchemy.dialects.postgresql import UUID as PG_UUID, ARRAY as PG_ARRAY, JSONB as PG_JSONB
+from sqlalchemy import JSON, String, Text, TypeDecorator
+from sqlalchemy.dialects.postgresql import ARRAY as PG_ARRAY
+from sqlalchemy.dialects.postgresql import JSONB as PG_JSONB
+from sqlalchemy.dialects.postgresql import UUID as PG_UUID
 
 
 class GUID(TypeDecorator):
@@ -37,7 +39,11 @@ class GUID(TypeDecorator):
         if value is None:
             return value
         if dialect.name == "postgresql":
-            return value if isinstance(value, uuid_module.UUID) else uuid_module.UUID(str(value))
+            return (
+                value
+                if isinstance(value, uuid_module.UUID)
+                else uuid_module.UUID(str(value))
+            )
         # SQLite: store as string
         if isinstance(value, uuid_module.UUID):
             return str(value)

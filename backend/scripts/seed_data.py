@@ -1,19 +1,20 @@
 """Seed database with sample data."""
+
 import asyncio
 import sys
-from pathlib import Path
-from datetime import datetime, time
 import uuid
+from datetime import time
+from pathlib import Path
 
 # Add parent directory to path for imports
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from app.database import async_session_factory
-from app.models.user import User, Address
-from app.models.restaurant import Restaurant, MenuCategory, MenuItem
-from app.models.rider import Rider
-from app.core.security import get_password_hash
 from app.core.enums import UserRole
+from app.core.security import get_password_hash
+from app.database import async_session_factory
+from app.models.restaurant import MenuCategory, MenuItem, Restaurant
+from app.models.rider import Rider
+from app.models.user import Address, User
 
 
 async def seed_data():

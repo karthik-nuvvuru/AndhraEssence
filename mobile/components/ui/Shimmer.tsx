@@ -1,9 +1,17 @@
-import React, { useEffect, useRef } from "react";
-import { View, Animated, StyleSheet, ViewStyle } from "react-native";
+import React, { useEffect } from "react";
+import { View, StyleSheet, ViewStyle, DimensionValue } from "react-native";
+import Animated, {
+  useSharedValue,
+  useAnimatedStyle,
+  withRepeat,
+  withTiming,
+  interpolate,
+  Easing,
+} from "react-native-reanimated";
 import { colors, borderRadius } from "@/theme";
 
 interface ShimmerProps {
-  width?: number | string;
+  width?: DimensionValue;
   height?: number;
   borderRadius?: number;
   style?: ViewStyle;
@@ -15,45 +23,37 @@ export const Shimmer: React.FC<ShimmerProps> = ({
   borderRadius: br = borderRadius.sm,
   style,
 }) => {
-  const animatedValue = useRef(new Animated.Value(0)).current;
+  const progress = useSharedValue(0);
 
   useEffect(() => {
-    const animation = Animated.loop(
-      Animated.sequence([
-        Animated.timing(animatedValue, {
-          toValue: 1,
-          duration: 1000,
-          useNativeDriver: true,
-        }),
-        Animated.timing(animatedValue, {
-          toValue: 0,
-          duration: 1000,
-          useNativeDriver: true,
-        }),
-      ])
+    progress.value = withRepeat(
+      withTiming(1, { duration: 1500, easing: Easing.linear }),
+      -1,
+      false
     );
-    animation.start();
-    return () => animation.stop();
-  }, [animatedValue]);
+  }, [progress]);
 
-  const opacity = animatedValue.interpolate({
-    inputRange: [0, 1],
-    outputRange: [0.3, 0.7],
+  const animatedStyle = useAnimatedStyle(() => {
+    const translateX = interpolate(progress.value, [0, 1], [-200, 400]);
+    return {
+      transform: [{ translateX }],
+    };
   });
 
   return (
-    <Animated.View
+    <View
       style={[
         styles.shimmer,
         {
           width,
           height,
           borderRadius: br,
-          opacity,
         },
         style,
       ]}
-    />
+    >
+      <Animated.View style={[styles.sweep, animatedStyle]} />
+    </View>
   );
 };
 
@@ -74,6 +74,16 @@ export const ShimmerCard: React.FC<{ style?: ViewStyle }> = ({ style }) => (
 const styles = StyleSheet.create({
   shimmer: {
     backgroundColor: colors.shimmer,
+    overflow: "hidden",
+  },
+  sweep: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: "rgba(255,255,255,0.3)",
+    transform: [{ skewX: "-20deg" }],
   },
   card: {
     backgroundColor: colors.backgroundCard,

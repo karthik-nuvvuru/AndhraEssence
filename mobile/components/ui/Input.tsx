@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   View,
   TextInput,
@@ -7,7 +7,15 @@ import {
   TouchableOpacity,
   ViewStyle,
 } from "react-native";
+import Animated, {
+  useSharedValue,
+  useAnimatedStyle,
+  withSpring,
+  withTiming,
+} from "react-native-reanimated";
 import { colors, typography, borderRadius, spacing } from "@/theme";
+
+const AnimatedText = Animated.createAnimatedComponent(Text);
 
 interface InputProps {
   label?: string;
@@ -49,21 +57,53 @@ export const Input: React.FC<InputProps> = ({
   returnKeyType,
 }) => {
   const [isFocused, setIsFocused] = useState(false);
+  const labelPosition = useSharedValue(value ? 1 : 0);
+  const shakePosition = useSharedValue(0);
+
+  useEffect(() => {
+    labelPosition.value = withSpring(value ? 1 : 0, { damping: 15, stiffness: 200 });
+  }, [value]);
+
+  const floatingLabelStyle = useAnimatedStyle(() => ({
+    transform: [
+      { translateY: withSpring(labelPosition.value ? -24 : 0, { damping: 15, stiffness: 200 }) },
+      { scale: withSpring(labelPosition.value ? 0.85 : 1, { damping: 15, stiffness: 200 }) },
+    ],
+    opacity: withTiming(labelPosition.value ? 1 : 0.7, { duration: 200 }),
+  }));
+
+  const inputContainerStyle = useAnimatedStyle(() => ({
+    borderColor: isFocused ? colors.primary : error ? colors.error : colors.border,
+    backgroundColor: isFocused ? colors.backgroundSecondary : colors.backgroundCard,
+    transform: [
+      { translateX: shakePosition.value },
+    ],
+  }));
+
+  const focusGlowStyle = useAnimatedStyle(() => ({
+    opacity: isFocused ? 1 : 0,
+  }));
+
+  const handleFocus = () => setIsFocused(true);
+  const handleBlur = () => {
+    setIsFocused(false);
+    if (!value) {
+      labelPosition.value = withSpring(0, { damping: 15, stiffness: 200 });
+    }
+  };
 
   return (
     <View style={[styles.container, style]}>
-      {label && <Text style={styles.label}>{label}</Text>}
-      <View
-        style={[
-          styles.inputContainer,
-          isFocused && styles.focused,
-          error && styles.error,
-          disabled && styles.disabled,
-        ]}
-      >
+      {label && (
+        <AnimatedText style={[styles.floatingLabel, floatingLabelStyle]}>
+          {label}
+        </AnimatedText>
+      )}
+      <Animated.View style={[styles.inputWrapper, inputContainerStyle]}>
+        <Animated.View style={[styles.focusGlow, focusGlowStyle]} />
         <TextInput
           style={[styles.input, multiline && styles.multiline]}
-          placeholder={placeholder}
+          placeholder={isFocused || !label ? placeholder : ""}
           placeholderTextColor={colors.textTertiary}
           value={value}
           onChangeText={onChangeText}
@@ -71,8 +111,8 @@ export const Input: React.FC<InputProps> = ({
           keyboardType={keyboardType}
           autoCapitalize={autoCapitalize}
           editable={!disabled}
-          onFocus={() => setIsFocused(true)}
-          onBlur={() => setIsFocused(false)}
+          onFocus={handleFocus}
+          onBlur={handleBlur}
           onSubmitEditing={onSubmitEditing}
           returnKeyType={returnKeyType}
           multiline={multiline}
@@ -89,7 +129,7 @@ export const Input: React.FC<InputProps> = ({
             {rightIcon}
           </TouchableOpacity>
         )}
-      </View>
+      </Animated.View>
       {error && <Text style={styles.errorText}>{error}</Text>}
     </View>
   );
@@ -99,15 +139,20 @@ const styles = StyleSheet.create({
   container: {
     marginBottom: spacing.md,
   },
-  label: {
+  floatingLabel: {
+    position: "absolute",
+    top: 16,
+    left: 16,
+    zIndex: 1,
     ...typography.caption,
     color: colors.textSecondary,
-    marginBottom: spacing.xs,
     fontWeight: "500",
     textTransform: "uppercase",
     letterSpacing: 0.5,
+    backgroundColor: colors.backgroundCard,
+    paddingHorizontal: 4,
   },
-  inputContainer: {
+  inputWrapper: {
     flexDirection: "row",
     alignItems: "center",
     backgroundColor: colors.backgroundCard,
@@ -115,6 +160,18 @@ const styles = StyleSheet.create({
     borderColor: colors.border,
     borderRadius: borderRadius.sm,
     paddingHorizontal: spacing.md,
+    overflow: "hidden",
+  },
+  focusGlow: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    borderRadius: borderRadius.sm,
+    borderWidth: 2,
+    borderColor: colors.primary,
+    opacity: 0,
   },
   focused: {
     borderColor: colors.primary,
@@ -132,6 +189,7 @@ const styles = StyleSheet.create({
     ...typography.body,
     color: colors.textPrimary,
     paddingVertical: spacing.sm + 4,
+    backgroundColor: "transparent",
   },
   multiline: {
     minHeight: 100,

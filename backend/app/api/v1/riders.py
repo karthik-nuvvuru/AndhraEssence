@@ -1,42 +1,46 @@
-from fastapi import APIRouter, Depends, Query
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select
-from sqlalchemy.orm import selectinload
-from typing import List, Optional
-from uuid import UUID
 from datetime import datetime
+from uuid import UUID
 
-from app.database import get_db
+from fastapi import APIRouter, Depends, Query
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
+
 from app.config import get_settings
+from app.database import get_db
+
 settings = get_settings()
 
 # Use demo_models in demo mode
 if settings.demo_mode:
-    from app.demo_models.user import User
-    from app.demo_models.restaurant import Restaurant
-    from app.demo_models.rider import Rider
     from app.demo_models.order import Order
+    from app.demo_models.rider import Rider
+    from app.demo_models.user import User
 else:
-    from app.models.user import User
-    from app.models.restaurant import Restaurant
-    from app.models.rider import Rider, RiderLocationHistory
     from app.models.order import Order
+    from app.models.rider import Rider, RiderLocationHistory
+    from app.models.user import User
 
-from app.schemas.rider import (
-    RiderCreate, RiderUpdate, RiderResponse, RiderLocationUpdate,
-    AvailableOrderResponse
+from app.api.v1.deps import get_current_user
+from app.config import get_settings
+from app.core.enums import OrderStatus, UserRole
+from app.core.exceptions import (
+    BadRequestException,
+    ForbiddenException,
+    NotFoundException,
 )
 from app.schemas.order import OrderResponse
-from app.core.security import decode_token, oauth2_scheme
-from app.core.exceptions import NotFoundException, ForbiddenException, UnauthorizedException, BadRequestException
-from app.core.enums import UserRole, OrderStatus
-from app.utils.distance import (
-    calculate_haversine_distance,
-    calculate_eta,
-    calculate_earnings
+from app.schemas.rider import (
+    AvailableOrderResponse,
+    RiderLocationUpdate,
+    RiderResponse,
+    RiderUpdate,
 )
-from app.config import get_settings
-from app.api.v1.deps import get_current_user
+from app.utils.distance import (
+    calculate_earnings,
+    calculate_eta,
+    calculate_haversine_distance,
+)
 
 router = APIRouter()
 
@@ -60,8 +64,7 @@ async def get_rider_or_create(user: User, db: AsyncSession) -> Rider:
 
 @router.post("/register", response_model=RiderResponse)
 async def register_as_rider(
-    current_user: User = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db)
+    current_user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)
 ):
     """Register current user as a rider."""
     if current_user.role != UserRole.RIDER:
@@ -82,8 +85,7 @@ async def register_as_rider(
 
 @router.get("/me", response_model=RiderResponse)
 async def get_rider_profile(
-    current_user: User = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db)
+    current_user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)
 ):
     """Get current rider's profile."""
     rider = await get_rider_or_create(current_user, db)
@@ -94,7 +96,7 @@ async def get_rider_profile(
 async def update_rider_profile(
     update_data: RiderUpdate,
     current_user: User = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_db),
 ):
     """Update rider profile."""
     rider = await get_rider_or_create(current_user, db)
@@ -112,7 +114,7 @@ async def update_rider_profile(
 async def update_location(
     location_data: RiderLocationUpdate,
     current_user: User = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_db),
 ):
     """Update rider's current location."""
     rider = await get_rider_or_create(current_user, db)
@@ -126,7 +128,7 @@ async def update_location(
         rider_id=rider.id,
         latitude=location_data.latitude,
         longitude=location_data.longitude,
-        accuracy=location_data.accuracy
+        accuracy=location_data.accuracy,
     )
     db.add(location_history)
 
@@ -135,10 +137,9 @@ async def update_location(
     return location_data
 
 
-@router.get("/orders/available", response_model=List[AvailableOrderResponse])
+@router.get("/orders/available", response_model=list[AvailableOrderResponse])
 async def get_available_orders(
-    current_user: User = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db)
+    current_user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)
 ):
     """Get available orders for rider to accept."""
     rider = await get_rider_or_create(current_user, db)
@@ -151,10 +152,7 @@ async def get_available_orders(
         select(Order)
         .options(selectinload(Order.restaurant))
         .options(selectinload(Order.delivery_address))
-        .where(
-            Order.status == OrderStatus.READY,
-            Order.rider_id == None
-        )
+        .where(Order.status == OrderStatus.READY, Order.rider_id.is_(None))
         .order_by(Order.created_at.asc())
         .limit(10)
     )
@@ -164,15 +162,17 @@ async def get_available_orders(
     for order in orders:
         # Calculate distance from rider's location to restaurant
         distance_km = 0.0
-        if (rider.current_latitude is not None and
-            rider.current_longitude is not None and
-            order.restaurant.latitude is not None and
-            order.restaurant.longitude is not None):
+        if (
+            rider.current_latitude is not None
+            and rider.current_longitude is not None
+            and order.restaurant.latitude is not None
+            and order.restaurant.longitude is not None
+        ):
             distance_km = calculate_haversine_distance(
                 rider.current_latitude,
                 rider.current_longitude,
                 order.restaurant.latitude,
-                order.restaurant.longitude
+                order.restaurant.longitude,
             )
 
         # Calculate ETA based on distance
@@ -181,19 +181,21 @@ async def get_available_orders(
         # Calculate earnings based on distance
         earnings = calculate_earnings(distance_km)
 
-        available_orders.append(AvailableOrderResponse(
-            order_id=order.id,
-            order_number=order.order_number,
-            pickup_address=order.restaurant.address_line,
-            pickup_latitude=order.restaurant.latitude,
-            pickup_longitude=order.restaurant.longitude,
-            delivery_address=order.delivery_address.address_line,
-            delivery_latitude=order.delivery_address.latitude,
-            delivery_longitude=order.delivery_address.longitude,
-            distance_km=round(distance_km, 2),
-            estimated_pickup_time=estimated_pickup_time,
-            earnings=round(earnings, 2)
-        ))
+        available_orders.append(
+            AvailableOrderResponse(
+                order_id=order.id,
+                order_number=order.order_number,
+                pickup_address=order.restaurant.address_line,
+                pickup_latitude=order.restaurant.latitude,
+                pickup_longitude=order.restaurant.longitude,
+                delivery_address=order.delivery_address.address_line,
+                delivery_latitude=order.delivery_address.latitude,
+                delivery_longitude=order.delivery_address.longitude,
+                distance_km=round(distance_km, 2),
+                estimated_pickup_time=estimated_pickup_time,
+                earnings=round(earnings, 2),
+            )
+        )
 
     return available_orders
 
@@ -202,7 +204,7 @@ async def get_available_orders(
 async def accept_order(
     order_id: UUID,
     current_user: User = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_db),
 ):
     """Accept an order for delivery."""
     rider = await get_rider_or_create(current_user, db)
@@ -210,9 +212,7 @@ async def accept_order(
     if not rider.is_online or not rider.is_available:
         raise BadRequestException("You must be online and available to accept orders")
 
-    result = await db.execute(
-        select(Order).where(Order.id == order_id)
-    )
+    result = await db.execute(select(Order).where(Order.id == order_id))
     order = result.scalar_one_or_none()
 
     if not order:
@@ -231,16 +231,14 @@ async def accept_order(
     return order
 
 
-@router.get("/orders", response_model=List[OrderResponse])
+@router.get("/orders", response_model=list[OrderResponse])
 async def get_rider_orders(
-    status: Optional[OrderStatus] = Query(None),
+    status: OrderStatus | None = Query(None),
     current_user: User = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_db),
 ):
     """Get rider's assigned orders."""
-    result = await db.execute(
-        select(Order).where(Order.rider_id == current_user.id)
-    )
+    result = await db.execute(select(Order).where(Order.rider_id == current_user.id))
     orders = result.scalars().all()
 
     if status:

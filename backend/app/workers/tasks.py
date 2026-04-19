@@ -1,9 +1,11 @@
-from app.workers.celery_app import celery_app
-from datetime import datetime, timedelta
-from sqlalchemy import select, update
-import logging
 import asyncio
+import logging
+from datetime import datetime, timedelta
+
 import redis.asyncio as aioredis
+from sqlalchemy import select, update
+
+from app.workers.celery_app import celery_app
 
 logger = logging.getLogger(__name__)
 
@@ -37,6 +39,7 @@ def send_sms(phone: str, message: str):
     logger.info(f"Sending SMS to {phone}: {message}")
 
     from app.config import get_settings
+
     settings = get_settings()
 
     if not settings.twilio_account_sid or not settings.twilio_auth_token:
@@ -48,9 +51,7 @@ def send_sms(phone: str, message: str):
 
         client = Client(settings.twilio_account_sid, settings.twilio_auth_token)
         result = client.messages.create(
-            body=message,
-            from_=settings.twilio_phone_number,
-            to=phone
+            body=message, from_=settings.twilio_phone_number, to=phone
         )
         logger.info(f"SMS sent successfully: {result.sid}")
         return {"success": True, "message_id": result.sid}
@@ -68,14 +69,12 @@ def process_payment_callback(order_id: str, payment_data: dict):
     logger.info(f"Processing payment callback for order {order_id}")
 
     async def _process():
+        from app.core.enums import PaymentStatus
         from app.database import async_session_factory
         from app.models.order import Order
-        from app.core.enums import PaymentStatus
 
         async with async_session_factory() as db:
-            result = await db.execute(
-                select(Order).where(Order.id == order_id)
-            )
+            result = await db.execute(select(Order).where(Order.id == order_id))
             order = result.scalar_one_or_none()
 
             if not order:
@@ -106,14 +105,13 @@ def generate_order_invoice(order_id: str):
     logger.info(f"Generating invoice for order {order_id}")
 
     async def _generate():
-        from app.database import async_session_factory
-        from app.models.order import Order
         from sqlalchemy import select
 
+        from app.database import async_session_factory
+        from app.models.order import Order
+
         async with async_session_factory() as db:
-            result = await db.execute(
-                select(Order).where(Order.id == order_id)
-            )
+            result = await db.execute(select(Order).where(Order.id == order_id))
             order = result.scalar_one_or_none()
 
             if not order:
@@ -127,7 +125,10 @@ def generate_order_invoice(order_id: str):
 
             # TODO: Generate actual PDF with WeasyPrint
             # For now, just mark as success
-            return {"success": True, "invoice_path": f"/invoices/{order.order_number}.pdf"}
+            return {
+                "success": True,
+                "invoice_path": f"/invoices/{order.order_number}.pdf",
+            }
 
     try:
         return asyncio.run(_generate())
@@ -145,19 +146,18 @@ def update_rider_location_async(rider_id: str, lat: float, lng: float):
     logger.debug(f"Updating location for rider {rider_id}: {lat}, {lng}")
 
     async def _update_location():
-        from app.config import get_settings
         import json
+
+        from app.config import get_settings
 
         settings = get_settings()
         redis = await aioredis.from_url(settings.redis_url)
         try:
             # Store location in Redis with TTL of 5 minutes
             key = f"rider_location:{rider_id}"
-            location_data = json.dumps({
-                "lat": lat,
-                "lng": lng,
-                "updated_at": datetime.utcnow().isoformat()
-            })
+            location_data = json.dumps(
+                {"lat": lat, "lng": lng, "updated_at": datetime.utcnow().isoformat()}
+            )
             await redis.setex(key, 300, location_data)
             logger.debug(f"Rider {rider_id} location cached in Redis")
         finally:
@@ -216,10 +216,11 @@ def update_restaurant_ratings():
     logger.info("Updating restaurant ratings")
 
     async def _update():
+        from sqlalchemy import func, select
+
         from app.database import async_session_factory
         from app.models.restaurant import Restaurant
         from app.models.review import Review
-        from sqlalchemy import select, func
 
         async with async_session_factory() as db:
             # Calculate average rating for each restaurant with reviews
@@ -227,9 +228,8 @@ def update_restaurant_ratings():
                 select(
                     Review.restaurant_id,
                     func.avg(Review.rating).label("avg_rating"),
-                    func.count(Review.id).label("review_count")
-                )
-                .group_by(Review.restaurant_id)
+                    func.count(Review.id).label("review_count"),
+                ).group_by(Review.restaurant_id)
             )
             ratings = result.all()
 
@@ -238,8 +238,7 @@ def update_restaurant_ratings():
                     update(Restaurant)
                     .where(Restaurant.id == row.restaurant_id)
                     .values(
-                        rating=round(row.avg_rating, 2),
-                        review_count=row.review_count
+                        rating=round(row.avg_rating, 2), review_count=row.review_count
                     )
                 )
 
@@ -260,11 +259,12 @@ def process_refund_requests():
     logger.info("Processing refund requests")
 
     async def _process():
+        from sqlalchemy import select
+
+        from app.core.enums import OrderStatus, PaymentStatus
         from app.database import async_session_factory
         from app.models.order import Order
         from app.models.payment import Payment
-        from app.core.enums import PaymentStatus, OrderStatus
-        from sqlalchemy import select
 
         async with async_session_factory() as db:
             # Find paid orders that were cancelled and haven't been refunded
@@ -273,7 +273,7 @@ def process_refund_requests():
                 .join(Payment, Order.id == Payment.order_id)
                 .where(
                     Order.status == OrderStatus.CANCELLED,
-                    Payment.status == PaymentStatus.COMPLETED
+                    Payment.status == PaymentStatus.COMPLETED,
                 )
             )
             orders_payments = result.all()
@@ -293,7 +293,9 @@ def process_refund_requests():
                     order.payment_status = PaymentStatus.REFUNDED
                     refunded_count += 1
                 except Exception as e:
-                    logger.error(f"Failed to process refund for order {order.order_number}: {e}")
+                    logger.error(
+                        f"Failed to process refund for order {order.order_number}: {e}"
+                    )
 
             await db.commit()
             logger.info(f"Processed {refunded_count} refunds")
@@ -312,19 +314,19 @@ def check_pending_orders():
     logger.info("Checking pending orders")
 
     async def _check():
+
+        from sqlalchemy import select
+
+        from app.core.enums import OrderStatus
         from app.database import async_session_factory
         from app.models.order import Order
-        from app.core.enums import OrderStatus
-        from datetime import timedelta
-        from sqlalchemy import select
 
         async with async_session_factory() as db:
             cutoff_time = datetime.utcnow() - timedelta(minutes=15)
 
             result = await db.execute(
                 select(Order).where(
-                    Order.status == OrderStatus.PENDING,
-                    Order.created_at < cutoff_time
+                    Order.status == OrderStatus.PENDING, Order.created_at < cutoff_time
                 )
             )
             pending_orders = result.scalars().all()
@@ -356,14 +358,13 @@ def send_order_notification(order_id: str, event: str):
     logger.info(f"Sending order notification: {event} for order {order_id}")
 
     async def _notify():
-        from app.database import async_session_factory
-        from app.models.order import Order
         from sqlalchemy import select
 
+        from app.database import async_session_factory
+        from app.models.order import Order
+
         async with async_session_factory() as db:
-            result = await db.execute(
-                select(Order).where(Order.id == order_id)
-            )
+            result = await db.execute(select(Order).where(Order.id == order_id))
             order = result.scalar_one_or_none()
 
             if not order:
@@ -374,44 +375,49 @@ def send_order_notification(order_id: str, event: str):
 
             if event in ["created", "confirmed", "preparing", "ready"]:
                 # Notify customer
-                notifications.append({
-                    "user_id": str(order.customer_id),
-                    "title": f"Order {event.replace('_', ' ').title()}",
-                    "message": f"Your order {order.order_number} is now {event.replace('_', ' ')}",
-                    "data": {"order_id": str(order.id)}
-                })
+                notifications.append(
+                    {
+                        "user_id": str(order.customer_id),
+                        "title": f"Order {event.replace('_', ' ').title()}",
+                        "message": f"Your order {order.order_number} is now {event.replace('_', ' ')}",
+                        "data": {"order_id": str(order.id)},
+                    }
+                )
             elif event == "picked_up":
                 # Notify customer that rider picked up
-                notifications.append({
-                    "user_id": str(order.customer_id),
-                    "title": "Order Picked Up",
-                    "message": f"Rider has picked up your order {order.order_number}",
-                    "data": {"order_id": str(order.id)}
-                })
+                notifications.append(
+                    {
+                        "user_id": str(order.customer_id),
+                        "title": "Order Picked Up",
+                        "message": f"Rider has picked up your order {order.order_number}",
+                        "data": {"order_id": str(order.id)},
+                    }
+                )
             elif event == "delivered":
                 # Notify customer of delivery
-                notifications.append({
-                    "user_id": str(order.customer_id),
-                    "title": "Order Delivered",
-                    "message": f"Your order {order.order_number} has been delivered",
-                    "data": {"order_id": str(order.id)}
-                })
+                notifications.append(
+                    {
+                        "user_id": str(order.customer_id),
+                        "title": "Order Delivered",
+                        "message": f"Your order {order.order_number} has been delivered",
+                        "data": {"order_id": str(order.id)},
+                    }
+                )
             elif event == "cancelled":
                 # Notify customer of cancellation
-                notifications.append({
-                    "user_id": str(order.customer_id),
-                    "title": "Order Cancelled",
-                    "message": f"Your order {order.order_number} has been cancelled",
-                    "data": {"order_id": str(order.id)}
-                })
+                notifications.append(
+                    {
+                        "user_id": str(order.customer_id),
+                        "title": "Order Cancelled",
+                        "message": f"Your order {order.order_number} has been cancelled",
+                        "data": {"order_id": str(order.id)},
+                    }
+                )
 
             # Send notifications (via send_push_notification task)
             for notif in notifications:
                 send_push_notification.delay(
-                    notif["user_id"],
-                    notif["title"],
-                    notif["message"],
-                    notif["data"]
+                    notif["user_id"], notif["title"], notif["message"], notif["data"]
                 )
 
             logger.info(f"Sent {len(notifications)} notifications for order {order_id}")

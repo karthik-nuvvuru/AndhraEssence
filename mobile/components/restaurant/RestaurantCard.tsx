@@ -35,7 +35,7 @@ export const RestaurantCard: React.FC<RestaurantCardProps> = ({
 
           {/* Delivery Time - Bottom Right */}
           <View style={styles.deliveryBadge}>
-            <Text style={styles.deliveryTimeText}>🕐 {Math.floor(Math.random() * 15 + 20)}-{Math.floor(Math.random() * 10 + 30)} min</Text>
+            <Text style={styles.deliveryTimeText}>🕐 {restaurant.delivery_fee ? `₹${restaurant.delivery_fee}` : '₹40'} delivery</Text>
           </View>
         </View>
 

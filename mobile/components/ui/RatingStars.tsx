@@ -1,5 +1,11 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { View, Text, StyleSheet, ViewStyle } from "react-native";
+import Animated, {
+  useSharedValue,
+  useAnimatedStyle,
+  withSpring,
+  withDelay,
+} from "react-native-reanimated";
 import { colors, typography, spacing } from "@/theme";
 
 interface RatingStarsProps {
@@ -8,6 +14,38 @@ interface RatingStarsProps {
   showValue?: boolean;
   style?: ViewStyle;
 }
+
+interface StarProps {
+  filled: boolean;
+  halfFilled: boolean;
+  size: number;
+  delay: number;
+}
+
+const AnimatedStar: React.FC<StarProps> = ({ filled, halfFilled, size, delay }) => {
+  const scale = useSharedValue(0);
+
+  useEffect(() => {
+    scale.value = withDelay(delay, withSpring(1, { damping: 12, stiffness: 200 }));
+  }, [scale, delay]);
+
+  const animatedStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: scale.value }],
+  }));
+
+  return (
+    <Animated.Text
+      style={[
+        styles.star,
+        { fontSize: size },
+        animatedStyle,
+        filled || halfFilled ? styles.starFilled : styles.starEmpty,
+      ]}
+    >
+      ★
+    </Animated.Text>
+  );
+};
 
 export const RatingStars: React.FC<RatingStarsProps> = ({
   rating,
@@ -28,16 +66,13 @@ export const RatingStars: React.FC<RatingStarsProps> = ({
     const halfFilled = rating >= index + 0.5;
 
     return (
-      <Text
+      <AnimatedStar
         key={index}
-        style={[
-          styles.star,
-          { fontSize: s.star },
-          filled || halfFilled ? styles.starFilled : styles.starEmpty,
-        ]}
-      >
-        ★
-      </Text>
+        filled={filled}
+        halfFilled={halfFilled}
+        size={s.star}
+        delay={index * 50}
+      />
     );
   };
 

@@ -1,5 +1,5 @@
 """Tests for restaurant endpoints."""
-import pytest
+
 from tests.conftest import auth_header
 
 
@@ -57,7 +57,9 @@ class TestGetRestaurant:
 
     async def test_get_restaurant_not_found(self, client, seeded_db):
         """Test getting non-existent restaurant."""
-        response = await client.get("/api/v1/restaurants/00000000-0000-0000-0000-000000000000")
+        response = await client.get(
+            "/api/v1/restaurants/00000000-0000-0000-0000-000000000000"
+        )
         assert response.status_code == 404
 
 
@@ -66,22 +68,26 @@ class TestCreateRestaurant:
 
     async def test_create_restaurant_success(self, client, owner_token, seeded_db):
         """Test successful restaurant creation by owner."""
-        response = await client.post("/api/v1/restaurants", json={
-            "name": "New Restaurant",
-            "description": "A new test restaurant",
-            "cuisine_type": "Indian",
-            "address_line": "789 New Street",
-            "city": "Hyderabad",
-            "state": "Telangana",
-            "postal_code": "500003",
-            "latitude": 17.3950,
-            "longitude": 78.4850,
-            "phone": "+919999999900",
-            "email": "new@restaurant.com",
-            "delivery_radius_km": 5.0,
-            "minimum_order": 100,
-            "delivery_fee": 30
-        }, headers=auth_header(owner_token))
+        response = await client.post(
+            "/api/v1/restaurants",
+            json={
+                "name": "New Restaurant",
+                "description": "A new test restaurant",
+                "cuisine_type": "Indian",
+                "address_line": "789 New Street",
+                "city": "Hyderabad",
+                "state": "Telangana",
+                "postal_code": "500003",
+                "latitude": 17.3950,
+                "longitude": 78.4850,
+                "phone": "+919999999900",
+                "email": "new@restaurant.com",
+                "delivery_radius_km": 5.0,
+                "minimum_order": 100,
+                "delivery_fee": 30,
+            },
+            headers=auth_header(owner_token),
+        )
         assert response.status_code == 200
         data = response.json()
         assert data["name"] == "New Restaurant"
@@ -89,43 +95,54 @@ class TestCreateRestaurant:
 
     async def test_create_restaurant_customer_forbidden(self, client, customer_token):
         """Test that customer cannot create restaurant."""
-        response = await client.post("/api/v1/restaurants", json={
-            "name": "Customer Restaurant",
-            "address_line": "123 Test St",
-            "city": "Hyderabad",
-            "state": "Telangana",
-            "postal_code": "500001",
-            "latitude": 17.3850,
-            "longitude": 78.4867
-        }, headers=auth_header(customer_token))
+        response = await client.post(
+            "/api/v1/restaurants",
+            json={
+                "name": "Customer Restaurant",
+                "address_line": "123 Test St",
+                "city": "Hyderabad",
+                "state": "Telangana",
+                "postal_code": "500001",
+                "latitude": 17.3850,
+                "longitude": 78.4867,
+            },
+            headers=auth_header(customer_token),
+        )
         assert response.status_code == 403
 
     async def test_create_restaurant_no_auth(self, client):
         """Test creating restaurant without authentication."""
-        response = await client.post("/api/v1/restaurants", json={
-            "name": "Unauthorized Restaurant",
-            "address_line": "123 Test St",
-            "city": "Hyderabad",
-            "state": "Telangana",
-            "postal_code": "500001",
-            "latitude": 17.3850,
-            "longitude": 78.4867
-        })
+        response = await client.post(
+            "/api/v1/restaurants",
+            json={
+                "name": "Unauthorized Restaurant",
+                "address_line": "123 Test St",
+                "city": "Hyderabad",
+                "state": "Telangana",
+                "postal_code": "500001",
+                "latitude": 17.3850,
+                "longitude": 78.4867,
+            },
+        )
         assert response.status_code == 401
 
     async def test_create_restaurant_admin(self, client, admin_token, seeded_db):
         """Test that admin can create restaurant."""
-        response = await client.post("/api/v1/restaurants", json={
-            "name": "Admin Restaurant",
-            "description": "Created by admin",
-            "cuisine_type": "Fusion",
-            "address_line": "999 Admin Ave",
-            "city": "Hyderabad",
-            "state": "Telangana",
-            "postal_code": "500004",
-            "latitude": 17.4000,
-            "longitude": 78.4900
-        }, headers=auth_header(admin_token))
+        response = await client.post(
+            "/api/v1/restaurants",
+            json={
+                "name": "Admin Restaurant",
+                "description": "Created by admin",
+                "cuisine_type": "Fusion",
+                "address_line": "999 Admin Ave",
+                "city": "Hyderabad",
+                "state": "Telangana",
+                "postal_code": "500004",
+                "latitude": 17.4000,
+                "longitude": 78.4900,
+            },
+            headers=auth_header(admin_token),
+        )
         assert response.status_code == 200
 
 
@@ -143,7 +160,9 @@ class TestUpdateRestaurant:
         # As the seeded restaurant owner has restaurant - let's find it
         # First get the owner token to know which restaurant they own
         # Get owner user info
-        me_response = await client.get("/api/v1/auth/me", headers=auth_header(owner_token))
+        me_response = await client.get(
+            "/api/v1/auth/me", headers=auth_header(owner_token)
+        )
         owner_id = me_response.json()["id"]
 
         # List restaurants and find the one owned by this owner
@@ -161,7 +180,7 @@ class TestUpdateRestaurant:
             response = await client.put(
                 f"/api/v1/restaurants/{restaurant_id}",
                 json={"name": "Updated Restaurant Name", "is_open": False},
-                headers=auth_header(owner_token)
+                headers=auth_header(owner_token),
             )
             assert response.status_code == 200
             assert response.json()["name"] == "Updated Restaurant Name"
@@ -177,7 +196,7 @@ class TestUpdateRestaurant:
             response = await client.put(
                 f"/api/v1/restaurants/{restaurant_id}",
                 json={"name": "Hacked Name"},
-                headers=auth_header(customer_token)
+                headers=auth_header(customer_token),
             )
             assert response.status_code == 403
 
@@ -186,7 +205,7 @@ class TestUpdateRestaurant:
         response = await client.put(
             "/api/v1/restaurants/00000000-0000-0000-0000-000000000000",
             json={"name": "Test"},
-            headers=auth_header(owner_token)
+            headers=auth_header(owner_token),
         )
         assert response.status_code == 404
 
@@ -197,7 +216,9 @@ class TestDeleteRestaurant:
     async def test_delete_restaurant_success(self, client, owner_token, seeded_db):
         """Test successful restaurant deletion by owner."""
         # Get owner restaurant ID
-        me_response = await client.get("/api/v1/auth/me", headers=auth_header(owner_token))
+        me_response = await client.get(
+            "/api/v1/auth/me", headers=auth_header(owner_token)
+        )
         owner_id = me_response.json()["id"]
 
         restaurants_response = await client.get("/api/v1/restaurants")
@@ -212,12 +233,13 @@ class TestDeleteRestaurant:
         if owner_restaurant:
             restaurant_id = owner_restaurant["id"]
             response = await client.delete(
-                f"/api/v1/restaurants/{restaurant_id}",
-                headers=auth_header(owner_token)
+                f"/api/v1/restaurants/{restaurant_id}", headers=auth_header(owner_token)
             )
             assert response.status_code == 200
 
-    async def test_delete_restaurant_customer_forbidden(self, client, customer_token, seeded_db):
+    async def test_delete_restaurant_customer_forbidden(
+        self, client, customer_token, seeded_db
+    ):
         """Test that customer cannot delete restaurant."""
         list_response = await client.get("/api/v1/restaurants")
         items = list_response.json()["items"]
@@ -225,6 +247,6 @@ class TestDeleteRestaurant:
             restaurant_id = items[0]["id"]
             response = await client.delete(
                 f"/api/v1/restaurants/{restaurant_id}",
-                headers=auth_header(customer_token)
+                headers=auth_header(customer_token),
             )
             assert response.status_code == 403

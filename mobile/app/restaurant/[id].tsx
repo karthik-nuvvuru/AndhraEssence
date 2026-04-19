@@ -14,16 +14,14 @@ import { useLocalSearchParams, useRouter } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { MenuItemCard } from "@/components/restaurant/MenuItemCard";
 import { Badge } from "@/components/ui/Badge";
-import { Button } from "@/components/ui/Button";
 import { LoadingSpinner } from "@/components/ui/LoadingSpinner";
-import { colors, typography, spacing, borderRadius, shadows } from "@/theme";
+import { colors, typography, spacing, borderRadius } from "@/theme";
 import { restaurantApi } from "@/services/api/endpoints";
 import { useCartStore } from "@/store";
 import { formatCurrency } from "@/utils/formatters";
 import type { Restaurant, MenuItem, MenuCategory } from "@/types/api";
 import { useToast } from "@/components/ui/Toast";
 
-const { width: SCREEN_WIDTH } = Dimensions.get("window");
 const HEADER_HEIGHT = 250;
 
 export default function RestaurantDetailScreen() {
@@ -226,7 +224,7 @@ export default function RestaurantDetailScreen() {
             <View style={styles.statDivider} />
 
             <View style={styles.statItem}>
-              <Text style={styles.statValue}>⏱ {restaurant.estimated_delivery_time || "30-40"} min</Text>
+              <Text style={styles.statValue}>⏱ 30-40 min</Text>
               <Text style={styles.statLabel}>Delivery</Text>
             </View>
 

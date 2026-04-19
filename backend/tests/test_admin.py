@@ -1,5 +1,7 @@
 """Tests for admin endpoints."""
+
 import pytest
+
 from tests.conftest import auth_header
 
 
@@ -9,8 +11,7 @@ class TestAdminDashboard:
     async def test_admin_dashboard_success(self, client, admin_token, seeded_db):
         """Test admin can access dashboard."""
         response = await client.get(
-            "/api/v1/admin/dashboard",
-            headers=auth_header(admin_token)
+            "/api/v1/admin/dashboard", headers=auth_header(admin_token)
         )
         assert response.status_code == 200
         data = response.json()
@@ -24,16 +25,14 @@ class TestAdminDashboard:
     async def test_admin_dashboard_customer_forbidden(self, client, customer_token):
         """Test that customer cannot access admin dashboard."""
         response = await client.get(
-            "/api/v1/admin/dashboard",
-            headers=auth_header(customer_token)
+            "/api/v1/admin/dashboard", headers=auth_header(customer_token)
         )
         assert response.status_code == 403
 
     async def test_admin_dashboard_owner_forbidden(self, client, owner_token):
         """Test that owner cannot access admin dashboard."""
         response = await client.get(
-            "/api/v1/admin/dashboard",
-            headers=auth_header(owner_token)
+            "/api/v1/admin/dashboard", headers=auth_header(owner_token)
         )
         assert response.status_code == 403
 
@@ -49,30 +48,31 @@ class TestAdminListUsers:
     async def test_admin_list_users_success(self, client, admin_token, seeded_db):
         """Test admin can list all users."""
         response = await client.get(
-            "/api/v1/admin/users",
-            headers=auth_header(admin_token)
+            "/api/v1/admin/users", headers=auth_header(admin_token)
         )
         assert response.status_code == 200
         data = response.json()
         assert isinstance(data, list)
         assert len(data) > 0
 
-    async def test_admin_list_users_filter_by_role(self, client, admin_token, seeded_db):
+    async def test_admin_list_users_filter_by_role(
+        self, client, admin_token, seeded_db
+    ):
         """Test filtering users by role."""
         response = await client.get(
-            "/api/v1/admin/users?role=customer",
-            headers=auth_header(admin_token)
+            "/api/v1/admin/users?role=customer", headers=auth_header(admin_token)
         )
         assert response.status_code == 200
         data = response.json()
         for user in data:
             assert user["role"] == "customer"
 
-    async def test_admin_list_users_filter_by_active(self, client, admin_token, seeded_db):
+    async def test_admin_list_users_filter_by_active(
+        self, client, admin_token, seeded_db
+    ):
         """Test filtering users by active status."""
         response = await client.get(
-            "/api/v1/admin/users?is_active=true",
-            headers=auth_header(admin_token)
+            "/api/v1/admin/users?is_active=true", headers=auth_header(admin_token)
         )
         assert response.status_code == 200
         data = response.json()
@@ -82,16 +82,14 @@ class TestAdminListUsers:
     async def test_admin_list_users_pagination(self, client, admin_token, seeded_db):
         """Test user listing pagination."""
         response = await client.get(
-            "/api/v1/admin/users?page=1&limit=5",
-            headers=auth_header(admin_token)
+            "/api/v1/admin/users?page=1&limit=5", headers=auth_header(admin_token)
         )
         assert response.status_code == 200
 
     async def test_admin_list_users_customer_forbidden(self, client, customer_token):
         """Test that customer cannot list users."""
         response = await client.get(
-            "/api/v1/admin/users",
-            headers=auth_header(customer_token)
+            "/api/v1/admin/users", headers=auth_header(customer_token)
         )
         assert response.status_code == 403
 
@@ -108,8 +106,7 @@ class TestAdminToggleUser:
         """Test admin can toggle user active status."""
         # Get a user to toggle
         list_response = await client.get(
-            "/api/v1/admin/users",
-            headers=auth_header(admin_token)
+            "/api/v1/admin/users", headers=auth_header(admin_token)
         )
         users = list_response.json()
         user_to_toggle = None
@@ -127,26 +124,30 @@ class TestAdminToggleUser:
         # Toggle
         response = await client.put(
             f"/api/v1/admin/users/{user_id}/toggle-active",
-            headers=auth_header(admin_token)
+            headers=auth_header(admin_token),
         )
         assert response.status_code == 200
         data = response.json()
-        assert data["message"] == f"User {'deactivated' if original_status else 'activated'}"
+        assert (
+            data["message"]
+            == f"User {'deactivated' if original_status else 'activated'}"
+        )
 
     async def test_admin_toggle_user_not_found(self, client, admin_token):
         """Test toggling non-existent user."""
         response = await client.put(
             "/api/v1/admin/users/00000000-0000-0000-0000-000000000000/toggle-active",
-            headers=auth_header(admin_token)
+            headers=auth_header(admin_token),
         )
         assert response.status_code == 404
 
-    async def test_admin_toggle_user_customer_forbidden(self, client, customer_token, seeded_db):
+    async def test_admin_toggle_user_customer_forbidden(
+        self, client, customer_token, seeded_db
+    ):
         """Test that customer cannot toggle user status."""
         # Get any user ID
         list_response = await client.get(
-            "/api/v1/admin/users",
-            headers=auth_header(customer_token)
+            "/api/v1/admin/users", headers=auth_header(customer_token)
         )
         # This should fail with 403
         assert list_response.status_code == 403
@@ -165,18 +166,18 @@ class TestAdminListRestaurants:
     async def test_admin_list_restaurants_success(self, client, admin_token, seeded_db):
         """Test admin can list all restaurants."""
         response = await client.get(
-            "/api/v1/admin/restaurants",
-            headers=auth_header(admin_token)
+            "/api/v1/admin/restaurants", headers=auth_header(admin_token)
         )
         assert response.status_code == 200
         data = response.json()
         assert isinstance(data, list)
 
-    async def test_admin_list_restaurants_customer_forbidden(self, client, customer_token):
+    async def test_admin_list_restaurants_customer_forbidden(
+        self, client, customer_token
+    ):
         """Test that customer cannot list all restaurants via admin."""
         response = await client.get(
-            "/api/v1/admin/restaurants",
-            headers=auth_header(customer_token)
+            "/api/v1/admin/restaurants", headers=auth_header(customer_token)
         )
         assert response.status_code == 403
 
@@ -187,8 +188,7 @@ class TestAdminAnalytics:
     async def test_admin_analytics_success(self, client, admin_token, seeded_db):
         """Test admin can access analytics."""
         response = await client.get(
-            "/api/v1/admin/analytics",
-            headers=auth_header(admin_token)
+            "/api/v1/admin/analytics", headers=auth_header(admin_token)
         )
         assert response.status_code == 200
         data = response.json()
@@ -201,8 +201,7 @@ class TestAdminAnalytics:
     async def test_admin_analytics_custom_days(self, client, admin_token, seeded_db):
         """Test analytics with custom day range."""
         response = await client.get(
-            "/api/v1/admin/analytics?days=7",
-            headers=auth_header(admin_token)
+            "/api/v1/admin/analytics?days=7", headers=auth_header(admin_token)
         )
         assert response.status_code == 200
         data = response.json()
@@ -211,7 +210,6 @@ class TestAdminAnalytics:
     async def test_admin_analytics_customer_forbidden(self, client, customer_token):
         """Test that customer cannot access analytics."""
         response = await client.get(
-            "/api/v1/admin/analytics",
-            headers=auth_header(customer_token)
+            "/api/v1/admin/analytics", headers=auth_header(customer_token)
         )
         assert response.status_code == 403

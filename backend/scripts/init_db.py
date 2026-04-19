@@ -1,4 +1,5 @@
 """Initialize database tables."""
+
 import asyncio
 import sys
 from pathlib import Path
@@ -6,7 +7,7 @@ from pathlib import Path
 # Add parent directory to path for imports
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from app.database import engine, Base
+from app.database import Base, engine
 from app.models import *  # noqa: F401, F403
 
 

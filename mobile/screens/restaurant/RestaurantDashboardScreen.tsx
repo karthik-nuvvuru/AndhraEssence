@@ -41,8 +41,8 @@ export default function RestaurantDashboardScreen() {
     const fetchData = async () => {
       try {
         // Fetch restaurant data for owner
-        if (user?.restaurant_id) {
-          const restaurantResponse = await restaurantApi.getById(user.restaurant_id);
+        if (user?.id) {
+          const restaurantResponse = await restaurantApi.getById(user.id);
           setRestaurant(restaurantResponse.data);
         }
         // Fetch orders
@@ -56,7 +56,7 @@ export default function RestaurantDashboardScreen() {
     };
 
     fetchData();
-  }, [user?.restaurant_id]);
+  }, [user?.id]);
 
   if (loading) {
     return (
@@ -124,8 +124,8 @@ export default function RestaurantDashboardScreen() {
                   size="sm"
                 />
               </View>
-              <Text style={styles.orderItems}>{order.items?.length ?? 0} items</Text>
-              <Text style={styles.orderTotal}>₹{order.total_amount}</Text>
+              <Text style={styles.orderItems}>{order.items ?? 0} items</Text>
+              <Text style={styles.orderTotal}>₹{order.total}</Text>
             </Card>
           ))}
         </View>
@@ -138,6 +138,11 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: colors.backgroundSecondary,
+  },
+  loadingContainer: {
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
   },
   header: {
     padding: spacing.md,

@@ -20,6 +20,7 @@ if config.config_file_name is not None:
 
 # Set the SQLAlchemy URL from environment
 from app.config import get_settings
+
 settings = get_settings()
 config.set_main_option("sqlalchemy.url", settings.database_url.replace("+asyncpg", ""))
 

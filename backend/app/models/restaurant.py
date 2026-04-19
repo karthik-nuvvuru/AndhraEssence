@@ -1,7 +1,18 @@
 import uuid
 from datetime import datetime, time
-from sqlalchemy import Column, String, Boolean, DateTime, Text, Float, Integer, Time, ForeignKey
-from sqlalchemy.dialects.postgresql import UUID, ARRAY
+
+from sqlalchemy import (
+    Boolean,
+    Column,
+    DateTime,
+    Float,
+    ForeignKey,
+    Integer,
+    String,
+    Text,
+    Time,
+)
+from sqlalchemy.dialects.postgresql import ARRAY, UUID
 from sqlalchemy.orm import relationship
 
 from app.database import Base
@@ -13,7 +24,9 @@ class Restaurant(Base):
     __tablename__ = "restaurants"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    owner_id = Column(UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
+    owner_id = Column(
+        UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), nullable=False
+    )
     name = Column(String(255), nullable=False)
     slug = Column(String(255), unique=True, nullable=False, index=True)
     description = Column(Text, nullable=True)
@@ -42,8 +55,12 @@ class Restaurant(Base):
 
     # Relationships
     owner = relationship("User", back_populates="restaurant")
-    categories = relationship("MenuCategory", back_populates="restaurant", cascade="all, delete-orphan")
-    menu_items = relationship("MenuItem", back_populates="restaurant", cascade="all, delete-orphan")
+    categories = relationship(
+        "MenuCategory", back_populates="restaurant", cascade="all, delete-orphan"
+    )
+    menu_items = relationship(
+        "MenuItem", back_populates="restaurant", cascade="all, delete-orphan"
+    )
     orders = relationship("Order", back_populates="restaurant")
     reviews = relationship("Review", back_populates="restaurant")
 
@@ -57,7 +74,11 @@ class MenuCategory(Base):
     __tablename__ = "menu_categories"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    restaurant_id = Column(UUID(as_uuid=True), ForeignKey("restaurants.id", ondelete="CASCADE"), nullable=False)
+    restaurant_id = Column(
+        UUID(as_uuid=True),
+        ForeignKey("restaurants.id", ondelete="CASCADE"),
+        nullable=False,
+    )
     name = Column(String(100), nullable=False)
     description = Column(Text, nullable=True)
     sort_order = Column(Integer, default=0)
@@ -78,8 +99,16 @@ class MenuItem(Base):
     __tablename__ = "menu_items"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    restaurant_id = Column(UUID(as_uuid=True), ForeignKey("restaurants.id", ondelete="CASCADE"), nullable=False)
-    category_id = Column(UUID(as_uuid=True), ForeignKey("menu_categories.id", ondelete="SET NULL"), nullable=True)
+    restaurant_id = Column(
+        UUID(as_uuid=True),
+        ForeignKey("restaurants.id", ondelete="CASCADE"),
+        nullable=False,
+    )
+    category_id = Column(
+        UUID(as_uuid=True),
+        ForeignKey("menu_categories.id", ondelete="SET NULL"),
+        nullable=True,
+    )
     name = Column(String(255), nullable=False)
     description = Column(Text, nullable=True)
     price = Column(Float, nullable=False)

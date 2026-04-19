@@ -10,7 +10,7 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import { router } from "expo-router";
 import { Button } from "@/components/ui/Button";
-import { colors, typography, spacing, borderRadius, shadows } from "@/theme";
+import { colors, typography, spacing, borderRadius } from "@/theme";
 import { useAuthStore } from "@/store";
 
 interface MenuItemProps {
@@ -148,7 +148,6 @@ const styles = StyleSheet.create({
     borderRadius: 58,
     backgroundColor: colors.primary,
     opacity: 0.2,
-    blurRadius: 20,
   },
   avatar: {
     width: 100,

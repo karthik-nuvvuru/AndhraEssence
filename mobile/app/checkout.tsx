@@ -20,9 +20,7 @@ import { colors, typography, spacing, borderRadius, shadows } from "@/theme";
 import { useCartStore } from "@/store";
 import { orderApi, userApi } from "@/services/api/endpoints";
 import { formatCurrency } from "@/utils/formatters";
-import type { Address } from "@/types/api";
-
-type PaymentMethod = "razorpay" | "upi" | "cod";
+import type { Address, PaymentMethod } from "@/types/api";
 type TipAmount = 0 | 20 | 50 | 100 | "custom";
 
 const DEFAULT_DELIVERY_FEE = 40;
@@ -104,7 +102,7 @@ export default function CheckoutScreen() {
     const address = addresses.find(a => a.id === selectedAddressId);
     Alert.alert(
       "Confirm Order",
-      `Total: ${formatCurrency(total)}\nDelivery to: ${address?.address_line || "selected address"}\nPayment: ${paymentMethod === "razorpay" ? "Credit/Debit Card" : paymentMethod === "upi" ? "UPI" : "Cash on Delivery"}`,
+      `Total: ${formatCurrency(total)}\nDelivery to: ${address?.address_line || "selected address"}\nPayment: ${paymentMethod === "razorpay" ? "Credit/Debit Card" : paymentMethod === "wallet" ? "Wallet" : "Cash on Delivery"}`,
       [
         { text: "Cancel", style: "cancel" },
         { text: "Confirm", onPress: handlePlaceOrder, style: "default" },
@@ -126,14 +124,14 @@ export default function CheckoutScreen() {
     setLoading(true);
     try {
       const response = await orderApi.create({
-        restaurant_id: restaurantId,
-        address_id: selectedAddressId,
+        restaurant_id: restaurantId as string,
+        address_id: selectedAddressId as string,
         items: items.map((item) => ({
           menu_item_id: item.menuItem.id,
           quantity: item.quantity,
           special_instructions: item.specialInstructions,
         })),
-        payment_method: paymentMethod === "cod" ? "cash" : paymentMethod,
+        payment_method: paymentMethod === "cod" ? "cash" : paymentMethod === "wallet" ? "wallet" : paymentMethod,
         delivery_instructions: deliveryInstructions,
         tip_amount: displayTip,
       });
@@ -261,7 +259,7 @@ export default function CheckoutScreen() {
           <View style={styles.paymentOptions}>
             {[
               { id: "razorpay", label: "Cards", icon: "💳" },
-              { id: "upi", label: "UPI", icon: "📱" },
+              { id: "wallet", label: "Wallet", icon: "👛" },
               { id: "cod", label: "Cash on Delivery", icon: "💵" },
             ].map((method) => (
               <TouchableOpacity

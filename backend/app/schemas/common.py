@@ -1,17 +1,19 @@
-from pydantic import BaseModel, ConfigDict
-from typing import Optional
 from datetime import datetime
 from uuid import UUID
+
+from pydantic import BaseModel, ConfigDict
 
 
 class TimestampMixin(BaseModel):
     """Mixin for timestamp fields."""
-    created_at: Optional[datetime] = None
-    updated_at: Optional[datetime] = None
+
+    created_at: datetime | None = None
+    updated_at: datetime | None = None
 
 
 class UUIDMixin(BaseModel):
     """Mixin for UUID id field."""
+
     model_config = ConfigDict(from_attributes=True)
 
     id: UUID
@@ -19,9 +21,10 @@ class UUIDMixin(BaseModel):
 
 class PaginationParams(BaseModel):
     """Pagination parameters."""
+
     page: int = 1
     limit: int = 20
-    offset: Optional[int] = None
+    offset: int | None = None
 
     @property
     def skip(self) -> int:
@@ -32,6 +35,7 @@ class PaginationParams(BaseModel):
 
 class PaginatedResponse(BaseModel):
     """Paginated response wrapper."""
+
     items: list
     total: int
     page: int
@@ -41,6 +45,7 @@ class PaginatedResponse(BaseModel):
 
 class SuccessResponse(BaseModel):
     """Generic success response."""
+
     success: bool = True
     message: str
-    data: Optional[dict] = None
+    data: dict | None = None

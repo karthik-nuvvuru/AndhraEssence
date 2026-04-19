@@ -13,9 +13,12 @@ test.describe('Home Screen', () => {
       { timeout: 10000 }
     ).catch(() => {});
 
+    // Wait for React to render the content
+    await page.waitForTimeout(1000);
+
     // Check that page has loaded with content
     const body = await page.textContent('body');
-    const hasContent = body.includes('What would you like') || body.includes('Nearby Restaurants');
+    const hasContent = body.includes('Restaurants near you') || body.includes('Nearby Restaurants');
     expect(hasContent).toBeTruthy();
   });
 
@@ -43,10 +46,18 @@ test.describe('Home Screen', () => {
     await page.goto(ROUTES.home);
     await page.waitForLoadState('networkidle');
 
-    // Check for new design greeting
+    // Wait for restaurants to load via API
+    await page.waitForResponse(
+      response => response.url().includes('/api/v1/restaurants') && response.status() === 200,
+      { timeout: 10000 }
+    ).catch(() => {});
+
+    // Wait for React to render the content
+    await page.waitForTimeout(1000);
+
+    // Check for home screen content
     const body = await page.textContent('body');
-    expect(body.includes('Good evening')).toBeTruthy();
-    expect(body.includes('What would you like')).toBeTruthy();
+    expect(body.includes('Deliver to')).toBeTruthy();
   });
 
   test('should navigate to cart tab', async ({ page }) => {

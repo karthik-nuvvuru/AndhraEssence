@@ -11,7 +11,7 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { router } from "expo-router";
-import { colors, spacing } from "@/theme";
+import { spacing } from "@/theme";
 import { authApi } from "@/services/api/endpoints";
 import { useAuthStore } from "@/store";
 
@@ -259,7 +259,6 @@ const styles = StyleSheet.create({
     height: 350,
     borderRadius: 175,
     backgroundColor: "rgba(124, 58, 237, 0.25)",
-    blurRadius: 80,
   },
   cyanOrb: {
     position: "absolute",
@@ -269,7 +268,6 @@ const styles = StyleSheet.create({
     height: 400,
     borderRadius: 200,
     backgroundColor: "rgba(6, 182, 212, 0.15)",
-    blurRadius: 100,
   },
   container: {
     flex: 1,

@@ -65,14 +65,20 @@ export default function OnboardingScreen() {
   const handleScroll = Animated.event(
     [{ nativeEvent: { contentOffset: { x: scrollX } } }],
     {
-      eventContainer: (args: any) => {
-        const offsetX = args.nativeEvent.contentOffset.x;
-        const index = Math.round(offsetX / SCREEN_WIDTH);
-        setCurrentIndex(index);
-      },
       useNativeDriver: false,
     }
   );
+
+  const handleScrollIndex = (event: any) => {
+    const offsetX = event.nativeEvent.contentOffset.x;
+    const index = Math.round(offsetX / SCREEN_WIDTH);
+    setCurrentIndex(index);
+  };
+
+  const handleScrollCombined = (event: any) => {
+    handleScroll(event);
+    handleScrollIndex(event);
+  };
 
   const handleNext = () => {
     if (currentIndex < SLIDES.length - 1) {
@@ -122,7 +128,7 @@ export default function OnboardingScreen() {
           horizontal
           pagingEnabled
           showsHorizontalScrollIndicator={false}
-          onScroll={handleScroll}
+          onScroll={handleScrollCombined}
           scrollEventThrottle={16}
           contentContainerStyle={styles.scrollContent}
         >
@@ -231,7 +237,6 @@ const styles = StyleSheet.create({
     height: 400,
     borderRadius: 200,
     backgroundColor: "rgba(124, 58, 237, 0.3)",
-    blurRadius: 80,
   },
   purpleOrb2: {
     position: "absolute",
@@ -241,7 +246,6 @@ const styles = StyleSheet.create({
     height: 300,
     borderRadius: 150,
     backgroundColor: "rgba(124, 58, 237, 0.15)",
-    blurRadius: 60,
   },
   cyanOrb: {
     position: "absolute",
@@ -251,7 +255,6 @@ const styles = StyleSheet.create({
     height: 350,
     borderRadius: 175,
     backgroundColor: "rgba(6, 182, 212, 0.12)",
-    blurRadius: 80,
   },
   container: {
     flex: 1,

@@ -14,7 +14,7 @@ import { LoadingSpinner } from "@/components/ui/LoadingSpinner";
 import { Button } from "@/components/ui/Button";
 import { colors, typography, spacing, borderRadius, shadows } from "@/theme";
 import { orderApi } from "@/services/api/endpoints";
-import { formatCurrency, formatRelativeTime, formatDate } from "@/utils/formatters";
+import { formatCurrency, formatDate } from "@/utils/formatters";
 import type { Order } from "@/types/api";
 
 // Status color mapping using design system colors
@@ -108,8 +108,8 @@ export default function OrdersScreen() {
       {/* Items Summary */}
       <View style={styles.itemsSummary}>
         <Text style={styles.itemsText}>
-          {item.items?.slice(0, 3).map(i => i.name).join(", ")}
-          {item.items?.length > 3 ? ` +${item.items.length - 3} more` : ""}
+          {(item.items ?? []).slice(0, 3).map(i => i.item_name).join(", ")}
+          {(item.items?.length ?? 0) > 3 ? ` +${item.items!.length - 3} more` : ""}
         </Text>
       </View>
 

@@ -1,11 +1,13 @@
 import uuid
 from datetime import datetime
-from sqlalchemy import Column, String, Boolean, DateTime, Enum as SQLEnum, ForeignKey, Text, Float
+
+from sqlalchemy import Boolean, Column, DateTime, Float, ForeignKey, String
+from sqlalchemy import Enum as SQLEnum
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
 
-from app.database import Base
 from app.core.enums import UserRole
+from app.database import Base
 
 
 class User(Base):
@@ -18,7 +20,11 @@ class User(Base):
     phone = Column(String(20), unique=True, nullable=False, index=True)
     password_hash = Column(String(255), nullable=False)
     full_name = Column(String(100), nullable=False)
-    role = Column(SQLEnum(UserRole, name="user_role", create_type=False), nullable=False, default=UserRole.CUSTOMER)
+    role = Column(
+        SQLEnum(UserRole, name="user_role", create_type=False),
+        nullable=False,
+        default=UserRole.CUSTOMER,
+    )
     avatar_url = Column(String(500), nullable=True)
     is_active = Column(Boolean, default=True)
     is_verified = Column(Boolean, default=False)
@@ -27,11 +33,17 @@ class User(Base):
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
     # Relationships
-    addresses = relationship("Address", back_populates="user", cascade="all, delete-orphan")
-    orders = relationship("Order", back_populates="customer", foreign_keys="Order.customer_id")
+    addresses = relationship(
+        "Address", back_populates="user", cascade="all, delete-orphan"
+    )
+    orders = relationship(
+        "Order", back_populates="customer", foreign_keys="Order.customer_id"
+    )
     restaurant = relationship("Restaurant", back_populates="owner", uselist=False)
     rider = relationship("Rider", back_populates="user", uselist=False)
-    notifications = relationship("Notification", back_populates="user", cascade="all, delete-orphan")
+    notifications = relationship(
+        "Notification", back_populates="user", cascade="all, delete-orphan"
+    )
 
     def __repr__(self):
         return f"<User {self.email} ({self.role})>"
@@ -43,7 +55,9 @@ class Address(Base):
     __tablename__ = "addresses"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    user_id = Column(UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
+    user_id = Column(
+        UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), nullable=False
+    )
     label = Column(String(50), default="Home")
     address_line = Column(String(255), nullable=False)
     city = Column(String(100), nullable=False)

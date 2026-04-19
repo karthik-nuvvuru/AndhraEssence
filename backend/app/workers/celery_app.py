@@ -9,7 +9,7 @@ celery_app = Celery(
     "andhra_essence",
     broker=settings.celery_broker_url,
     backend=settings.celery_result_backend,
-    include=["app.workers.tasks"]
+    include=["app.workers.tasks"],
 )
 
 celery_app.conf.update(

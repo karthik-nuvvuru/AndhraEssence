@@ -1,7 +1,9 @@
 """Demo review models using cross-database compatible types."""
+
 import uuid
 from datetime import datetime
-from sqlalchemy import Column, String, Boolean, DateTime, Text, Integer, ForeignKey
+
+from sqlalchemy import Boolean, Column, DateTime, ForeignKey, Integer, String, Text
 from sqlalchemy.orm import relationship
 
 from app.database import Base
@@ -14,7 +16,9 @@ class Review(Base):
     __tablename__ = "reviews"
 
     id = Column(GUID(), primary_key=True, default=uuid.uuid4)
-    order_id = Column(GUID(), ForeignKey("orders.id", ondelete="SET NULL"), nullable=True)
+    order_id = Column(
+        GUID(), ForeignKey("orders.id", ondelete="SET NULL"), nullable=True
+    )
     customer_id = Column(GUID(), ForeignKey("users.id"), nullable=False)
     restaurant_id = Column(GUID(), ForeignKey("restaurants.id"), nullable=False)
     rider_id = Column(GUID(), ForeignKey("riders.id"), nullable=True)

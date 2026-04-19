@@ -33,6 +33,7 @@ RUN pip install --no-cache-dir \
     psycopg2-binary==2.9.9 \
     python-jose[cryptography]==3.3.0 \
     passlib[bcrypt]==1.7.4 \
+    bcrypt==4.0.1 \
     pydantic==2.6.0 \
     pydantic-settings==2.1.0 \
     email-validator==2.1.0 \
@@ -42,7 +43,9 @@ RUN pip install --no-cache-dir \
     python-dotenv==1.0.0 \
     httpx==0.27.0 \
     geopy==2.4.1 \
-    razorpay==1.4.2
+    razorpay==1.4.2 \
+    slowapi==0.1.9 \
+    aiosqlite==0.19.0
 
 # Copy application code
 COPY . .
