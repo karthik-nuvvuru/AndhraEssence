@@ -1,5 +1,5 @@
 // Premium Cart Screen - Liquid Glass Design
-import React, { useState, useCallback } from "react";
+import React, { useState, useCallback, useRef, useEffect } from "react";
 import {
   View,
   Text,
@@ -10,20 +10,29 @@ import {
   TextInput,
   KeyboardAvoidingView,
   Platform,
+  ScrollView,
+  Animated,
 } from "react-native";
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
-import { Tag, Trash2, ShoppingBag } from "lucide-react-native";
+import { Tag, Trash2, ShoppingBag, Home, Bell, Phone, ChevronDown, ChevronUp } from "lucide-react-native";
 import { GlassCard } from "@/components/ui/GlassCard";
 import { Button } from "@/components/ui/Button";
-import { CartItem } from "@/components/ui/CartItem";
+import { CartItem as CartItemCard } from "@/components/ui/CartItem";
 import { colors, typography, spacing, borderRadius, shadows } from "@/theme";
-import { useCartStore } from "@/store";
+import { useCartStore, CartItem } from "@/store";
 import { formatCurrency } from "@/utils/formatters";
+import * as Haptics from "expo-haptics";
 
 const TAX_RATE = 0.05;
 const DELIVERY_FEE = 40;
 const PLATFORM_FEE = 5;
+
+const DELIVERY_INSTRUCTIONS = [
+  { id: "door", label: "Leave at door", Icon: Home },
+  { id: "ring", label: "Ring bell", Icon: Bell },
+  { id: "call", label: "Call me", Icon: Phone },
+];
 
 export default function CartScreen() {
   const router = useRouter();
@@ -40,10 +49,37 @@ export default function CartScreen() {
   const [promoCode, setPromoCode] = useState("");
   const [appliedPromo, setAppliedPromo] = useState<string | null>(null);
   const [discountAmount, setDiscountAmount] = useState(0);
+  const [selectedInstruction, setSelectedInstruction] = useState<string | null>(null);
+
+  // Animated bill breakdown
+  const billExpanded = useRef(new Animated.Value(1)).current;
+  const [billOpen, setBillOpen] = useState(true);
+  const chevronRotate = useRef(new Animated.Value(0)).current;
 
   const subtotal = getSubtotal();
   const taxAmount = subtotal * TAX_RATE;
   const total = subtotal + taxAmount + DELIVERY_FEE + PLATFORM_FEE - discountAmount;
+
+  const toggleBill = () => {
+    const toValue = billOpen ? 0 : 1;
+    Animated.parallel([
+      Animated.spring(billExpanded, {
+        toValue,
+        damping: 15,
+        stiffness: 200,
+        useNativeDriver: false,
+      }),
+      Animated.timing(chevronRotate, {
+        toValue,
+        duration: 250,
+        useNativeDriver: true,
+      }),
+    ]).start();
+    setBillOpen(!billOpen);
+    if (Platform.OS !== "web") {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    }
+  };
 
   const handleApplyPromo = useCallback(() => {
     if (!promoCode.trim()) {
@@ -54,6 +90,9 @@ export default function CartScreen() {
       const discount = Math.round(subtotal * 0.1);
       setDiscountAmount(discount);
       setAppliedPromo(promoCode.toUpperCase());
+      if (Platform.OS !== "web") {
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      }
       Alert.alert("Success", `Promo code applied! You save ${formatCurrency(discount)}`);
     } else {
       Alert.alert("Invalid Code", "This promo code is not valid");
@@ -66,7 +105,18 @@ export default function CartScreen() {
     setPromoCode("");
   }, []);
 
+  const handleInstructionSelect = (id: string) => {
+    const newInstruction = selectedInstruction === id ? null : id;
+    setSelectedInstruction(newInstruction);
+    if (Platform.OS !== "web") {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    }
+  };
+
   const handleIncrease = (itemId: string) => {
+    if (Platform.OS !== "web") {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    }
     const item = items.find((i) => i.menuItem.id === itemId);
     if (item) {
       updateQuantity(itemId, item.quantity + 1);
@@ -74,6 +124,9 @@ export default function CartScreen() {
   };
 
   const handleDecrease = (itemId: string) => {
+    if (Platform.OS !== "web") {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    }
     const item = items.find((i) => i.menuItem.id === itemId);
     if (item) {
       const newQty = item.quantity - 1;
@@ -86,7 +139,12 @@ export default function CartScreen() {
             {
               text: "Remove",
               style: "destructive",
-              onPress: () => removeItem(itemId),
+              onPress: () => {
+                if (Platform.OS !== "web") {
+                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+                }
+                removeItem(itemId);
+              },
             },
           ]
         );
@@ -97,6 +155,9 @@ export default function CartScreen() {
   };
 
   const handleRemoveItem = (item: CartItem) => {
+    if (Platform.OS !== "web") {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    }
     Alert.alert(
       "Remove Item",
       `Remove ${item.menuItem.name} from cart?`,
@@ -112,6 +173,9 @@ export default function CartScreen() {
   };
 
   const handleClearCart = () => {
+    if (Platform.OS !== "web") {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    }
     Alert.alert(
       "Clear Cart",
       "Remove all items from your cart?",
@@ -134,8 +198,8 @@ export default function CartScreen() {
     router.push("/");
   };
 
-  const renderCartItem = ({ item }: { item: CartItem }) => (
-    <CartItem
+  const renderCartItem = ({ item }: { item: any }) => (
+    <CartItemCard
       item={item}
       onIncrease={handleIncrease}
       onDecrease={handleDecrease}
@@ -143,47 +207,112 @@ export default function CartScreen() {
     />
   );
 
-  const renderBillBreakdown = () => (
-    <GlassCard style={styles.billCard} variant="default" padding="md">
-      <Text style={styles.billTitle}>Bill Details</Text>
-
-      <View style={styles.billRow}>
-        <Text style={styles.billLabel}>Item Total</Text>
-        <Text style={styles.billValue}>{formatCurrency(subtotal)}</Text>
-      </View>
-
-      <View style={styles.billRow}>
-        <Text style={styles.billLabel}>Taxes & GST (5%)</Text>
-        <Text style={styles.billValue}>{formatCurrency(taxAmount)}</Text>
-      </View>
-
-      <View style={styles.billRow}>
-        <Text style={styles.billLabel}>Delivery Fee</Text>
-        <Text style={styles.billValue}>{formatCurrency(DELIVERY_FEE)}</Text>
-      </View>
-
-      <View style={styles.billRow}>
-        <Text style={styles.billLabel}>Platform Fee</Text>
-        <Text style={styles.billValue}>{formatCurrency(PLATFORM_FEE)}</Text>
-      </View>
-
-      {discountAmount > 0 && (
-        <View style={[styles.billRow, styles.discountRow]}>
-          <Text style={styles.discountLabel}>
-            <Text style={styles.discountTag}>{appliedPromo}</Text> Discount
-          </Text>
-          <Text style={styles.discountValue}>-{formatCurrency(discountAmount)}</Text>
-        </View>
-      )}
-
-      <View style={styles.divider} />
-
-      <View style={styles.totalRow}>
-        <Text style={styles.totalLabel}>Total</Text>
-        <Text style={styles.totalValue}>{formatCurrency(total)}</Text>
-      </View>
-    </GlassCard>
+  const renderDeliveryInstructions = () => (
+    <View style={styles.instructionsSection}>
+      <Text style={styles.sectionLabel}>Delivery Instructions</Text>
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        contentContainerStyle={styles.instructionsScroll}
+      >
+        {DELIVERY_INSTRUCTIONS.map((item) => {
+          const isSelected = selectedInstruction === item.id;
+          return (
+            <TouchableOpacity
+              key={item.id}
+              style={[styles.instructionChip, isSelected && styles.instructionChipSelected]}
+              onPress={() => handleInstructionSelect(item.id)}
+              activeOpacity={0.7}
+            >
+              <item.Icon
+                size={15}
+                color={isSelected ? colors.primary : colors.textTertiary}
+                strokeWidth={2}
+              />
+              <Text
+                style={[
+                  styles.instructionText,
+                  isSelected && styles.instructionTextSelected,
+                ]}
+              >
+                {item.label}
+              </Text>
+              {isSelected && (
+                <View style={styles.instructionCheck}>
+                  <Text style={styles.instructionCheckText}>✓</Text>
+                </View>
+              )}
+            </TouchableOpacity>
+          );
+        })}
+      </ScrollView>
+    </View>
   );
+
+  const renderBillBreakdown = () => {
+    const billHeight = billExpanded.interpolate({
+      inputRange: [0, 1],
+      outputRange: [0, 180],
+    });
+
+    const chevronDeg = chevronRotate.interpolate({
+      inputRange: [0, 1],
+      outputRange: [0, 180],
+    });
+
+    return (
+      <GlassCard style={styles.billCard} variant="default" padding="md">
+        <TouchableOpacity
+          style={styles.billHeader}
+          onPress={toggleBill}
+          activeOpacity={0.7}
+        >
+          <Text style={styles.billTitle}>Bill Details</Text>
+          <Animated.View style={{ transform: [{ rotate: `${chevronDeg}deg` }] }}>
+            <ChevronDown size={18} color={colors.textTertiary} />
+          </Animated.View>
+        </TouchableOpacity>
+
+        <Animated.View style={[styles.billContent, { maxHeight: billHeight }]}>
+          <View style={styles.billRow}>
+            <Text style={styles.billLabel}>Item Total</Text>
+            <Text style={styles.billValue}>{formatCurrency(subtotal)}</Text>
+          </View>
+
+          <View style={styles.billRow}>
+            <Text style={styles.billLabel}>Taxes & GST (5%)</Text>
+            <Text style={styles.billValue}>{formatCurrency(taxAmount)}</Text>
+          </View>
+
+          <View style={styles.billRow}>
+            <Text style={styles.billLabel}>Delivery Fee</Text>
+            <Text style={styles.billValue}>{formatCurrency(DELIVERY_FEE)}</Text>
+          </View>
+
+          <View style={styles.billRow}>
+            <Text style={styles.billLabel}>Platform Fee</Text>
+            <Text style={styles.billValue}>{formatCurrency(PLATFORM_FEE)}</Text>
+          </View>
+
+          {discountAmount > 0 && (
+            <View style={[styles.billRow, styles.discountRow]}>
+              <Text style={styles.discountLabel}>
+                <Text style={styles.discountTag}>{appliedPromo}</Text> Discount
+              </Text>
+              <Text style={styles.discountValue}>-{formatCurrency(discountAmount)}</Text>
+            </View>
+          )}
+        </Animated.View>
+
+        <View style={styles.divider} />
+
+        <View style={styles.totalRow}>
+          <Text style={styles.totalLabel}>Total</Text>
+          <Text style={styles.totalValue}>{formatCurrency(total)}</Text>
+        </View>
+      </GlassCard>
+    );
+  };
 
   const renderPromoCode = () => (
     <GlassCard style={styles.promoCard} variant="default" padding="md">
@@ -263,7 +392,6 @@ export default function CartScreen() {
       <KeyboardAvoidingView
         style={styles.keyboardView}
         behavior={Platform.OS === "ios" ? "padding" : "height"}
-        keyboardShouldPersistTaps="handled"
       >
         {/* Header */}
         <View style={styles.header}>
@@ -288,6 +416,7 @@ export default function CartScreen() {
           showsVerticalScrollIndicator={false}
           ListFooterComponent={
             <View style={styles.footer}>
+              {renderDeliveryInstructions()}
               {renderPromoCode()}
               {renderBillBreakdown()}
               <View style={styles.footerSpacer} />
@@ -296,7 +425,15 @@ export default function CartScreen() {
         />
 
         {/* Sticky Checkout Button */}
-        <View style={[styles.stickyFooter, { paddingBottom: insets.bottom > 0 ? insets.bottom + spacing.md : spacing.md }]}>
+        <View
+          style={[
+            styles.stickyFooter,
+            {
+              paddingBottom:
+                insets.bottom > 0 ? insets.bottom + spacing.md : spacing.md,
+            },
+          ]}
+        >
           <View style={styles.stickyContent}>
             <View style={styles.totalInfo}>
               <Text style={styles.stickyTotalLabel}>Total</Text>
@@ -359,6 +496,62 @@ const styles = StyleSheet.create({
   },
   footer: {
     marginTop: spacing.sm,
+  },
+  instructionsSection: {
+    marginBottom: spacing.md,
+  },
+  sectionLabel: {
+    ...typography.caption,
+    color: colors.textTertiary,
+    textTransform: "uppercase",
+    letterSpacing: 1.5,
+    fontWeight: "600",
+    marginBottom: spacing.sm,
+  },
+  instructionsScroll: {
+    gap: spacing.sm,
+  },
+  instructionChip: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: colors.backgroundCard,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+    borderRadius: borderRadius.full,
+    borderWidth: 1,
+    borderColor: colors.border,
+    gap: spacing.xs,
+    marginRight: spacing.sm,
+  },
+  instructionChipSelected: {
+    borderColor: colors.primary,
+    backgroundColor: colors.primaryGlow,
+  },
+  instructionIcon: {
+    // Lucide icon styling applied inline
+  },
+  instructionText: {
+    ...typography.bodySmall,
+    color: colors.textSecondary,
+    fontWeight: "500",
+  },
+  instructionTextSelected: {
+    color: colors.primary,
+    fontWeight: "600",
+  },
+  instructionCheck: {
+    width: 16,
+    height: 16,
+    borderRadius: 8,
+    backgroundColor: colors.primary,
+    alignItems: "center",
+    justifyContent: "center",
+    marginLeft: spacing.xs,
+  },
+  instructionCheckText: {
+    color: colors.white,
+    fontSize: 10,
+    fontWeight: "700",
   },
   promoCard: {
     marginBottom: spacing.md,
@@ -426,10 +619,18 @@ const styles = StyleSheet.create({
   billCard: {
     marginBottom: spacing.md,
   },
+  billHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: spacing.sm,
+  },
   billTitle: {
     ...typography.h4,
     color: colors.textPrimary,
-    marginBottom: spacing.md,
+  },
+  billContent: {
+    overflow: "hidden",
   },
   billRow: {
     flexDirection: "row",

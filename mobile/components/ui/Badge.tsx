@@ -20,7 +20,7 @@ interface BadgeProps {
 }
 
 const variantStyles: Record<BadgeVariant, { bg: string; text: string; border?: string }> = {
-  primary: { bg: "rgba(124, 58, 237, 0.15)", text: colors.primary, border: colors.primary },
+  primary: { bg: colors.primaryGlow, text: colors.primary, border: colors.primary },
   secondary: { bg: colors.backgroundElevated, text: colors.textSecondary, border: colors.border },
   success: { bg: colors.successBg, text: colors.success, border: colors.success },
   warning: { bg: colors.warningBg, text: colors.warning, border: colors.warning },

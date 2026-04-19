@@ -1,33 +1,35 @@
-// Premium Purple Theme - Glassmorphism Dark
-// Zomato/Uber Eats quality with fintech/AI aesthetic
+// Premium Coral/Orange Theme - Zomato/Swiggy Quality
+// World-class food delivery design system
 
 export const colors = {
   // Background Colors (Deep Dark)
-  background: "#0B0B0F",
-  backgroundSecondary: "#141419",
-  backgroundCard: "#1C1C22",
-  backgroundElevated: "#222228",
-  backgroundHover: "#2A2A32",
+  background: "#0D0D0D",
+  backgroundSecondary: "#161616",
+  backgroundCard: "#1E1E1E",
+  backgroundElevated: "#282828",
+  backgroundHover: "#333333",
 
-  // Brand Primary (Purple)
-  primary: "#7C3AED",
-  primaryLight: "#8B5CF6",
-  primaryDark: "#6D28D9",
-  primaryGlow: "rgba(124, 58, 237, 0.25)",
+  // Brand Primary (Coral/Orange)
+  primary: "#FF4500",
+  primaryLight: "#FF6B35",
+  primaryDark: "#E63D00",
+  primaryGlow: "rgba(255, 69, 0, 0.2)",
+  primaryGlowStrong: "rgba(255, 69, 0, 0.35)",
 
-  // Secondary (Cyan)
-  secondary: "#06B6D4",
-  secondaryLight: "#22D3EE",
-  secondaryDark: "#0891B2",
+  // Secondary (Warm Orange)
+  secondary: "#FF8C42",
+  secondaryLight: "#FFA366",
+  secondaryDark: "#E67332",
 
-  // Accent (Gold/Amber)
-  accent: "#F59E0B",
-  accentLight: "#FBBF24",
-  accentDark: "#D97706",
+  // Accent (Electric Yellow)
+  accent: "#FFD60A",
+  accentLight: "#FFE44D",
+  accentDark: "#E6BE00",
+  accentGlow: "rgba(255, 214, 10, 0.2)",
 
   // Status Colors
-  success: "#10B981",
-  successBg: "rgba(16, 185, 129, 0.12)",
+  success: "#22C55E",
+  successBg: "rgba(34, 197, 94, 0.12)",
   warning: "#F59E0B",
   warningBg: "rgba(245, 158, 11, 0.12)",
   error: "#EF4444",
@@ -38,7 +40,7 @@ export const colors = {
   // Border Colors
   border: "rgba(255, 255, 255, 0.08)",
   borderLight: "rgba(255, 255, 255, 0.12)",
-  borderFocus: "#7C3AED",
+  borderFocus: "#FF4500",
 
   // Text Colors
   textPrimary: "#FFFFFF",
@@ -53,18 +55,18 @@ export const colors = {
   gray200: "#E4E4E7",
   gray300: "#D4D4D8",
   gray400: "#A1A1AA",
-  textLight: "#D4D4D8",
 
   // Order Status Colors
   orderPending: "#F59E0B",
   orderConfirmed: "#3B82F6",
-  orderPreparing: "#8B5CF6",
+  orderPreparing: "#FF6B35",
   orderReady: "#EF4444",
-  orderDelivered: "#10B981",
+  orderInTransit: "#FF8C42",
+  orderDelivered: "#22C55E",
   orderCancelled: "#EF4444",
 
   // Veg/Non-veg
-  veg: "#10B981",
+  veg: "#22C55E",
   nonVeg: "#EF4444",
 
   // Glassmorphism
@@ -72,30 +74,41 @@ export const colors = {
   glassBorder: "rgba(255, 255, 255, 0.10)",
   glassHover: "rgba(255, 255, 255, 0.08)",
 
+  // Coral gradient presets
+  gradientCoralStart: "#FF4500",
+  gradientCoralEnd: "#FF6B35",
+  gradientYellowStart: "#FFD60A",
+  gradientYellowEnd: "#FFA500",
+
   // Misc
   overlay: "rgba(0, 0, 0, 0.6)",
-  shimmer: "#1C1C22",
-  shimmerHighlight: "#2A2A32",
+  shimmer: "#1E1E1E",
+  shimmerHighlight: "#2A2A2A",
 
   // Gradient overlays
   gradientStart: "rgba(0,0,0,0)",
   gradientEnd: "rgba(0,0,0,0.7)",
+
+  // Live/Status indicators
+  liveGreen: "#22C55E",
+  liveGreenGlow: "rgba(34, 197, 94, 0.3)",
 };
 
 export const spacing = {
   xs: 4,
   sm: 8,
   md: 16,
-  lg: 24,
-  xl: 32,
-  xxl: 48,
+  lg: 20,
+  xl: 24,
+  xxl: 32,
+  xxxl: 48,
 };
 
 export const typography = {
-  display: {
-    fontSize: 36,
-    fontWeight: "700" as const,
-    lineHeight: 44,
+  hero: {
+    fontSize: 40,
+    fontWeight: "800" as const,
+    lineHeight: 48,
     letterSpacing: -0.5,
   },
   h1: {
@@ -106,7 +119,7 @@ export const typography = {
   },
   h2: {
     fontSize: 24,
-    fontWeight: "600" as const,
+    fontWeight: "700" as const,
     lineHeight: 32,
   },
   h3: {
@@ -183,12 +196,26 @@ export const shadows = {
     shadowRadius: 12,
     elevation: 5,
   },
-  glow: {
-    shadowColor: "#7C3AED",
+  coral: {
+    shadowColor: "#FF4500",
     shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.4,
+    shadowOpacity: 0.25,
     shadowRadius: 16,
     elevation: 8,
+  },
+  coralStrong: {
+    shadowColor: "#FF4500",
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.4,
+    shadowRadius: 24,
+    elevation: 10,
+  },
+  glow: {
+    shadowColor: "#FF4500",
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.5,
+    shadowRadius: 20,
+    elevation: 6,
   },
   glass: {
     shadowColor: "#000",

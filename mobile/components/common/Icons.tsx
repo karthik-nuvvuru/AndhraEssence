@@ -48,6 +48,9 @@ import {
   Gift,
   Award,
   Coffee,
+  Info,
+  Flame,
+  UtensilsCrossed,
 } from "lucide-react-native";
 
 export const icons = {
@@ -112,6 +115,9 @@ export const icons = {
   Gift,
   Award,
   Zap,
+  Info,
+  Flame,
+  UtensilsCrossed,
 };
 
 export type IconName = keyof typeof icons;

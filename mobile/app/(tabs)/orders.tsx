@@ -61,6 +61,28 @@ export default function OrdersScreen() {
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  // Pulse animation for active timeline dot
+  const pulseAnim = useRef(new Animated.Value(1)).current;
+
+  useEffect(() => {
+    const pulse = Animated.loop(
+      Animated.sequence([
+        Animated.timing(pulseAnim, {
+          toValue: 1.3,
+          duration: 600,
+          useNativeDriver: true,
+        }),
+        Animated.timing(pulseAnim, {
+          toValue: 1,
+          duration: 600,
+          useNativeDriver: true,
+        }),
+      ])
+    );
+    pulse.start();
+    return () => pulse.stop();
+  }, [pulseAnim]);
+
   const fetchOrders = async (refresh: boolean = false) => {
     try {
       setError(null);
@@ -106,12 +128,22 @@ export default function OrdersScreen() {
           <View style={styles.statusTimeline}>
             {statusSteps.map((step, idx) => (
               <View key={step.key} style={styles.timelineStep}>
-                <View
-                  style={[
-                    styles.timelineDot,
-                    idx <= stepIndex ? styles.timelineDotActive : styles.timelineDotInactive,
-                  ]}
-                />
+                {idx === stepIndex ? (
+                  <Animated.View
+                    style={[
+                      styles.timelineDot,
+                      styles.timelineDotActive,
+                      { transform: [{ scale: pulseAnim }] },
+                    ]}
+                  />
+                ) : (
+                  <View
+                    style={[
+                      styles.timelineDot,
+                      idx < stepIndex ? styles.timelineDotActive : styles.timelineDotInactive,
+                    ]}
+                  />
+                )}
                 {idx < statusSteps.length - 1 && (
                   <View
                     style={[
@@ -135,7 +167,7 @@ export default function OrdersScreen() {
                 {item.restaurant_name || "Restaurant"}
               </Text>
               <Text style={styles.orderDate}>
-                {formatDate(item.placed_at)} {item.placed_at && new Date(item.placed_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                {item.placed_at ? formatDate(item.placed_at) : ""} {item.placed_at && new Date(item.placed_at!).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
               </Text>
             </View>
           </View>

@@ -135,7 +135,7 @@ const styles = StyleSheet.create({
   },
   primary: {
     backgroundColor: colors.primary,
-    ...shadows.glow,
+    ...shadows.coral,
   },
   secondary: {
     backgroundColor: colors.backgroundElevated,
@@ -151,7 +151,7 @@ const styles = StyleSheet.create({
   gradient: {
     backgroundColor: colors.primary,
     overflow: "hidden",
-    ...shadows.glow,
+    ...shadows.coralStrong,
   },
   sm: {
     paddingVertical: spacing.xs + 2,

@@ -10,16 +10,30 @@ import {
   Alert,
   TouchableOpacity,
   TextInput,
+  Platform,
 } from "react-native";
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
 import { Button } from "@/components/ui/Button";
 import { GlassCard } from "@/components/ui/GlassCard";
 import { LoadingSpinner } from "@/components/ui/LoadingSpinner";
+import {
+  MapPin,
+  CreditCard,
+  Wallet,
+  ChevronLeft,
+  ChevronDown,
+  Check,
+  UtensilsCrossed,
+  Plus,
+  Home,
+  Building2,
+} from "lucide-react-native";
 import { colors, typography, spacing, borderRadius, shadows } from "@/theme";
 import { useCartStore } from "@/store";
 import { orderApi, userApi } from "@/services/api/endpoints";
 import { formatCurrency } from "@/utils/formatters";
+import * as Haptics from "expo-haptics";
 import type { Address, PaymentMethod } from "@/types/api";
 type TipAmount = 0 | 20 | 50 | 100 | "custom";
 
@@ -36,7 +50,7 @@ export default function CheckoutScreen() {
   const [selectedAddressId, setSelectedAddressId] = useState<string | null>(null);
   const [loadingAddresses, setLoadingAddresses] = useState(true);
   const [deliveryInstructions, setDeliveryInstructions] = useState("");
-  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("razorpay");
+  const [paymentMethod, setPaymentMethod] = useState<"razorpay" | "wallet" | "cod">("razorpay");
   const [tipAmount, setTipAmount] = useState<TipAmount>(0);
   const [customTip, setCustomTip] = useState("");
   const [summaryExpanded, setSummaryExpanded] = useState(false);
@@ -78,12 +92,15 @@ export default function CheckoutScreen() {
 
   const getAddressIcon = (label: string) => {
     const lower = label.toLowerCase();
-    if (lower.includes("home")) return "🏠";
-    if (lower.includes("work") || lower.includes("office")) return "💼";
-    return "📍";
+    if (lower.includes("home")) return <Home size={20} color={colors.primary} />;
+    if (lower.includes("work") || lower.includes("office")) return <Building2 size={20} color={colors.primary} />;
+    return <MapPin size={20} color={colors.primary} />;
   };
 
   const handleTipSelect = (amount: TipAmount) => {
+    if (Platform.OS !== "web") {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    }
     if (tipAmount === amount) return;
     setTipAmount(amount);
     if (amount !== "custom") {
@@ -103,7 +120,7 @@ export default function CheckoutScreen() {
     const address = addresses.find(a => a.id === selectedAddressId);
     Alert.alert(
       "Confirm Order",
-      `Total: ${formatCurrency(total)}\nDelivery to: ${address?.address_line || "selected address"}\nPayment: ${paymentMethod === "razorpay" ? "Credit/Debit Card" : paymentMethod === "wallet" ? "Wallet" : "Cash on Delivery"}`,
+      `Total: ${formatCurrency(total)}\nDelivery to: ${address?.address_line1 || "selected address"}\nPayment: ${paymentMethod === "razorpay" ? "Credit/Debit Card" : paymentMethod === "wallet" ? "Wallet" : "Cash on Delivery"}`,
       [
         { text: "Cancel", style: "cancel" },
         { text: "Confirm", onPress: handlePlaceOrder, style: "default" },
@@ -138,6 +155,9 @@ export default function CheckoutScreen() {
       });
 
       clearCart();
+      if (Platform.OS !== "web") {
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      }
       router.replace(`/order/${response.data.id}`);
     } catch (error: any) {
       const message = error.response?.data?.detail || "Failed to place order";
@@ -151,7 +171,9 @@ export default function CheckoutScreen() {
     return (
       <SafeAreaView style={styles.container}>
         <View style={styles.emptyContainer}>
-          <Text style={styles.emptyIcon}>🛒</Text>
+          <View style={styles.emptyIconContainer}>
+            <UtensilsCrossed size={48} color={colors.textTertiary} />
+          </View>
           <Text style={styles.emptyTitle}>Your cart is empty</Text>
           <Text style={styles.emptySubtext}>Add items to proceed with checkout</Text>
           <Button title="Browse Restaurants" onPress={() => router.back()} />
@@ -165,7 +187,7 @@ export default function CheckoutScreen() {
       {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-          <Text style={styles.backIcon}>←</Text>
+          <ChevronLeft size={22} color={colors.textPrimary} />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Checkout</Text>
         <View style={styles.headerSpacer} />
@@ -179,7 +201,9 @@ export default function CheckoutScreen() {
         {/* Restaurant Banner */}
         {restaurantName && (
           <View style={styles.restaurantBanner}>
-            <Text style={styles.restaurantIcon}>🍽</Text>
+            <View style={styles.restaurantIconBox}>
+              <UtensilsCrossed size={20} color={colors.primary} />
+            </View>
             <Text style={styles.restaurantName}>{restaurantName}</Text>
           </View>
         )}
@@ -205,7 +229,9 @@ export default function CheckoutScreen() {
                 }}
               >
                 <View style={styles.addressIconContainer}>
-                  <Text style={styles.addressIcon}>{selectedAddress ? getAddressIcon(selectedAddress.label) : "📍"}</Text>
+                  <View style={styles.addressIconBox}>
+                    {selectedAddress ? getAddressIcon(selectedAddress.label) : <MapPin size={20} color={colors.primary} />}
+                  </View>
                 </View>
                 <View style={styles.addressContent}>
                   {selectedAddress ? (
@@ -219,7 +245,7 @@ export default function CheckoutScreen() {
                         )}
                       </View>
                       <Text style={styles.addressText}>
-                        {selectedAddress.address_line}, {selectedAddress.city}
+                        {selectedAddress.address_line1}, {selectedAddress.city}
                       </Text>
                       <Text style={styles.addressSubtext}>
                         {selectedAddress.state} {selectedAddress.postal_code}
@@ -259,9 +285,9 @@ export default function CheckoutScreen() {
           <Text style={styles.sectionTitle}>Payment Method</Text>
           <View style={styles.paymentOptions}>
             {[
-              { id: "razorpay", label: "Cards", icon: "💳" },
-              { id: "wallet", label: "Wallet", icon: "👛" },
-              { id: "cod", label: "Cash on Delivery", icon: "💵" },
+              { id: "razorpay", label: "Cards", icon: <CreditCard size={18} color={paymentMethod === "razorpay" ? colors.primary : colors.textSecondary} /> },
+              { id: "wallet", label: "Wallet", icon: <Wallet size={18} color={paymentMethod === "wallet" ? colors.primary : colors.textSecondary} /> },
+              { id: "cod", label: "Cash on Delivery", icon: <MapPin size={18} color={paymentMethod === "cod" ? colors.primary : colors.textSecondary} /> },
             ].map((method) => (
               <TouchableOpacity
                 key={method.id}
@@ -271,7 +297,7 @@ export default function CheckoutScreen() {
                 ]}
                 onPress={() => setPaymentMethod(method.id as PaymentMethod)}
               >
-                <Text style={styles.paymentIcon}>{method.icon}</Text>
+              <View style={styles.paymentIconBox}>{method.icon}</View>
                 <Text
                   style={[
                     styles.paymentLabel,
@@ -469,11 +495,6 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: colors.border,
   },
-  backIcon: {
-    fontSize: 24,
-    color: colors.textPrimary,
-    fontWeight: "600",
-  },
   headerTitle: {
     ...typography.h3,
     color: colors.textPrimary,
@@ -496,8 +517,13 @@ const styles = StyleSheet.create({
     borderColor: colors.border,
     marginBottom: spacing.lg,
   },
-  restaurantIcon: {
-    fontSize: 24,
+  restaurantIconBox: {
+    width: 40,
+    height: 40,
+    borderRadius: borderRadius.md,
+    backgroundColor: colors.primaryGlow,
+    alignItems: "center",
+    justifyContent: "center",
     marginRight: spacing.sm,
   },
   restaurantName: {
@@ -530,8 +556,9 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     marginRight: spacing.md,
   },
-  addressIcon: {
-    fontSize: 24,
+  addressIconBox: {
+    alignItems: "center",
+    justifyContent: "center",
   },
   addressContent: {
     flex: 1,
@@ -627,8 +654,7 @@ const styles = StyleSheet.create({
     borderColor: colors.primary,
     backgroundColor: colors.primaryGlow,
   },
-  paymentIcon: {
-    fontSize: 18,
+  paymentIconBox: {
     marginRight: spacing.xs,
   },
   paymentLabel: {
@@ -863,7 +889,7 @@ const styles = StyleSheet.create({
     minWidth: 180,
     borderRadius: borderRadius.lg,
     overflow: "hidden",
-    ...shadows.glow,
+    ...shadows.coralStrong,
   },
   gradientButtonInner: {
     position: "relative",
@@ -903,9 +929,16 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     padding: spacing.xl,
   },
-  emptyIcon: {
-    fontSize: 64,
-    marginBottom: spacing.md,
+  emptyIconContainer: {
+    width: 100,
+    height: 100,
+    borderRadius: 50,
+    backgroundColor: colors.backgroundCard,
+    borderWidth: 1,
+    borderColor: colors.border,
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: spacing.lg,
   },
   emptyTitle: {
     ...typography.h3,

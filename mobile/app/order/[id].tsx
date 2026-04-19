@@ -11,7 +11,7 @@ import {
 } from "react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { Check, Phone, Package, UtensilsCrossed, Clock, MapPin, Copy } from "lucide-react-native";
+import { Check, Phone, Package, UtensilsCrossed, Clock, MapPin, Copy, ChevronLeft } from "lucide-react-native";
 import { colors, typography, spacing, borderRadius, shadows } from "@/theme";
 import { orderApi } from "@/services/api/endpoints";
 import { useOrderStore, useAuthStore } from "@/store";
@@ -44,14 +44,14 @@ const statusIndex: Record<string, number> = {
 };
 
 const statusDisplayColors: Record<string, { bg: string; text: string; border: string }> = {
-  pending: { bg: "rgba(245, 158, 11, 0.15)", text: "#F59E0B", border: "#F59E0B" },
-  confirmed: { bg: "rgba(59, 130, 246, 0.15)", text: "#3B82F6", border: "#3B82F6" },
-  preparing: { bg: "rgba(139, 92, 246, 0.15)", text: "#8B5CF6", border: "#8B5CF6" },
-  ready: { bg: "rgba(239, 68, 68, 0.15)", text: "#EF4444", border: "#EF4444" },
-  picked_up: { bg: "rgba(6, 182, 212, 0.15)", text: "#06B6D4", border: "#06B6D4" },
-  in_transit: { bg: "rgba(6, 182, 212, 0.15)", text: "#06B6D4", border: "#06B6D4" },
-  delivered: { bg: "rgba(16, 185, 129, 0.15)", text: "#10B981", border: "#10B981" },
-  cancelled: { bg: "rgba(239, 68, 68, 0.15)", text: "#EF4444", border: "#EF4444" },
+  pending: { bg: colors.warningBg, text: colors.warning, border: colors.warning },
+  confirmed: { bg: colors.infoBg, text: colors.info, border: colors.info },
+  preparing: { bg: colors.primaryGlow, text: colors.primary, border: colors.primary },
+  ready: { bg: colors.errorBg, text: colors.error, border: colors.error },
+  picked_up: { bg: colors.secondaryLight + "25", text: colors.secondary, border: colors.secondary },
+  in_transit: { bg: colors.secondaryLight + "25", text: colors.secondary, border: colors.secondary },
+  delivered: { bg: colors.successBg, text: colors.success, border: colors.success },
+  cancelled: { bg: colors.errorBg, text: colors.error, border: colors.error },
 };
 
 interface RiderInfo {
@@ -494,6 +494,10 @@ const styles = StyleSheet.create({
   },
   mapOverlay: {
     alignItems: "center",
+  },
+  mapPinContainer: {
+    alignItems: "center",
+    justifyContent: "center",
   },
   mapLabel: {
     ...typography.h4,

@@ -1,5 +1,5 @@
-// Premium Home Screen - Liquid Glass Design System
-import React, { useState, useEffect, useCallback } from "react";
+// Premium Home Screen - Cinematic Glassmorphism Design
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import {
   View,
   Text,
@@ -14,49 +14,72 @@ import {
 } from "react-native";
 import { useRouter } from "expo-router";
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
-import { Search, MapPin, ChevronDown, Clock, Star, UtensilsCrossed } from "lucide-react-native";
+import { Search, MapPin, ChevronDown, Clock, Star, UtensilsCrossed, Flame } from "lucide-react-native";
 import { RestaurantCard } from "@/components/restaurant/RestaurantCard";
 import { ShimmerCard } from "@/components/ui/Shimmer";
 import { colors, typography, spacing, borderRadius, shadows } from "@/theme";
 import { restaurantApi } from "@/services/api/endpoints";
 import type { Restaurant } from "@/types/api";
 
-const CATEGORIES = [
-  { id: "all", name: "All" },
-  { id: "biryani", name: "Biryani" },
-  { id: "south indian", name: "South Indian" },
-  { id: "starters", name: "Starters" },
-  { id: "curry", name: "Curry" },
-  { id: "desserts", name: "Desserts" },
-  { id: "andhra", name: "Andhra" },
+const FOOD_CATEGORIES = [
+  { id: "biryani", name: "Biryani", emoji: "🍚" },
+  { id: "south-indian", name: "South Indian", emoji: "🥘" },
+  { id: "starters", name: "Starters", emoji: "🍗" },
+  { id: "curry", name: "Curry", emoji: "🍛" },
+  { id: "desserts", name: "Desserts", emoji: "🍨" },
+  { id: "andhra", name: "Andhra", emoji: "🌶️" },
+  { id: "drinks", name: "Drinks", emoji: "🥤" },
 ];
 
 const FEATURED_ITEMS = [
   {
     id: "1",
     image: "https://images.unsplash.com/photo-1589302168068-964664d93dc0?w=500",
-    name: "Hyderabadi Biryani House",
+    name: "Hyderabadi Dum Biryani",
     rating: 4.5,
     time: "25-35 min",
     promo: "FREE DELIVERY",
+    restaurant: "Paradise Biryani",
   },
   {
     id: "2",
     image: "https://images.unsplash.com/photo-1563379091339-03b21ab4a4f8?w=500",
-    name: "Andhra Spice Kitchen",
+    name: "Andhra Chicken Curry",
     rating: 4.3,
     time: "30-40 min",
-    promo: "FREE DELIVERY",
+    promo: "20% OFF",
+    restaurant: "Andhra Spice Kitchen",
   },
   {
     id: "3",
     image: "https://images.unsplash.com/photo-1626645738196-c2a72c7ac1d2?w=500",
-    name: "South Indian Grand",
+    name: "Masala Dosa",
     rating: 4.7,
     time: "20-30 min",
     promo: "FREE DELIVERY",
+    restaurant: "South Indian Grand",
   },
 ];
+
+function LiveDot() {
+  const pulseAnim = useRef(new Animated.Value(1)).current;
+  useEffect(() => {
+    Animated.loop(
+      Animated.sequence([
+        Animated.timing(pulseAnim, { toValue: 1.4, duration: 800, useNativeDriver: true }),
+        Animated.timing(pulseAnim, { toValue: 1, duration: 800, useNativeDriver: true }),
+      ])
+    ).start();
+  }, []);
+  return (
+    <Animated.View
+      style={[
+        styles.liveDot,
+        { transform: [{ scale: pulseAnim }] },
+      ]}
+    />
+  );
+}
 
 export default function HomeScreen() {
   const router = useRouter();
@@ -70,6 +93,16 @@ export default function HomeScreen() {
   const [selectedCategory, setSelectedCategory] = useState("all");
 
   const scrollY = new Animated.Value(0);
+  const searchBarAnim = useRef(new Animated.Value(1)).current;
+  const heroAnim = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    Animated.timing(heroAnim, {
+      toValue: 1,
+      duration: 800,
+      useNativeDriver: false,
+    }).start();
+  }, []);
 
   const fetchRestaurants = async (pageNum: number = 1, refresh: boolean = false) => {
     try {
@@ -114,92 +147,209 @@ export default function HomeScreen() {
   };
 
   const headerOpacity = scrollY.interpolate({
-    inputRange: [0, 80],
-    outputRange: [1, 0.95],
-    extrapolate: Animated.Interpolation.CLAMP,
+    inputRange: [0, 60],
+    outputRange: [1, 0.92],
+    extrapolate: "clamp",
   });
 
-  const renderHeader = () => (
-    <View style={[styles.headerContent, { paddingTop: insets.top + 80 }]}>
-      {/* Categories */}
-      <View style={styles.categoriesSection}>
-        <Text style={styles.sectionLabel}>Explore</Text>
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={styles.categoriesContainer}
-          decelerationRate="fast"
-        >
-          {CATEGORIES.map((cat) => (
-            <TouchableOpacity
-              key={cat.id}
-              style={[
-                styles.categoryPill,
-                selectedCategory === cat.id && styles.categoryPillActive,
-              ]}
-              onPress={() => setSelectedCategory(cat.id)}
-              activeOpacity={0.7}
-            >
-              <View style={[styles.categoryIconBox, selectedCategory === cat.id && styles.categoryIconBoxActive]}>
-                <UtensilsCrossed size={14} color={selectedCategory === cat.id ? colors.white : colors.primary} />
-              </View>
-              <Text
-                style={[
-                  styles.categoryText,
-                  selectedCategory === cat.id && styles.categoryTextActive,
-                ]}
-              >
-                {cat.name}
-              </Text>
-            </TouchableOpacity>
-          ))}
-        </ScrollView>
+  const searchBarScale = scrollY.interpolate({
+    inputRange: [0, 100],
+    outputRange: [1, 0.95],
+    extrapolate: "clamp",
+  });
+
+  const searchBarOpacity = scrollY.interpolate({
+    inputRange: [0, 100],
+    outputRange: [1, 0.8],
+    extrapolate: "clamp",
+  });
+
+  const heroTranslateY = scrollY.interpolate({
+    inputRange: [0, 150],
+    outputRange: [0, -40],
+    extrapolate: "clamp",
+  });
+
+  const heroOpacity = scrollY.interpolate({
+    inputRange: [0, 80],
+    outputRange: [1, 0],
+    extrapolate: "clamp",
+  });
+
+  const heroScale = scrollY.interpolate({
+    inputRange: [0, 150],
+    outputRange: [1, 1.08],
+    extrapolate: "clamp",
+  });
+
+  const renderHero = () => (
+    <Animated.View
+      style={[
+        styles.heroContainer,
+        {
+          paddingTop: insets.top,
+          opacity: heroOpacity,
+          transform: [{ translateY: heroTranslateY }, { scale: heroScale }],
+        },
+      ]}
+    >
+      {/* Cinematic gradient background */}
+      <View style={styles.heroGradientBg}>
+        <View style={styles.heroGradientLayer1} />
+        <View style={styles.heroGradientLayer2} />
+        <View style={styles.heroGradientOverlay} />
       </View>
 
-      {/* Featured Section */}
-      <View style={styles.featuredSection}>
-        <View style={styles.sectionHeader}>
-          <Text style={styles.featuredTitle}>Top Picks</Text>
-          <TouchableOpacity activeOpacity={0.7}>
-            <Text style={styles.seeAllText}>See all</Text>
-          </TouchableOpacity>
+      {/* Location Row with Live Dot */}
+      <View style={styles.heroLocationRow}>
+        <View style={styles.locationIconBox}>
+          <MapPin size={18} color={colors.white} />
         </View>
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={styles.featuredScroll}
-          decelerationRate="fast"
-          snapToInterval={210}
+        <View style={styles.locationTextContainer}>
+          <View style={styles.locationTopRow}>
+            <Text style={styles.deliverTo}>Deliver to</Text>
+            <View style={styles.liveIndicator}>
+              <LiveDot />
+              <Text style={styles.liveText}>Live</Text>
+            </View>
+          </View>
+          <View style={styles.locationBottomRow}>
+            <Text style={styles.locationCity}>Hyderabad, Telangana</Text>
+            <ChevronDown size={16} color={colors.white} />
+          </View>
+        </View>
+      </View>
+
+      {/* Greeting */}
+      <View style={styles.heroGreeting}>
+        <Text style={styles.heroGreetingText}>Hungry?</Text>
+        <Text style={styles.heroGreetingSubtext}>
+          Order from the best Andhra restaurants
+        </Text>
+      </View>
+
+      {/* Morphing Search Bar */}
+      <Animated.View
+        style={[
+          styles.heroSearchContainer,
+          {
+            opacity: searchBarOpacity,
+            transform: [{ scale: searchBarScale }],
+          },
+        ]}
+      >
+        <TouchableOpacity
+          style={styles.searchBar}
+          activeOpacity={0.8}
+          onPress={() => router.push("/(tabs)/search")}
         >
-          {FEATURED_ITEMS.map((item) => (
-            <View key={item.id} style={styles.featuredCard}>
-              <Image source={{ uri: item.image }} style={styles.featuredImage} />
-              <View style={styles.featuredGradient} />
-              <View style={styles.featuredPromo}>
-                <Text style={styles.featuredPromoText}>{item.promo}</Text>
-              </View>
-              <View style={styles.featuredInfo}>
-                <Text style={styles.featuredName} numberOfLines={1}>{item.name}</Text>
-                <View style={styles.featuredMeta}>
-                  <Star size={11} color={colors.accent} fill={colors.accent} />
-                  <Text style={styles.featuredMetaText}>{item.rating}</Text>
-                  <View style={styles.metaDot} />
-                  <Clock size={11} color="rgba(255,255,255,0.7)" />
-                  <Text style={styles.featuredMetaText}>{item.time}</Text>
-                </View>
+          <Search size={18} color={colors.textTertiary} />
+          <Text style={styles.searchPlaceholder}>
+            Search for biryani, dosa, curry...
+          </Text>
+        </TouchableOpacity>
+      </Animated.View>
+    </Animated.View>
+  );
+
+  const renderFoodCategories = () => (
+    <View style={styles.categoriesSection}>
+      <View style={styles.sectionHeader}>
+        <Text style={styles.sectionTitle}>What's on your mind?</Text>
+        <TouchableOpacity activeOpacity={0.7}>
+          <Text style={styles.seeAllText}>See all</Text>
+        </TouchableOpacity>
+      </View>
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        contentContainerStyle={styles.categoriesContainer}
+        decelerationRate="fast"
+        snapToInterval={90}
+      >
+        {FOOD_CATEGORIES.map((cat) => (
+          <TouchableOpacity
+            key={cat.id}
+            style={[
+              styles.categoryItem,
+              selectedCategory === cat.id && styles.categoryItemActive,
+            ]}
+            onPress={() => setSelectedCategory(cat.id)}
+            activeOpacity={0.7}
+          >
+            <View
+              style={[
+                styles.categoryIconContainer,
+                selectedCategory === cat.id && styles.categoryIconActive,
+              ]}
+            >
+              <Text style={styles.categoryEmoji}>{cat.emoji}</Text>
+            </View>
+            <Text
+              style={[
+                styles.categoryName,
+                selectedCategory === cat.id && styles.categoryNameActive,
+              ]}
+              numberOfLines={1}
+            >
+              {cat.name}
+            </Text>
+          </TouchableOpacity>
+        ))}
+      </ScrollView>
+    </View>
+  );
+
+  const renderFeaturedSection = () => (
+    <View style={styles.featuredSection}>
+      <View style={styles.sectionHeader}>
+        <View style={styles.sectionTitleRow}>
+          <Flame size={20} color={colors.accent} />
+          <Text style={styles.sectionTitle}>Top Picks for You</Text>
+        </View>
+        <TouchableOpacity activeOpacity={0.7}>
+          <Text style={styles.seeAllText}>See all</Text>
+        </TouchableOpacity>
+      </View>
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        contentContainerStyle={styles.featuredScroll}
+        decelerationRate="fast"
+        snapToInterval={220}
+      >
+        {FEATURED_ITEMS.map((item) => (
+          <View key={item.id} style={styles.featuredCard}>
+            <Image source={{ uri: item.image }} style={styles.featuredImage} />
+            <View style={styles.featuredGradient} />
+            <View style={styles.featuredPromoBadge}>
+              <Text style={styles.featuredPromoText}>{item.promo}</Text>
+            </View>
+            <View style={styles.featuredInfo}>
+              <Text style={styles.featuredName} numberOfLines={1}>
+                {item.name}
+              </Text>
+              <Text style={styles.featuredRestaurant} numberOfLines={1}>
+                {item.restaurant}
+              </Text>
+              <View style={styles.featuredMeta}>
+                <Star size={11} color={colors.accent} fill={colors.accent} />
+                <Text style={styles.featuredMetaText}>{item.rating}</Text>
+                <View style={styles.metaDot} />
+                <Clock size={11} color="rgba(255,255,255,0.7)" />
+                <Text style={styles.featuredMetaText}>{item.time}</Text>
               </View>
             </View>
-          ))}
-        </ScrollView>
-      </View>
+          </View>
+        ))}
+      </ScrollView>
+    </View>
+  );
 
-      {/* Restaurants Section */}
-      <View style={styles.restaurantsSection}>
-        <View style={styles.restaurantsHeaderRow}>
-          <Text style={styles.sectionTitle}>Restaurants</Text>
-          <Text style={styles.restaurantCount}>{restaurants.length} places</Text>
-        </View>
-      </View>
+  const renderRestaurantsHeader = () => (
+    <View style={styles.restaurantsHeaderRow}>
+      <Text style={styles.restaurantsHeaderTitle}>All Restaurants</Text>
+      <Text style={styles.restaurantsCount}>{restaurants.length} places</Text>
     </View>
   );
 
@@ -209,13 +359,21 @@ export default function HomeScreen() {
         <UtensilsCrossed size={40} color={colors.textTertiary} />
       </View>
       <Text style={styles.emptyTitle}>No restaurants found</Text>
-      <Text style={styles.emptySubtext}>Try adjusting your search or check back later</Text>
+      <Text style={styles.emptySubtext}>
+        Try adjusting your search or check back later
+      </Text>
     </View>
   );
 
-  const renderRestaurantItem = useCallback(({ item }: { item: Restaurant }) => (
-    <RestaurantCard restaurant={item} onPress={() => handleRestaurantPress(item)} />
-  ), [handleRestaurantPress]);
+  const renderRestaurantItem = useCallback(
+    ({ item }: { item: Restaurant }) => (
+      <RestaurantCard
+        restaurant={item}
+        onPress={() => handleRestaurantPress(item)}
+      />
+    ),
+    [handleRestaurantPress]
+  );
 
   const renderSkeletonLoader = () => (
     <View style={styles.skeletonContainer}>
@@ -229,26 +387,7 @@ export default function HomeScreen() {
     return (
       <SafeAreaView style={styles.container} edges={["top"]}>
         <StatusBar barStyle="light-content" backgroundColor={colors.background} />
-        <View style={[styles.fixedHeader, { paddingTop: spacing.lg }]}>
-          <View style={styles.glassHeader}>
-            <TouchableOpacity style={styles.locationSelector} activeOpacity={0.7}>
-              <View style={styles.locationIconBox}>
-                <MapPin size={16} color={colors.primary} />
-              </View>
-              <View style={styles.locationInfo}>
-                <Text style={styles.locationLabel}>Deliver to</Text>
-                <View style={styles.locationRow}>
-                  <Text style={styles.locationText}>Hyderabad</Text>
-                  <ChevronDown size={14} color={colors.primary} />
-                </View>
-              </View>
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.searchBar} activeOpacity={0.8}>
-              <Search size={16} color={colors.textTertiary} />
-              <Text style={styles.searchPlaceholder}>Search restaurants or cuisines...</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
+        {renderHero()}
         <View style={styles.skeletonContent}>{renderSkeletonLoader()}</View>
       </SafeAreaView>
     );
@@ -264,7 +403,10 @@ export default function HomeScreen() {
           </View>
           <Text style={styles.errorTitle}>Something went wrong</Text>
           <Text style={styles.errorText}>{error}</Text>
-          <TouchableOpacity style={styles.retryButton} onPress={() => fetchRestaurants(1, true)}>
+          <TouchableOpacity
+            style={styles.retryButton}
+            onPress={() => fetchRestaurants(1, true)}
+          >
             <Text style={styles.retryButtonText}>Try Again</Text>
           </TouchableOpacity>
         </View>
@@ -277,11 +419,19 @@ export default function HomeScreen() {
       <StatusBar barStyle="light-content" backgroundColor={colors.background} />
 
       {/* Fixed Glassmorphism Header */}
-      <Animated.View style={[styles.fixedHeader, { paddingTop: insets.top + spacing.sm }, { opacity: headerOpacity }]}>
+      <Animated.View
+        style={[
+          styles.fixedHeader,
+          {
+            paddingTop: insets.top + spacing.sm,
+            opacity: headerOpacity,
+          },
+        ]}
+      >
         <View style={styles.glassHeader}>
           {/* Location Selector */}
           <TouchableOpacity style={styles.locationSelector} activeOpacity={0.7}>
-            <View style={styles.locationIconBox}>
+            <View style={styles.locationIconBoxHeader}>
               <MapPin size={16} color={colors.primary} />
             </View>
             <View style={styles.locationInfo}>
@@ -295,12 +445,14 @@ export default function HomeScreen() {
 
           {/* Search Bar */}
           <TouchableOpacity
-            style={styles.searchBar}
+            style={styles.searchBarHeader}
             activeOpacity={0.8}
             onPress={() => router.push("/(tabs)/search")}
           >
             <Search size={16} color={colors.textTertiary} />
-            <Text style={styles.searchPlaceholder}>Search restaurants or cuisines...</Text>
+            <Text style={styles.searchPlaceholderHeader}>
+              Search biryani, dosa...
+            </Text>
           </TouchableOpacity>
         </View>
       </Animated.View>
@@ -310,7 +462,14 @@ export default function HomeScreen() {
         data={restaurants}
         keyExtractor={(item) => item.id}
         renderItem={renderRestaurantItem}
-        ListHeaderComponent={renderHeader}
+        ListHeaderComponent={() => (
+          <View>
+            {renderHero()}
+            {renderFoodCategories()}
+            {renderFeaturedSection()}
+            {renderRestaurantsHeader()}
+          </View>
+        )}
         ListEmptyComponent={renderEmpty}
         contentContainerStyle={styles.listContent}
         refreshControl={
@@ -326,7 +485,7 @@ export default function HomeScreen() {
         showsVerticalScrollIndicator={false}
         onScroll={Animated.event(
           [{ nativeEvent: { contentOffset: { y: scrollY } } }],
-          { useNativeDriver: true }
+          { useNativeDriver: false }
         )}
         scrollEventThrottle={16}
       />
@@ -348,7 +507,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.md,
   },
   glassHeader: {
-    backgroundColor: "rgba(11, 11, 15, 0.92)",
+    backgroundColor: "rgba(13, 13, 13, 0.92)",
     borderRadius: borderRadius.xl,
     padding: spacing.md,
     borderWidth: 1,
@@ -360,7 +519,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     marginBottom: spacing.sm,
   },
-  locationIconBox: {
+  locationIconBoxHeader: {
     width: 32,
     height: 32,
     borderRadius: borderRadius.sm,
@@ -386,7 +545,7 @@ const styles = StyleSheet.create({
     marginRight: spacing.xs,
     fontSize: 15,
   },
-  searchBar: {
+  searchBarHeader: {
     flexDirection: "row",
     alignItems: "center",
     backgroundColor: colors.backgroundCard,
@@ -396,171 +555,11 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: colors.border,
   },
-  searchPlaceholder: {
+  searchPlaceholderHeader: {
     ...typography.body,
     color: colors.textTertiary,
     flex: 1,
     marginLeft: spacing.sm,
-  },
-  headerContent: {
-    paddingHorizontal: spacing.md,
-  },
-  categoriesSection: {
-    marginBottom: spacing.lg,
-  },
-  sectionLabel: {
-    ...typography.caption,
-    color: colors.textTertiary,
-    textTransform: "uppercase",
-    letterSpacing: 1.5,
-    fontWeight: "600",
-    marginBottom: spacing.sm,
-  },
-  categoriesContainer: {
-    paddingVertical: spacing.xs,
-    gap: spacing.sm,
-  },
-  categoryPill: {
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: colors.backgroundCard,
-    paddingRight: spacing.md,
-    paddingVertical: spacing.sm,
-    borderRadius: borderRadius.full,
-    marginRight: spacing.sm,
-    borderWidth: 1,
-    borderColor: colors.border,
-  },
-  categoryPillActive: {
-    backgroundColor: colors.primary,
-    borderColor: colors.primary,
-  },
-  categoryIconBox: {
-    width: 28,
-    height: 28,
-    borderRadius: borderRadius.sm,
-    backgroundColor: colors.primaryGlow,
-    alignItems: "center",
-    justifyContent: "center",
-    marginRight: spacing.xs,
-  },
-  categoryIconBoxActive: {
-    backgroundColor: "rgba(255,255,255,0.2)",
-  },
-  categoryText: {
-    ...typography.bodySmall,
-    color: colors.textSecondary,
-    fontWeight: "500",
-  },
-  categoryTextActive: {
-    color: colors.white,
-    fontWeight: "600",
-  },
-  featuredSection: {
-    marginBottom: spacing.lg,
-  },
-  sectionHeader: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: spacing.sm,
-  },
-  featuredTitle: {
-    ...typography.h3,
-    color: colors.textPrimary,
-    fontWeight: "700",
-    letterSpacing: -0.2,
-  },
-  seeAllText: {
-    ...typography.bodySmall,
-    color: colors.primary,
-    fontWeight: "600",
-  },
-  featuredScroll: {
-    paddingRight: spacing.md,
-  },
-  featuredCard: {
-    width: 200,
-    height: 150,
-    borderRadius: borderRadius.lg,
-    overflow: "hidden",
-    marginRight: spacing.md,
-    position: "relative",
-  },
-  featuredImage: {
-    width: "100%",
-    height: "100%",
-    resizeMode: "cover",
-  },
-  featuredGradient: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: "rgba(0,0,0,0.15)",
-  },
-  featuredPromo: {
-    position: "absolute",
-    top: spacing.sm,
-    left: spacing.sm,
-    backgroundColor: colors.primary,
-    paddingHorizontal: spacing.sm + 2,
-    paddingVertical: spacing.xs,
-    borderRadius: borderRadius.sm,
-  },
-  featuredPromoText: {
-    ...typography.small,
-    color: colors.white,
-    fontWeight: "700",
-    fontSize: 9,
-    letterSpacing: 0.3,
-  },
-  featuredInfo: {
-    position: "absolute",
-    bottom: 0,
-    left: 0,
-    right: 0,
-    padding: spacing.sm,
-    backgroundColor: "rgba(0,0,0,0.55)",
-  },
-  featuredName: {
-    fontSize: 14,
-    fontWeight: "700",
-    color: colors.white,
-    marginBottom: 3,
-  },
-  featuredMeta: {
-    flexDirection: "row",
-    alignItems: "center",
-  },
-  featuredMetaText: {
-    ...typography.small,
-    color: "rgba(255,255,255,0.85)",
-    marginLeft: 3,
-    fontWeight: "500",
-  },
-  metaDot: {
-    width: 3,
-    height: 3,
-    borderRadius: 1.5,
-    backgroundColor: "rgba(255,255,255,0.5)",
-    marginHorizontal: spacing.xs,
-  },
-  restaurantsSection: {
-    marginBottom: spacing.sm,
-  },
-  restaurantsHeaderRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: spacing.md,
-  },
-  sectionTitle: {
-    ...typography.h4,
-    color: colors.textPrimary,
-    fontWeight: "700",
-    letterSpacing: -0.2,
-  },
-  restaurantCount: {
-    ...typography.bodySmall,
-    color: colors.textTertiary,
   },
   listContent: {
     paddingHorizontal: spacing.md,
@@ -568,37 +567,11 @@ const styles = StyleSheet.create({
   },
   skeletonContent: {
     flex: 1,
-    paddingTop: 140,
+    paddingTop: spacing.sm,
     paddingHorizontal: spacing.md,
   },
   skeletonContainer: {
     flex: 1,
-  },
-  emptyContainer: {
-    alignItems: "center",
-    justifyContent: "center",
-    paddingVertical: spacing.xxl * 2,
-  },
-  emptyIconContainer: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-    backgroundColor: colors.backgroundCard,
-    alignItems: "center",
-    justifyContent: "center",
-    marginBottom: spacing.md,
-    borderWidth: 1,
-    borderColor: colors.border,
-  },
-  emptyTitle: {
-    ...typography.h3,
-    color: colors.textSecondary,
-    marginBottom: spacing.xs,
-  },
-  emptySubtext: {
-    ...typography.body,
-    color: colors.textTertiary,
-    textAlign: "center",
   },
   errorContainer: {
     flex: 1,
@@ -636,5 +609,319 @@ const styles = StyleSheet.create({
     ...typography.button,
     color: colors.white,
     fontWeight: "600",
+  },
+
+  // Hero styles
+  heroContainer: {
+    position: "relative",
+    paddingTop: spacing.xxl,
+    paddingBottom: spacing.lg,
+  },
+  heroGradientBg: {
+    ...StyleSheet.absoluteFillObject,
+    overflow: "hidden",
+  },
+  heroGradientLayer1: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: "#1A0A00",
+  },
+  heroGradientLayer2: {
+    position: "absolute",
+    top: "-20%",
+    right: "-30%",
+    width: 300,
+    height: 300,
+    borderRadius: 150,
+    backgroundColor: colors.primaryGlowStrong,
+    opacity: 0.6,
+  },
+  heroGradientOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: "rgba(0,0,0,0.3)",
+  },
+  heroLocationRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: spacing.lg,
+    paddingHorizontal: spacing.md,
+  },
+  locationIconBox: {
+    width: 40,
+    height: 40,
+    borderRadius: borderRadius.md,
+    backgroundColor: colors.primary,
+    alignItems: "center",
+    justifyContent: "center",
+    marginRight: spacing.md,
+    ...shadows.coral,
+  },
+  locationTextContainer: {
+    flex: 1,
+  },
+  locationTopRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: spacing.sm,
+  },
+  deliverTo: {
+    ...typography.small,
+    color: "rgba(255,255,255,0.6)",
+    textTransform: "uppercase",
+    letterSpacing: 1,
+    fontWeight: "600",
+  },
+  liveIndicator: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: colors.liveGreen,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: 2,
+    borderRadius: borderRadius.full,
+    gap: 4,
+  },
+  liveText: {
+    ...typography.small,
+    color: colors.white,
+    fontWeight: "700",
+    fontSize: 10,
+    letterSpacing: 0.5,
+  },
+  liveDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: colors.white,
+  },
+  locationBottomRow: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  locationCity: {
+    ...typography.h4,
+    color: colors.white,
+    fontWeight: "700",
+    marginRight: spacing.xs,
+  },
+  heroGreeting: {
+    paddingHorizontal: spacing.md,
+    marginBottom: spacing.lg,
+  },
+  heroGreetingText: {
+    ...typography.hero,
+    color: colors.white,
+    marginBottom: spacing.xs,
+  },
+  heroGreetingSubtext: {
+    ...typography.body,
+    color: "rgba(255,255,255,0.7)",
+  },
+  heroSearchContainer: {
+    paddingHorizontal: spacing.md,
+  },
+  searchBar: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: colors.backgroundCard,
+    borderRadius: borderRadius.xl,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.md,
+    borderWidth: 1,
+    borderColor: colors.border,
+    gap: spacing.sm,
+    ...shadows.sm,
+  },
+  searchPlaceholder: {
+    ...typography.body,
+    color: colors.textTertiary,
+    flex: 1,
+  },
+
+  // Categories
+  categoriesSection: {
+    marginBottom: spacing.lg,
+  },
+  sectionHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: spacing.md,
+    paddingHorizontal: spacing.md,
+  },
+  sectionTitleRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: spacing.xs,
+  },
+  sectionTitle: {
+    ...typography.h3,
+    color: colors.textPrimary,
+    fontWeight: "700",
+    letterSpacing: -0.2,
+  },
+  seeAllText: {
+    ...typography.bodySmall,
+    color: colors.primary,
+    fontWeight: "600",
+  },
+  categoriesContainer: {
+    paddingHorizontal: spacing.md,
+    gap: spacing.md,
+  },
+  categoryItem: {
+    alignItems: "center",
+    width: 72,
+  },
+  categoryItemActive: {},
+  categoryIconContainer: {
+    width: 60,
+    height: 60,
+    borderRadius: borderRadius.lg,
+    backgroundColor: colors.backgroundCard,
+    borderWidth: 2,
+    borderColor: colors.border,
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: spacing.xs,
+  },
+  categoryIconActive: {
+    borderColor: colors.primary,
+    backgroundColor: colors.primaryGlow,
+  },
+  categoryEmoji: {
+    fontSize: 28,
+  },
+  categoryName: {
+    ...typography.small,
+    color: colors.textSecondary,
+    textAlign: "center",
+    fontWeight: "500",
+  },
+  categoryNameActive: {
+    color: colors.primary,
+    fontWeight: "700",
+  },
+
+  // Featured
+  featuredSection: {
+    marginBottom: spacing.lg,
+  },
+  featuredScroll: {
+    paddingRight: spacing.md,
+  },
+  featuredCard: {
+    width: 200,
+    height: 160,
+    borderRadius: borderRadius.lg,
+    overflow: "hidden",
+    marginRight: spacing.md,
+    position: "relative",
+    ...shadows.md,
+  },
+  featuredImage: {
+    width: "100%",
+    height: "100%",
+    resizeMode: "cover",
+  },
+  featuredGradient: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: "rgba(0,0,0,0.1)",
+  },
+  featuredPromoBadge: {
+    position: "absolute",
+    top: spacing.sm,
+    left: spacing.sm,
+    backgroundColor: colors.accent,
+    paddingHorizontal: spacing.sm + 2,
+    paddingVertical: spacing.xs,
+    borderRadius: borderRadius.sm,
+  },
+  featuredPromoText: {
+    ...typography.small,
+    color: colors.black,
+    fontWeight: "800",
+    fontSize: 9,
+    letterSpacing: 0.5,
+  },
+  featuredInfo: {
+    position: "absolute",
+    bottom: 0,
+    left: 0,
+    right: 0,
+    padding: spacing.sm,
+    backgroundColor: "rgba(0,0,0,0.65)",
+  },
+  featuredName: {
+    fontSize: 14,
+    fontWeight: "700",
+    color: colors.white,
+    marginBottom: 2,
+  },
+  featuredRestaurant: {
+    fontSize: 11,
+    color: "rgba(255,255,255,0.7)",
+    marginBottom: 3,
+  },
+  featuredMeta: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  featuredMetaText: {
+    ...typography.small,
+    color: "rgba(255,255,255,0.85)",
+    marginLeft: 3,
+    fontWeight: "500",
+  },
+  metaDot: {
+    width: 3,
+    height: 3,
+    borderRadius: 1.5,
+    backgroundColor: "rgba(255,255,255,0.5)",
+    marginHorizontal: spacing.xs,
+  },
+
+  // Restaurants header
+  restaurantsHeaderRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: spacing.md,
+    paddingHorizontal: spacing.md,
+  },
+  restaurantsHeaderTitle: {
+    ...typography.h4,
+    color: colors.textPrimary,
+    fontWeight: "700",
+  },
+  restaurantsCount: {
+    ...typography.bodySmall,
+    color: colors.textTertiary,
+  },
+
+  // Empty
+  emptyContainer: {
+    alignItems: "center",
+    justifyContent: "center",
+    paddingVertical: spacing.xxl * 2,
+  },
+  emptyIconContainer: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    backgroundColor: colors.backgroundCard,
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: spacing.md,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  emptyTitle: {
+    ...typography.h3,
+    color: colors.textSecondary,
+    marginBottom: spacing.xs,
+  },
+  emptySubtext: {
+    ...typography.body,
+    color: colors.textTertiary,
+    textAlign: "center",
   },
 });

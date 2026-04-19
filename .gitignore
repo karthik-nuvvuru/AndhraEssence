@@ -100,3 +100,9 @@ design-system/
 *.pem
 *.key
 credentials.json
+
+# Claude Code
+.claude/
+
+# Python poetry
+poetry.lock

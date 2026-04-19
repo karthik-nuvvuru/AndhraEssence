@@ -5,13 +5,18 @@ export interface Restaurant {
   name: string;
   cuisine_type: string;
   address: string;
+  address_line1?: string;
   city: string;
   rating: number;
+  review_count?: number;
   delivery_fee: number;
   minimum_order: number;
   is_open: boolean;
   is_active: boolean;
   image_url?: string;
+  cover_image_url?: string;
+  promo_text?: string;
+  estimated_delivery_time?: string;
   opening_time: string;
   closing_time: string;
   created_at: string;
@@ -27,16 +32,21 @@ export interface MenuItem {
   is_veg: boolean;
   is_available: boolean;
   is_bestseller: boolean;
+  is_featured?: boolean;
   prep_time: number;
+  preparation_time_minutes?: number;
   category: string;
+  category_id?: string;
   created_at: string;
 }
 
 export interface MenuCategory {
   id: string;
+  restaurant_id?: string;
   name: string;
   description?: string;
   display_order: number;
+  items?: MenuItem[];
 }
 
 export interface CartItem {
@@ -50,6 +60,7 @@ export interface Order {
   order_number: string;
   customer_id: string;
   restaurant_id: string;
+  restaurant_name?: string;
   address_id: string;
   subtotal: number;
   tax_amount: number;
@@ -62,6 +73,7 @@ export interface Order {
   promo_code?: string;
   delivery_instructions?: string;
   created_at: string;
+  placed_at?: string;
   confirmed_at?: string;
   preparing_at?: string;
   ready_at?: string;
@@ -69,6 +81,7 @@ export interface Order {
   delivered_at?: string;
   cancelled_at?: string;
   cancellation_reason?: string;
+  items?: Array<{ item_name: string; quantity: number; price: number }>;
 }
 
 export type OrderStatus =

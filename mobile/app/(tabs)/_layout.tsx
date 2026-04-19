@@ -1,26 +1,56 @@
+// Tab Navigation - Lucide Icon Design
 import React from "react";
 import { Tabs } from "expo-router";
 import { View, Text, StyleSheet } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { colors, typography, spacing } from "@/theme";
+import Animated, {
+  useAnimatedStyle,
+  useSharedValue,
+  withSpring,
+} from "react-native-reanimated";
+import {
+  Home,
+  Search,
+  ShoppingCart,
+  Package,
+  User,
+} from "lucide-react-native";
+import { colors, typography, spacing, borderRadius, shadows } from "@/theme";
 import { useCartStore } from "@/store";
 
 function TabBarIcon({ name, focused }: { name: string; focused: boolean }) {
-  const icons: Record<string, string> = {
-    home: "🏠",
-    search: "🔍",
-    cart: "🛒",
-    orders: "📦",
-    profile: "👤",
-  };
+  const scale = useSharedValue(focused ? 1.15 : 1);
+
+  const iconColor = focused ? colors.primary : colors.textTertiary;
+
+  const iconEl = (() => {
+    switch (name) {
+      case "home": return <Home size={22} color={iconColor} />;
+      case "search": return <Search size={22} color={iconColor} />;
+      case "cart": return <ShoppingCart size={22} color={iconColor} />;
+      case "orders": return <Package size={22} color={iconColor} />;
+      case "profile": return <User size={22} color={iconColor} />;
+      default: return <Home size={22} color={iconColor} />;
+    }
+  })();
+
+  const animatedStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: scale.value }],
+  }));
+
+  const cartCount = name === "cart" ? useCartStore.getState().getItemCount() : 0;
 
   return (
     <View style={styles.iconWrapper}>
-      <Text style={[styles.icon, focused && styles.iconActive]}>{icons[name] || "•"}</Text>
-      {focused && <View style={styles.activeIndicator} />}
-      {name === "cart" && useCartStore.getState().getItemCount() > 0 && (
+      <Animated.View style={[styles.iconContainer, animatedStyle]}>
+        {iconEl}
+      </Animated.View>
+      {focused && (
+        <View style={styles.activeIndicator} />
+      )}
+      {cartCount > 0 && (
         <View style={styles.badge}>
-          <Text style={styles.badgeText}>{useCartStore.getState().getItemCount()}</Text>
+          <Text style={styles.badgeText}>{cartCount > 99 ? "99+" : cartCount}</Text>
         </View>
       )}
     </View>
@@ -33,8 +63,8 @@ export default function TabsLayout() {
   return (
     <Tabs
       screenOptions={{
-        tabBarActiveTintColor: "#7C3AED",
-        tabBarInactiveTintColor: "#71717A",
+        tabBarActiveTintColor: colors.primary,
+        tabBarInactiveTintColor: colors.textTertiary,
         tabBarStyle: [styles.tabBar, { paddingBottom: insets.bottom > 0 ? spacing.md : spacing.lg }],
         tabBarLabelStyle: styles.tabLabel,
         headerShown: false,
@@ -82,9 +112,9 @@ export default function TabsLayout() {
 
 const styles = StyleSheet.create({
   tabBar: {
-    backgroundColor: "#141419",
+    backgroundColor: colors.backgroundSecondary,
     borderTopWidth: 1,
-    borderTopColor: "rgba(255,255,255,0.08)",
+    borderTopColor: colors.border,
     paddingTop: spacing.sm,
     paddingBottom: spacing.lg,
     height: 80,
@@ -97,16 +127,16 @@ const styles = StyleSheet.create({
     position: "relative",
     alignItems: "center",
     justifyContent: "center",
+    width: 40,
+    height: 32,
   },
-  icon: {
-    fontSize: 24,
-  },
-  iconActive: {
-    transform: [{ scale: 1.1 }],
+  iconContainer: {
+    alignItems: "center",
+    justifyContent: "center",
   },
   activeIndicator: {
     position: "absolute",
-    bottom: -8,
+    bottom: -6,
     width: 4,
     height: 4,
     borderRadius: 2,
@@ -119,9 +149,9 @@ const styles = StyleSheet.create({
   },
   badge: {
     position: "absolute",
-    top: -6,
-    right: -12,
-    backgroundColor: colors.primary,
+    top: -4,
+    right: -10,
+    backgroundColor: colors.accent,
     borderRadius: 10,
     minWidth: 18,
     height: 18,
@@ -130,7 +160,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 4,
   },
   badgeText: {
-    color: colors.white,
+    color: colors.black,
     fontSize: 10,
     fontWeight: "700",
   },

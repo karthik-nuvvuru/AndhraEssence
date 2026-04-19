@@ -8,6 +8,7 @@ import Animated, {
   withTiming,
   runOnJS,
 } from "react-native-reanimated";
+import { Check, X, Info } from "lucide-react-native";
 import { colors, typography, spacing, borderRadius } from "@/theme";
 
 const { width: SCREEN_WIDTH } = Dimensions.get("window");
@@ -45,8 +46,8 @@ export function ToastProvider({ children }: ToastProviderProps) {
   const translateY = useSharedValue(0);
   const opacity = useSharedValue(0);
   const progress = useSharedValue(1);
-  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
-  const progressIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const progressIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const hideToastInternal = useCallback(() => {
     opacity.value = withTiming(0, { duration: 200 });
@@ -128,10 +129,10 @@ export function ToastProvider({ children }: ToastProviderProps) {
     };
   }, []);
 
-  const toastConfig: Record<ToastType, { bg: string; icon: string; iconColor: string }> = {
-    success: { bg: colors.successBg, icon: "✓", iconColor: colors.success },
-    error: { bg: colors.errorBg, icon: "✕", iconColor: colors.error },
-    info: { bg: colors.infoBg, icon: "ℹ", iconColor: colors.info },
+  const toastConfig: Record<ToastType, { bg: string; IconComponent: React.ComponentType<any>; iconColor: string }> = {
+    success: { bg: colors.successBg, IconComponent: Check, iconColor: colors.success },
+    error: { bg: colors.errorBg, IconComponent: X, iconColor: colors.error },
+    info: { bg: colors.infoBg, IconComponent: Info, iconColor: colors.info },
   };
 
   return (
@@ -155,7 +156,10 @@ export function ToastProvider({ children }: ToastProviderProps) {
               </View>
               <View style={styles.content}>
                 <View style={[styles.iconContainer, { backgroundColor: toastConfig[toast.type].iconColor }]}>
-                  <Text style={styles.icon}>{toastConfig[toast.type].icon}</Text>
+                  {(() => {
+                    const IconC = toastConfig[toast.type].IconComponent;
+                    return <IconC size={14} color={colors.white} />;
+                  })()}
                 </View>
                 <Text style={styles.message}>{toast.message}</Text>
               </View>
@@ -214,11 +218,6 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     marginRight: spacing.sm,
-  },
-  icon: {
-    color: colors.white,
-    fontSize: 14,
-    fontWeight: "bold",
   },
   message: {
     ...typography.body,

@@ -1,5 +1,5 @@
 // Premium Search Screen - Liquid Glass Design
-import React, { useState, useCallback } from "react";
+import React, { useState, useCallback, useRef, useEffect } from "react";
 import {
   View,
   Text,
@@ -10,15 +10,17 @@ import {
   KeyboardAvoidingView,
   Platform,
   ScrollView,
+  Animated,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
-import { Search, X, TrendingUp, Clock, MapPin } from "lucide-react-native";
+import { Search, X, TrendingUp, Clock, MapPin, Flame } from "lucide-react-native";
 import { RestaurantCard } from "@/components/restaurant/RestaurantCard";
 import { ShimmerCard } from "@/components/ui/Shimmer";
 import { colors, typography, spacing, borderRadius } from "@/theme";
 import { restaurantApi } from "@/services/api/endpoints";
 import type { Restaurant } from "@/types/api";
+import * as Haptics from "expo-haptics";
 
 const FILTER_CHIPS = ["Sort", "Fast Delivery", "Rating 4.0+", "Near Me", "Price"];
 
@@ -33,6 +35,53 @@ export default function SearchScreen() {
   const [hasSearched, setHasSearched] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [activeFilter, setActiveFilter] = useState<string | null>(null);
+  const [isFocused, setIsFocused] = useState(false);
+
+  // Blinking cursor animation
+  const cursorOpacity = useRef(new Animated.Value(1)).current;
+  const cursorAnimRef = useRef<Animated.CompositeAnimation | null>(null);
+
+  const startCursorBlink = () => {
+    cursorAnimRef.current = Animated.loop(
+      Animated.sequence([
+        Animated.timing(cursorOpacity, {
+          toValue: 0,
+          duration: 530,
+          useNativeDriver: true,
+        }),
+        Animated.timing(cursorOpacity, {
+          toValue: 1,
+          duration: 530,
+          useNativeDriver: true,
+        }),
+      ])
+    );
+    cursorAnimRef.current.start();
+  };
+
+  const stopCursorBlink = () => {
+    if (cursorAnimRef.current) {
+      cursorAnimRef.current.stop();
+      cursorAnimRef.current = null;
+    }
+    cursorOpacity.setValue(1);
+  };
+
+  const handleFocus = () => {
+    setIsFocused(true);
+    startCursorBlink();
+  };
+
+  const handleBlur = () => {
+    setIsFocused(false);
+    stopCursorBlink();
+  };
+
+  useEffect(() => {
+    return () => {
+      stopCursorBlink();
+    };
+  }, []);
 
   const handleSearch = async () => {
     if (!query.trim()) return;
@@ -68,6 +117,9 @@ export default function SearchScreen() {
   };
 
   const handleQuickSearch = (term: string) => {
+    if (Platform.OS !== "web") {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    }
     setQuery(term);
     setTimeout(() => {
       setLoading(true);
@@ -81,6 +133,9 @@ export default function SearchScreen() {
   };
 
   const toggleFilter = (chip: string) => {
+    if (Platform.OS !== "web") {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    }
     setActiveFilter(activeFilter === chip ? null : chip);
   };
 
@@ -117,7 +172,7 @@ export default function SearchScreen() {
                   onPress={() => handleQuickSearch(term)}
                   activeOpacity={0.7}
                 >
-                  <TrendingUp size={14} color={colors.primary} />
+                  <Flame size={14} color={colors.primary} />
                   <Text style={styles.quickSearchText}>{term}</Text>
                 </TouchableOpacity>
               ))}
@@ -153,7 +208,6 @@ export default function SearchScreen() {
       <KeyboardAvoidingView
         behavior={Platform.OS === "ios" ? "padding" : "height"}
         style={styles.keyboardView}
-        keyboardShouldPersistTaps="handled"
       >
         <View style={styles.header}>
           <Text style={styles.title}>Search</Text>
@@ -161,9 +215,9 @@ export default function SearchScreen() {
 
         {/* Search Input */}
         <View style={styles.searchContainer}>
-          <View style={styles.searchInputWrapper}>
+          <View style={[styles.searchInputWrapper, isFocused && styles.searchInputFocused]}>
             <View style={styles.searchInput}>
-              <Search size={18} color={colors.textTertiary} />
+              <Search size={18} color={isFocused ? colors.primary : colors.textTertiary} />
               <TextInput
                 style={styles.searchTextInput}
                 placeholder="Search restaurants or cuisines..."
@@ -171,8 +225,14 @@ export default function SearchScreen() {
                 value={query}
                 onChangeText={setQuery}
                 onSubmitEditing={handleSearch}
+                onFocus={handleFocus}
+                onBlur={handleBlur}
                 returnKeyType="search"
               />
+              {/* Blinking cursor when focused and empty */}
+              {isFocused && query.length === 0 && (
+                <Animated.Text style={[styles.cursor, { opacity: cursorOpacity }]}>|</Animated.Text>
+              )}
               {query.length > 0 && (
                 <TouchableOpacity onPress={handleClear} style={styles.clearButton}>
                   <X size={16} color={colors.textSecondary} />
@@ -270,6 +330,9 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: colors.border,
   },
+  searchInputFocused: {
+    borderColor: colors.primary,
+  },
   searchInput: {
     flexDirection: "row",
     alignItems: "center",
@@ -282,6 +345,12 @@ const styles = StyleSheet.create({
     color: colors.textPrimary,
     flex: 1,
     padding: 0,
+  },
+  cursor: {
+    fontSize: 20,
+    color: colors.primary,
+    fontWeight: "300",
+    marginRight: 2,
   },
   clearButton: {
     width: 24,

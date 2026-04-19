@@ -11,6 +11,8 @@ Notifications.setNotificationHandler({
     shouldShowAlert: true,
     shouldPlaySound: true,
     shouldSetBadge: true,
+    shouldShowBanner: true,
+    shouldShowList: true,
   }),
 });
 
@@ -91,8 +93,9 @@ export async function registerDeviceToken(token: string): Promise<DeviceTokenRes
     const response = await deviceApi.registerPushToken(token);
     return { success: true, message: "Device token registered successfully" };
   } catch (error) {
-    console.error("[NotificationService] Error registering device token:", error);
-    return { success: false, message: "Failed to register device token" };
+    // Silently handle 404 - backend may not have push notification endpoint yet
+    console.log("[NotificationService] Push token registration skipped (backend not available)");
+    return { success: false, message: "Backend not available" };
   }
 }
 

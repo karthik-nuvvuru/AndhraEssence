@@ -207,7 +207,6 @@ export default function RegisterScreen() {
         <KeyboardAvoidingView
           behavior="padding"
           style={styles.keyboardView}
-          keyboardShouldPersistTaps="handled"
         >
           <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
             <Animated.View style={[styles.card, { opacity: fadeAnim }]}>
@@ -379,7 +378,7 @@ const styles = StyleSheet.create({
     width: 320,
     height: 320,
     borderRadius: 160,
-    backgroundColor: colors.primaryGlow,
+    backgroundColor: colors.primaryGlowStrong,
   },
   cyanOrb: {
     position: "absolute",
@@ -388,7 +387,7 @@ const styles = StyleSheet.create({
     width: 380,
     height: 380,
     borderRadius: 190,
-    backgroundColor: "rgba(6, 182, 212, 0.12)",
+    backgroundColor: colors.accentGlow,
   },
   container: {
     flex: 1,

@@ -13,13 +13,13 @@ import { GlassCard } from "@/components/ui/GlassCard";
 import { QuantityStepper } from "@/components/ui/QuantityStepper";
 import { colors, typography, spacing, borderRadius } from "@/theme";
 import { formatCurrency } from "@/utils/formatters";
-import type { CartItem } from "@/store";
+import type { CartItem as CartItemType } from "@/store";
 
 interface CartItemProps {
-  item: CartItem;
+  item: CartItemType;
   onIncrease: (itemId: string) => void;
   onDecrease: (itemId: string) => void;
-  onRemove: (item: CartItem) => void;
+  onRemove: (item: CartItemType) => void;
 }
 
 export const CartItem = React.memo(function CartItem({

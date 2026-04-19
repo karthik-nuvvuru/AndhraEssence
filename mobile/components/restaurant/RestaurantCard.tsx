@@ -64,7 +64,7 @@ export const RestaurantCard: React.FC<RestaurantCardProps> = React.memo(({
           )}
 
           <Text style={styles.address} numberOfLines={1}>
-            {restaurant.address_line}{restaurant.city && `, ${restaurant.city}`}
+            {restaurant.address_line1}{restaurant.city && `, ${restaurant.city}`}
           </Text>
 
           {restaurant.delivery_fee > 0 && (

@@ -1,5 +1,5 @@
 // Premium Profile Screen - Liquid Glass Design
-import React from "react";
+import React, { useRef, useEffect } from "react";
 import {
   View,
   Text,
@@ -7,6 +7,7 @@ import {
   ScrollView,
   TouchableOpacity,
   Alert,
+  Animated,
 } from "react-native";
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 import { router } from "expo-router";
@@ -23,6 +24,9 @@ import {
   User,
   Mail,
   Phone,
+  ShoppingBag,
+  Gift,
+  Star,
 } from "lucide-react-native";
 import { colors, typography, spacing, borderRadius, shadows } from "@/theme";
 import { useAuthStore } from "@/store";
@@ -70,6 +74,28 @@ export default function ProfileScreen() {
   const { user } = useAuthStore();
   const insets = useSafeAreaInsets();
 
+  // Pulse animation for avatar glow
+  const avatarPulseAnim = useRef(new Animated.Value(1)).current;
+
+  useEffect(() => {
+    const pulse = Animated.loop(
+      Animated.sequence([
+        Animated.timing(avatarPulseAnim, {
+          toValue: 1.08,
+          duration: 1200,
+          useNativeDriver: true,
+        }),
+        Animated.timing(avatarPulseAnim, {
+          toValue: 1,
+          duration: 1200,
+          useNativeDriver: true,
+        }),
+      ])
+    );
+    pulse.start();
+    return () => pulse.stop();
+  }, [avatarPulseAnim]);
+
   const menuItems = [
     { icon: <MapPin size={18} color={colors.primary} />, title: "My Addresses", subtitle: "Manage delivery addresses", onPress: () => router.push("/profile/addresses") },
     { icon: <CreditCard size={18} color={colors.primary} />, title: "Payment Methods", subtitle: "Cards, wallets, UPI", onPress: () => Alert.alert("Coming Soon", "Payment methods will be available soon") },
@@ -111,7 +137,25 @@ export default function ProfileScreen() {
         {/* Avatar Section */}
         <View style={styles.avatarSection}>
           <View style={styles.avatarContainer}>
-            <View style={styles.avatarGlow} />
+            {/* 3-layer gradient glow with pulse */}
+            <Animated.View
+              style={[
+                styles.avatarGlowOuter,
+                { transform: [{ scale: avatarPulseAnim }] },
+              ]}
+            />
+            <Animated.View
+              style={[
+                styles.avatarGlowMiddle,
+                { transform: [{ scale: avatarPulseAnim }] },
+              ]}
+            />
+            <Animated.View
+              style={[
+                styles.avatarGlowInner,
+                { transform: [{ scale: avatarPulseAnim }] },
+              ]}
+            />
             <View style={styles.avatar}>
               <Text style={styles.avatarInitials}>{initials}</Text>
             </View>
@@ -124,6 +168,33 @@ export default function ProfileScreen() {
               <Text style={styles.userPhone}>{user.phone}</Text>
             </View>
           )}
+        </View>
+
+        {/* Stats Row */}
+        <View style={styles.statsRow}>
+          <View style={styles.statBox}>
+            <View style={styles.statIconBox}>
+              <ShoppingBag size={16} color={colors.primary} />
+            </View>
+            <Text style={styles.statValue}>12</Text>
+            <Text style={styles.statLabel}>Orders</Text>
+          </View>
+          <View style={styles.statBoxDivider} />
+          <View style={styles.statBox}>
+            <View style={styles.statIconBox}>
+              <Gift size={16} color={colors.accent} />
+            </View>
+            <Text style={styles.statValue}>240</Text>
+            <Text style={styles.statLabel}>Rewards</Text>
+          </View>
+          <View style={styles.statBoxDivider} />
+          <View style={styles.statBox}>
+            <View style={styles.statIconBox}>
+              <Star size={16} color={colors.warning} />
+            </View>
+            <Text style={styles.statValue}>3</Text>
+            <Text style={styles.statLabel}>Reviews</Text>
+          </View>
         </View>
 
         {/* Account Settings */}
@@ -219,15 +290,35 @@ const styles = StyleSheet.create({
     position: "relative",
     marginBottom: spacing.md,
   },
-  avatarGlow: {
+  avatarGlowOuter: {
     position: "absolute",
-    top: -10,
-    left: -10,
-    right: -10,
-    bottom: -10,
-    borderRadius: 60,
+    top: -20,
+    left: -20,
+    right: -20,
+    bottom: -20,
+    borderRadius: 68,
     backgroundColor: colors.primary,
-    opacity: 0.15,
+    opacity: 0.1,
+  },
+  avatarGlowMiddle: {
+    position: "absolute",
+    top: -14,
+    left: -14,
+    right: -14,
+    bottom: -14,
+    borderRadius: 62,
+    backgroundColor: colors.primary,
+    opacity: 0.18,
+  },
+  avatarGlowInner: {
+    position: "absolute",
+    top: -8,
+    left: -8,
+    right: -8,
+    bottom: -8,
+    borderRadius: 56,
+    backgroundColor: colors.primary,
+    opacity: 0.3,
   },
   avatar: {
     width: 96,
@@ -263,6 +354,48 @@ const styles = StyleSheet.create({
   },
   userPhone: {
     ...typography.bodySmall,
+    color: colors.textTertiary,
+  },
+  statsRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: colors.backgroundCard,
+    borderRadius: borderRadius.lg,
+    borderWidth: 1,
+    borderColor: colors.border,
+    marginHorizontal: spacing.md,
+    marginBottom: spacing.lg,
+    paddingVertical: spacing.md,
+    paddingHorizontal: spacing.sm,
+  },
+  statBox: {
+    flex: 1,
+    alignItems: "center",
+    paddingVertical: spacing.xs,
+  },
+  statBoxDivider: {
+    width: 1,
+    height: 40,
+    backgroundColor: colors.border,
+  },
+  statIconBox: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: colors.background,
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: spacing.xs,
+  },
+  statValue: {
+    ...typography.h3,
+    color: colors.textPrimary,
+    fontWeight: "700",
+    marginBottom: 2,
+  },
+  statLabel: {
+    ...typography.caption,
     color: colors.textTertiary,
   },
   menuSection: {

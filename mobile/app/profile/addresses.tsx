@@ -71,7 +71,7 @@ export default function AddressesScreen() {
               </View>
             )}
           </View>
-          <Text style={styles.addressText}>{item.address_line}</Text>
+          <Text style={styles.addressText}>{item.address_line1}</Text>
           <Text style={styles.addressSubtext}>
             {item.city}, {item.state} {item.postal_code}
           </Text>
