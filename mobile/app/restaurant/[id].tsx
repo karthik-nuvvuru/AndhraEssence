@@ -11,11 +11,11 @@ import {
   Dimensions,
 } from "react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import { SafeAreaView } from "react-native-safe-area-context";
+import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 import { MenuItemCard } from "@/components/restaurant/MenuItemCard";
 import { Badge } from "@/components/ui/Badge";
 import { LoadingSpinner } from "@/components/ui/LoadingSpinner";
-import { colors, typography, spacing, borderRadius } from "@/theme";
+import { colors, typography, spacing, borderRadius, shadows } from "@/theme";
 import { restaurantApi } from "@/services/api/endpoints";
 import { useCartStore } from "@/store";
 import { formatCurrency } from "@/utils/formatters";
@@ -33,6 +33,7 @@ export default function RestaurantDetailScreen() {
   const [isFavorite, setIsFavorite] = useState(false);
   const { addItem, getItemCount, getSubtotal } = useCartStore();
   const { showToast } = useToast();
+  const insets = useSafeAreaInsets();
 
   useEffect(() => {
     fetchRestaurantData();
@@ -266,7 +267,7 @@ export default function RestaurantDetailScreen() {
 
       {/* Sticky Cart Footer */}
       {itemCount > 0 && (
-        <View style={styles.cartFooter}>
+        <View style={[styles.cartFooter, { paddingBottom: insets.bottom > 0 ? insets.bottom + spacing.md : spacing.md }]}>
           <View style={styles.cartInfo}>
             <Text style={styles.cartCount}>{itemCount} item{itemCount > 1 ? "s" : ""}</Text>
             <Text style={styles.cartSubtotal}>{formatCurrency(subtotal)}</Text>

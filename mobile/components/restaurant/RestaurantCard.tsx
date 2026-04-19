@@ -1,5 +1,7 @@
+// Premium Restaurant Card - Liquid Glass Design
 import React from "react";
 import { View, Text, Image, StyleSheet, TouchableOpacity } from "react-native";
+import { Star, MapPin, Clock } from "lucide-react-native";
 import { colors, typography, spacing, borderRadius, shadows } from "@/theme";
 import { formatCurrency } from "@/utils/formatters";
 import type { Restaurant } from "@/types/api";
@@ -9,7 +11,7 @@ interface RestaurantCardProps {
   onPress: () => void;
 }
 
-export const RestaurantCard: React.FC<RestaurantCardProps> = ({
+export const RestaurantCard: React.FC<RestaurantCardProps> = React.memo(({
   restaurant,
   onPress,
 }) => {
@@ -27,57 +29,66 @@ export const RestaurantCard: React.FC<RestaurantCardProps> = ({
           )}
           <View style={styles.gradientOverlay} />
 
-          {/* Status Badge - Top Left */}
+          {/* Status Badge */}
           <View style={styles.statusBadge}>
             <View style={[styles.statusDot, { backgroundColor: restaurant.is_open ? colors.success : colors.error }]} />
             <Text style={styles.statusText}>{restaurant.is_open ? "Open" : "Closed"}</Text>
           </View>
 
-          {/* Delivery Time - Bottom Right */}
+          {/* Delivery Info */}
           <View style={styles.deliveryBadge}>
-            <Text style={styles.deliveryTimeText}>🕐 {restaurant.delivery_fee ? `₹${restaurant.delivery_fee}` : '₹40'} delivery</Text>
+            <Clock size={11} color={colors.textPrimary} />
+            <Text style={styles.deliveryTimeText}>
+              {restaurant.delivery_fee ? `₹${restaurant.delivery_fee}` : '₹40'} delivery
+            </Text>
           </View>
         </View>
 
         {/* Content Section */}
         <View style={styles.content}>
-          <Text style={styles.name} numberOfLines={1}>{restaurant.name}</Text>
+          <View style={styles.nameRow}>
+            <Text style={styles.name} numberOfLines={1}>{restaurant.name}</Text>
+            {restaurant.rating > 0 && (
+              <View style={styles.ratingBadge}>
+                <Star size={10} color={colors.accent} fill={colors.accent} />
+                <Text style={styles.ratingText}>{restaurant.rating.toFixed(1)}</Text>
+              </View>
+            )}
+          </View>
 
           {restaurant.cuisine_type && (
-            <Text style={styles.cuisine}>🍴 {restaurant.cuisine_type}</Text>
+            <View style={styles.cuisineRow}>
+              <MapPin size={12} color={colors.textTertiary} />
+              <Text style={styles.cuisine}>{restaurant.cuisine_type}</Text>
+            </View>
           )}
 
           <Text style={styles.address} numberOfLines={1}>
             {restaurant.address_line}{restaurant.city && `, ${restaurant.city}`}
           </Text>
 
-          <View style={styles.footer}>
-            {/* Rating Badge */}
-            <View style={styles.ratingBadge}>
-              <Text style={styles.ratingIcon}>⭐</Text>
-              <Text style={styles.ratingText}>{restaurant.rating.toFixed(1)}</Text>
-            </View>
-
-            {/* Delivery Fee */}
-            <Text style={styles.deliveryFee}>{formatCurrency(restaurant.delivery_fee)} delivery</Text>
-          </View>
+          {restaurant.delivery_fee > 0 && (
+            <Text style={styles.deliveryFeeText}>
+              {formatCurrency(restaurant.delivery_fee)} delivery
+            </Text>
+          )}
         </View>
       </View>
     </TouchableOpacity>
   );
-};
+});
 
 const styles = StyleSheet.create({
   wrapper: {
     marginBottom: spacing.md,
   },
   card: {
-    backgroundColor: colors.glass,
+    backgroundColor: colors.backgroundCard,
     borderRadius: borderRadius.lg,
     borderWidth: 1,
-    borderColor: colors.glassBorder,
+    borderColor: colors.border,
     overflow: "hidden",
-    ...shadows.glass,
+    ...shadows.sm,
   },
   imageContainer: {
     height: 200,
@@ -91,14 +102,14 @@ const styles = StyleSheet.create({
   placeholderImage: {
     width: "100%",
     height: "100%",
-    backgroundColor: colors.primary,
+    backgroundColor: colors.primaryGlow,
     alignItems: "center",
     justifyContent: "center",
   },
   placeholderText: {
     fontSize: 48,
     fontWeight: "bold",
-    color: colors.white,
+    color: colors.primary,
   },
   gradientOverlay: {
     position: "absolute",
@@ -106,7 +117,7 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     height: 60,
-    backgroundColor: "rgba(0,0,0,0.3)",
+    backgroundColor: "rgba(0,0,0,0.25)",
   },
   statusBadge: {
     position: "absolute",
@@ -135,10 +146,13 @@ const styles = StyleSheet.create({
     position: "absolute",
     bottom: spacing.sm,
     right: spacing.sm,
+    flexDirection: "row",
+    alignItems: "center",
     backgroundColor: colors.white,
     paddingHorizontal: spacing.sm,
     paddingVertical: spacing.xs,
     borderRadius: borderRadius.full,
+    gap: 4,
     ...shadows.sm,
   },
   deliveryTimeText: {
@@ -148,28 +162,19 @@ const styles = StyleSheet.create({
   },
   content: {
     padding: spacing.md,
-    backgroundColor: colors.backgroundCard,
+  },
+  nameRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginBottom: spacing.xs,
   },
   name: {
     ...typography.h4,
     color: colors.textPrimary,
     fontWeight: "700",
-    marginBottom: spacing.xs,
-  },
-  cuisine: {
-    ...typography.bodySmall,
-    color: colors.textSecondary,
-    marginBottom: spacing.xs,
-  },
-  address: {
-    ...typography.caption,
-    color: colors.textTertiary,
-    marginBottom: spacing.sm,
-  },
-  footer: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
+    flex: 1,
+    marginRight: spacing.sm,
   },
   ratingBadge: {
     flexDirection: "row",
@@ -178,19 +183,31 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.xs + 2,
     paddingVertical: 2,
     borderRadius: borderRadius.sm,
-  },
-  ratingIcon: {
-    fontSize: 12,
-    marginRight: 2,
+    gap: 2,
   },
   ratingText: {
     ...typography.small,
     color: colors.white,
     fontWeight: "700",
   },
-  deliveryFee: {
+  cuisineRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+    marginBottom: spacing.xs,
+  },
+  cuisine: {
     ...typography.bodySmall,
-    color: colors.accent,
+    color: colors.textSecondary,
+  },
+  address: {
+    ...typography.caption,
+    color: colors.textTertiary,
+    marginBottom: spacing.sm,
+  },
+  deliveryFeeText: {
+    ...typography.bodySmall,
+    color: colors.primary,
     fontWeight: "600",
   },
 });

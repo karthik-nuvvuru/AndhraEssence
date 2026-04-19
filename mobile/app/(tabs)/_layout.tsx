@@ -1,6 +1,7 @@
 import React from "react";
 import { Tabs } from "expo-router";
 import { View, Text, StyleSheet } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { colors, typography, spacing } from "@/theme";
 import { useCartStore } from "@/store";
 
@@ -27,12 +28,14 @@ function TabBarIcon({ name, focused }: { name: string; focused: boolean }) {
 }
 
 export default function TabsLayout() {
+  const insets = useSafeAreaInsets();
+
   return (
     <Tabs
       screenOptions={{
         tabBarActiveTintColor: "#7C3AED",
         tabBarInactiveTintColor: "#71717A",
-        tabBarStyle: styles.tabBar,
+        tabBarStyle: [styles.tabBar, { paddingBottom: insets.bottom > 0 ? spacing.md : spacing.lg }],
         tabBarLabelStyle: styles.tabLabel,
         headerShown: false,
         tabBarShowLabel: true,

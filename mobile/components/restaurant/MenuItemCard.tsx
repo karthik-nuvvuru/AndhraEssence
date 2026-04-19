@@ -1,6 +1,7 @@
-// Premium Menu Item Card - Glassmorphism Dark Theme
+// Premium Menu Item Card - Liquid Glass Design
 import React from "react";
 import { View, Text, Image, StyleSheet, TouchableOpacity } from "react-native";
+import { Star, Clock } from "lucide-react-native";
 import { colors, typography, spacing, borderRadius, shadows } from "@/theme";
 import { formatCurrency } from "@/utils/formatters";
 import type { MenuItem } from "@/types/api";
@@ -10,7 +11,7 @@ interface MenuItemCardProps {
   onAddToCart: () => void;
 }
 
-export const MenuItemCard: React.FC<MenuItemCardProps> = ({
+export const MenuItemCard: React.FC<MenuItemCardProps> = React.memo(({
   item,
   onAddToCart,
 }) => {
@@ -36,7 +37,7 @@ export const MenuItemCard: React.FC<MenuItemCardProps> = ({
             </View>
             {item.is_featured && (
               <View style={styles.featuredBadge}>
-                <Text style={styles.featuredIcon}>★</Text>
+                <Star size={9} color={colors.warning} fill={colors.warning} />
                 <Text style={styles.featuredText}>Bestseller</Text>
               </View>
             )}
@@ -58,9 +59,12 @@ export const MenuItemCard: React.FC<MenuItemCardProps> = ({
           <View style={styles.priceRow}>
             <Text style={styles.price}>{formatCurrency(item.price)}</Text>
             {item.preparation_time_minutes && (
-              <Text style={styles.prepTime}>
-                ⏱ {item.preparation_time_minutes} min
-              </Text>
+              <View style={styles.prepTimeRow}>
+                <Clock size={11} color={colors.textTertiary} />
+                <Text style={styles.prepTime}>
+                  {item.preparation_time_minutes} min
+                </Text>
+              </View>
             )}
           </View>
         </View>
@@ -108,7 +112,7 @@ export const MenuItemCard: React.FC<MenuItemCardProps> = ({
       </View>
     </View>
   );
-};
+});
 
 const styles = StyleSheet.create({
   card: {
@@ -164,11 +168,7 @@ const styles = StyleSheet.create({
     borderRadius: borderRadius.sm,
     borderWidth: 1,
     borderColor: colors.warning,
-  },
-  featuredIcon: {
-    fontSize: 10,
-    color: colors.warning,
-    marginRight: 3,
+    gap: 3,
   },
   featuredText: {
     ...typography.small,
@@ -196,6 +196,11 @@ const styles = StyleSheet.create({
     ...typography.h4,
     color: colors.accent,
     fontWeight: "700",
+  },
+  prepTimeRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 3,
   },
   prepTime: {
     ...typography.caption,
@@ -252,7 +257,7 @@ const styles = StyleSheet.create({
     borderRadius: borderRadius.md,
     borderWidth: 1.5,
     borderColor: colors.primary,
-    backgroundColor: "rgba(124, 58, 237, 0.15)",
+    backgroundColor: colors.primaryGlow,
     minWidth: 90,
   },
   addButtonTextLarge: {

@@ -51,29 +51,9 @@ function RootLayoutNav() {
     <Stack screenOptions={{ headerShown: false }}>
       <Stack.Screen name="index" />
       <Stack.Screen name="(tabs)" />
-      <Stack.Screen name="auth" />
       <Stack.Screen name="restaurant/[id]" />
       <Stack.Screen name="checkout" />
       <Stack.Screen name="order/[id]" />
-      {/* Dashboard screens based on user role */}
-      {role === "admin" && (
-        <Stack.Screen
-          name="screens/admin/AdminDashboardScreen"
-          options={{ title: "Admin Dashboard" }}
-        />
-      )}
-      {role === "restaurant_owner" && (
-        <Stack.Screen
-          name="screens/restaurant/RestaurantDashboardScreen"
-          options={{ title: "Restaurant Dashboard" }}
-        />
-      )}
-      {role === "rider" && (
-        <Stack.Screen
-          name="screens/rider/RiderDashboardScreen"
-          options={{ title: "Rider Dashboard" }}
-        />
-      )}
     </Stack>
   );
 }

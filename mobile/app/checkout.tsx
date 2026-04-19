@@ -11,7 +11,7 @@ import {
   TouchableOpacity,
   TextInput,
 } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
+import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
 import { Button } from "@/components/ui/Button";
 import { GlassCard } from "@/components/ui/GlassCard";
@@ -27,6 +27,7 @@ const DEFAULT_DELIVERY_FEE = 40;
 
 export default function CheckoutScreen() {
   const router = useRouter();
+  const insets = useSafeAreaInsets();
   const { items, restaurantId, restaurantName, getSubtotal, clearCart } = useCartStore();
 
   // State
@@ -416,7 +417,7 @@ export default function CheckoutScreen() {
       </ScrollView>
 
       {/* Sticky Footer with Place Order Button */}
-      <View style={styles.footer}>
+      <View style={[styles.footer, { paddingBottom: insets.bottom > 0 ? insets.bottom : spacing.md }]}>
         <View style={styles.footerContent}>
           <View style={styles.footerTotalContainer}>
             <Text style={styles.footerTotalLabel}>Total</Text>

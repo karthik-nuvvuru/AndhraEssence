@@ -1,9 +1,9 @@
+// Premium Login Screen - Glassmorphism Dark Theme
 import React, { useState, useEffect, useRef } from "react";
 import {
   View,
   Text,
   StyleSheet,
-  Platform,
   Animated,
   TextInput,
   Pressable,
@@ -11,7 +11,8 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { router } from "expo-router";
-import { spacing } from "@/theme";
+import { Mail, Lock, Eye, EyeOff } from "lucide-react-native";
+import { spacing, colors, typography, borderRadius } from "@/theme";
 import { authApi } from "@/services/api/endpoints";
 import { useAuthStore } from "@/store";
 
@@ -21,12 +22,16 @@ export default function LoginScreen() {
   const [loading, setLoading] = useState(false);
   const [emailError, setEmailError] = useState("");
   const [passwordError, setPasswordError] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const { setAuth } = useAuthStore();
 
-  // Animations
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const slideAnim = useRef(new Animated.Value(40)).current;
   const buttonScaleAnim = useRef(new Animated.Value(1)).current;
+  const orb1Y = useRef(new Animated.Value(0)).current;
+  const orb1Scale = useRef(new Animated.Value(1)).current;
+  const orb2Y = useRef(new Animated.Value(0)).current;
+  const orb2Scale = useRef(new Animated.Value(1)).current;
 
   useEffect(() => {
     Animated.parallel([
@@ -40,6 +45,30 @@ export default function LoginScreen() {
         duration: 800,
         useNativeDriver: true,
       }),
+      Animated.loop(
+        Animated.sequence([
+          Animated.parallel([
+            Animated.timing(orb1Y, { toValue: -30, duration: 3000, useNativeDriver: true }),
+            Animated.timing(orb1Scale, { toValue: 1.15, duration: 3000, useNativeDriver: true }),
+          ]),
+          Animated.parallel([
+            Animated.timing(orb1Y, { toValue: 0, duration: 3000, useNativeDriver: true }),
+            Animated.timing(orb1Scale, { toValue: 1, duration: 3000, useNativeDriver: true }),
+          ]),
+        ])
+      ),
+      Animated.loop(
+        Animated.sequence([
+          Animated.parallel([
+            Animated.timing(orb2Y, { toValue: 25, duration: 2500, useNativeDriver: true }),
+            Animated.timing(orb2Scale, { toValue: 1.1, duration: 2500, useNativeDriver: true }),
+          ]),
+          Animated.parallel([
+            Animated.timing(orb2Y, { toValue: 0, duration: 2500, useNativeDriver: true }),
+            Animated.timing(orb2Scale, { toValue: 1, duration: 2500, useNativeDriver: true }),
+          ]),
+        ])
+      ),
     ]).start();
   }, []);
 
@@ -73,7 +102,6 @@ export default function LoginScreen() {
   const handleLogin = async () => {
     const isEmailValid = validateEmail(email);
     const isPasswordValid = validatePassword(password);
-
     if (!isEmailValid || !isPasswordValid) return;
 
     try {
@@ -111,7 +139,6 @@ export default function LoginScreen() {
       );
       router.replace("/");
     } catch {
-      // Shake animation on error
       Animated.sequence([
         Animated.timing(buttonScaleAnim, { toValue: 0.95, duration: 50, useNativeDriver: true }),
         Animated.timing(buttonScaleAnim, { toValue: 1.02, duration: 100, useNativeDriver: true }),
@@ -124,17 +151,38 @@ export default function LoginScreen() {
 
   return (
     <View style={styles.wrapper}>
-      {/* Dark gradient background */}
+      {/* Animated Background */}
       <View style={styles.gradientBg}>
         <View style={styles.bgLayer1} />
-        <View style={styles.purpleOrb} />
-        <View style={styles.cyanOrb} />
+        <Animated.View
+          style={[
+            styles.purpleOrb,
+            {
+              transform: [
+                { translateY: orb1Y },
+                { scale: orb1Scale },
+              ],
+            },
+          ]}
+        />
+        <Animated.View
+          style={[
+            styles.cyanOrb,
+            {
+              transform: [
+                { translateY: orb2Y },
+                { scale: orb2Scale },
+              ],
+            },
+          ]}
+        />
       </View>
 
       <SafeAreaView style={styles.container} edges={["top", "bottom"]}>
         <KeyboardAvoidingView
-          behavior={Platform.OS === "ios" ? "padding" : "height"}
+          behavior="padding"
           style={styles.keyboardView}
+          keyboardShouldPersistTaps="handled"
         >
           <Animated.View style={[styles.card, { opacity: fadeAnim }]}>
             {/* Logo */}
@@ -143,23 +191,23 @@ export default function LoginScreen() {
             </Animated.View>
 
             <Animated.Text style={[styles.title, { opacity: fadeAnim }]}>
-              AndhraEssence
+              Welcome Back
             </Animated.Text>
             <Animated.Text style={[styles.subtitle, { opacity: fadeAnim }]}>
-              Premium Food Delivery
+              Sign in to continue ordering
             </Animated.Text>
 
-            {/* Inputs */}
+            {/* Form */}
             <Animated.View style={[styles.form, { opacity: fadeAnim, transform: [{ translateY: slideAnim }] }]}>
               {/* Email */}
               <View style={styles.inputGroup}>
                 <Text style={styles.label}>Email</Text>
                 <View style={[styles.inputWrapper, emailError && styles.inputError]}>
-                  <Text style={styles.inputIcon}>✉️</Text>
+                  <Mail size={18} color={colors.textTertiary} />
                   <TextInput
                     style={styles.input}
                     placeholder="Enter your email"
-                    placeholderTextColor="rgba(255,255,255,0.3)"
+                    placeholderTextColor={colors.textTertiary}
                     value={email}
                     onChangeText={(text) => {
                       setEmail(text);
@@ -178,19 +226,26 @@ export default function LoginScreen() {
               <View style={styles.inputGroup}>
                 <Text style={styles.label}>Password</Text>
                 <View style={[styles.inputWrapper, passwordError && styles.inputError]}>
-                  <Text style={styles.inputIcon}>🔐</Text>
+                  <Lock size={18} color={colors.textTertiary} />
                   <TextInput
                     style={styles.input}
                     placeholder="Enter your password"
-                    placeholderTextColor="rgba(255,255,255,0.3)"
+                    placeholderTextColor={colors.textTertiary}
                     value={password}
                     onChangeText={(text) => {
                       setPassword(text);
                       if (passwordError) validatePassword(text);
                     }}
                     onBlur={() => validatePassword(password)}
-                    secureTextEntry
+                    secureTextEntry={!showPassword}
                   />
+                  <Pressable onPress={() => setShowPassword(!showPassword)} hitSlop={8}>
+                    {showPassword ? (
+                      <EyeOff size={18} color={colors.textTertiary} />
+                    ) : (
+                      <Eye size={18} color={colors.textTertiary} />
+                    )}
+                  </Pressable>
                 </View>
                 {passwordError ? <Text style={styles.errorText}>{passwordError}</Text> : null}
               </View>
@@ -204,17 +259,16 @@ export default function LoginScreen() {
             {/* CTA Button */}
             <Animated.View style={{ transform: [{ scale: buttonScaleAnim }] }}>
               <Pressable
-                style={({ pressed }) => [
-                  styles.ctaButton,
-                  pressed && styles.ctaButtonPressed,
-                ]}
+                style={({ pressed }) => [styles.ctaButton, pressed && styles.ctaButtonPressed]}
                 onPress={handleLogin}
                 disabled={loading}
               >
                 <View style={styles.ctaInner}>
-                  <Text style={styles.ctaText}>
-                    {loading ? "Signing in..." : "Sign In"}
-                  </Text>
+                  {loading ? (
+                    <Text style={styles.ctaLoadingText}>Signing in...</Text>
+                  ) : (
+                    <Text style={styles.ctaText}>Sign In</Text>
+                  )}
                 </View>
               </Pressable>
             </Animated.View>
@@ -229,7 +283,7 @@ export default function LoginScreen() {
 
             {/* Demo hint */}
             <View style={styles.demoBox}>
-              <Text style={styles.demoText}>Use: customer@example.com / customer123</Text>
+              <Text style={styles.demoText}>Demo: customer@example.com / customer123</Text>
             </View>
           </Animated.View>
         </KeyboardAvoidingView>
@@ -242,32 +296,32 @@ const styles = StyleSheet.create({
   wrapper: {
     flex: 1,
     position: "relative",
-    backgroundColor: "#0B0B0F",
+    backgroundColor: colors.background,
   },
   gradientBg: {
     ...StyleSheet.absoluteFillObject,
   },
   bgLayer1: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: "#0A0A14",
+    backgroundColor: colors.background,
   },
   purpleOrb: {
     position: "absolute",
-    top: "-20%",
-    right: "-25%",
-    width: 350,
-    height: 350,
-    borderRadius: 175,
-    backgroundColor: "rgba(124, 58, 237, 0.25)",
+    top: "-15%",
+    right: "-20%",
+    width: 320,
+    height: 320,
+    borderRadius: 160,
+    backgroundColor: colors.primaryGlow,
   },
   cyanOrb: {
     position: "absolute",
-    bottom: "-25%",
+    bottom: "-20%",
     left: "-15%",
-    width: 400,
-    height: 400,
-    borderRadius: 200,
-    backgroundColor: "rgba(6, 182, 212, 0.15)",
+    width: 380,
+    height: 380,
+    borderRadius: 190,
+    backgroundColor: "rgba(6, 182, 212, 0.12)",
   },
   container: {
     flex: 1,
@@ -280,11 +334,11 @@ const styles = StyleSheet.create({
   },
   card: {
     width: "100%",
-    maxWidth: 380,
-    backgroundColor: "rgba(255, 255, 255, 0.035)",
-    borderRadius: 28,
+    maxWidth: 400,
+    backgroundColor: colors.backgroundCard,
+    borderRadius: borderRadius.xl,
     borderWidth: 1,
-    borderColor: "rgba(255, 255, 255, 0.08)",
+    borderColor: colors.border,
     padding: spacing.xl,
     alignItems: "center",
   },
@@ -292,9 +346,9 @@ const styles = StyleSheet.create({
     width: 64,
     height: 64,
     borderRadius: 18,
-    backgroundColor: "rgba(124, 58, 237, 0.15)",
+    backgroundColor: colors.primaryGlow,
     borderWidth: 1,
-    borderColor: "rgba(124, 58, 237, 0.3)",
+    borderColor: colors.border,
     alignItems: "center",
     justifyContent: "center",
     marginBottom: spacing.lg,
@@ -302,18 +356,19 @@ const styles = StyleSheet.create({
   logoText: {
     fontSize: 24,
     fontWeight: "800",
-    color: "#7C3AED",
+    color: colors.primary,
     letterSpacing: 2,
   },
   title: {
     fontSize: 30,
     fontWeight: "800",
-    color: "#FFFFFF",
+    color: colors.textPrimary,
     marginBottom: spacing.xs,
+    letterSpacing: -0.3,
   },
   subtitle: {
     fontSize: 14,
-    color: "rgba(255, 255, 255, 0.45)",
+    color: colors.textSecondary,
     fontWeight: "500",
     marginBottom: spacing.xl,
   },
@@ -327,7 +382,7 @@ const styles = StyleSheet.create({
   label: {
     fontSize: 11,
     fontWeight: "700",
-    color: "rgba(255, 255, 255, 0.4)",
+    color: colors.textSecondary,
     marginBottom: spacing.xs,
     textTransform: "uppercase",
     letterSpacing: 1.2,
@@ -335,29 +390,26 @@ const styles = StyleSheet.create({
   inputWrapper: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: "rgba(255, 255, 255, 0.04)",
-    borderRadius: 14,
+    backgroundColor: colors.background,
+    borderRadius: borderRadius.md,
     borderWidth: 1,
-    borderColor: "rgba(255, 255, 255, 0.07)",
+    borderColor: colors.border,
     paddingHorizontal: spacing.md,
     paddingVertical: 14,
+    gap: spacing.sm,
   },
   inputError: {
-    borderColor: "rgba(239, 68, 68, 0.5)",
-  },
-  inputIcon: {
-    fontSize: 17,
-    marginRight: spacing.sm,
+    borderColor: colors.error,
   },
   input: {
     flex: 1,
     fontSize: 16,
-    color: "#FFFFFF",
+    color: colors.textPrimary,
     padding: 0,
   },
   errorText: {
     fontSize: 12,
-    color: "#EF4444",
+    color: colors.error,
     marginTop: 4,
   },
   forgotRow: {
@@ -366,12 +418,12 @@ const styles = StyleSheet.create({
   },
   forgotText: {
     fontSize: 13,
-    color: "rgba(255, 255, 255, 0.4)",
+    color: colors.primary,
     fontWeight: "500",
   },
   ctaButton: {
     width: "100%",
-    borderRadius: 16,
+    borderRadius: borderRadius.md,
     overflow: "hidden",
     marginBottom: spacing.lg,
   },
@@ -379,14 +431,20 @@ const styles = StyleSheet.create({
     opacity: 0.85,
   },
   ctaInner: {
-    backgroundColor: "#7C3AED",
+    backgroundColor: colors.primary,
     paddingVertical: 17,
     alignItems: "center",
   },
   ctaText: {
     fontSize: 17,
     fontWeight: "700",
-    color: "#FFFFFF",
+    color: colors.white,
+    letterSpacing: 0.3,
+  },
+  ctaLoadingText: {
+    fontSize: 17,
+    fontWeight: "700",
+    color: colors.white,
     letterSpacing: 0.3,
   },
   footer: {
@@ -396,27 +454,27 @@ const styles = StyleSheet.create({
   },
   footerText: {
     fontSize: 14,
-    color: "rgba(255, 255, 255, 0.4)",
+    color: colors.textSecondary,
   },
   signUpText: {
     fontSize: 14,
     fontWeight: "600",
-    color: "#7C3AED",
+    color: colors.primary,
   },
   demoBox: {
     marginTop: spacing.lg,
     paddingVertical: spacing.sm,
     paddingHorizontal: spacing.md,
-    backgroundColor: "rgba(255, 255, 255, 0.025)",
-    borderRadius: 10,
+    backgroundColor: colors.background,
+    borderRadius: borderRadius.sm,
     borderWidth: 1,
-    borderColor: "rgba(255, 255, 255, 0.05)",
+    borderColor: colors.border,
     borderStyle: "dashed",
     width: "100%",
     alignItems: "center",
   },
   demoText: {
     fontSize: 12,
-    color: "rgba(255, 255, 255, 0.25)",
+    color: colors.textMuted,
   },
 });

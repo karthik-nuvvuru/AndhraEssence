@@ -1,3 +1,4 @@
+// Premium Home Screen - Liquid Glass Design System
 import React, { useState, useEffect, useCallback } from "react";
 import {
   View,
@@ -9,30 +10,25 @@ import {
   ScrollView,
   Image,
   StatusBar,
+  Animated,
 } from "react-native";
-import Animated, {
-  useAnimatedStyle,
-  withTiming,
-  withSpring,
-  withDelay,
-} from "react-native-reanimated";
 import { useRouter } from "expo-router";
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
+import { Search, MapPin, ChevronDown, Clock, Star, UtensilsCrossed } from "lucide-react-native";
 import { RestaurantCard } from "@/components/restaurant/RestaurantCard";
 import { ShimmerCard } from "@/components/ui/Shimmer";
-import { Button } from "@/components/ui/Button";
 import { colors, typography, spacing, borderRadius, shadows } from "@/theme";
 import { restaurantApi } from "@/services/api/endpoints";
 import type { Restaurant } from "@/types/api";
 
 const CATEGORIES = [
-  { id: "all", name: "All", emoji: "🔥" },
-  { id: "biryani", name: "Biryani", emoji: "🍚" },
-  { id: "south indian", name: "South Indian", emoji: "🥗" },
-  { id: "starters", name: "Starters", emoji: "🍗" },
-  { id: "curry", name: "Curry", emoji: "🍛" },
-  { id: "desserts", name: "Desserts", emoji: "🍰" },
-  { id: "andhra", name: "Andhra", emoji: "🌶️" },
+  { id: "all", name: "All" },
+  { id: "biryani", name: "Biryani" },
+  { id: "south indian", name: "South Indian" },
+  { id: "starters", name: "Starters" },
+  { id: "curry", name: "Curry" },
+  { id: "desserts", name: "Desserts" },
+  { id: "andhra", name: "Andhra" },
 ];
 
 const FEATURED_ITEMS = [
@@ -72,6 +68,8 @@ export default function HomeScreen() {
   const [hasMore, setHasMore] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [selectedCategory, setSelectedCategory] = useState("all");
+
+  const scrollY = new Animated.Value(0);
 
   const fetchRestaurants = async (pageNum: number = 1, refresh: boolean = false) => {
     try {
@@ -115,98 +113,108 @@ export default function HomeScreen() {
     router.push(`/restaurant/${restaurant.id}`);
   };
 
-  const AnimatedRestaurantCard: React.FC<{ restaurant: Restaurant; index: number; onPress: (r: Restaurant) => void }> = ({ restaurant, index, onPress }) => {
-    const entryStyle = useAnimatedStyle(() => ({
-      opacity: withDelay(index * 100, withTiming(1, { duration: 300 })),
-      transform: [
-        { translateY: withDelay(index * 100, withSpring(0)) },
-      ],
-    }));
-
-    return (
-      <Animated.View style={entryStyle}>
-        <RestaurantCard restaurant={restaurant} onPress={() => onPress(restaurant)} />
-      </Animated.View>
-    );
-  };
+  const headerOpacity = scrollY.interpolate({
+    inputRange: [0, 80],
+    outputRange: [1, 0.95],
+    extrapolate: Animated.Interpolation.CLAMP,
+  });
 
   const renderHeader = () => (
-    <View style={styles.headerContent}>
+    <View style={[styles.headerContent, { paddingTop: insets.top + 80 }]}>
       {/* Categories */}
-      <ScrollView
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        contentContainerStyle={styles.categoriesContainer}
-        decelerationRate="fast"
-        snapToInterval={120}
-      >
-        {CATEGORIES.map((cat) => (
-          <TouchableOpacity
-            key={cat.id}
-            style={[
-              styles.categoryPill,
-              selectedCategory === cat.id && styles.categoryPillActive,
-            ]}
-            onPress={() => setSelectedCategory(cat.id)}
-            activeOpacity={0.7}
-          >
-            <Text style={styles.categoryEmoji}>{cat.emoji}</Text>
-            <Text
+      <View style={styles.categoriesSection}>
+        <Text style={styles.sectionLabel}>Explore</Text>
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.categoriesContainer}
+          decelerationRate="fast"
+        >
+          {CATEGORIES.map((cat) => (
+            <TouchableOpacity
+              key={cat.id}
               style={[
-                styles.categoryText,
-                selectedCategory === cat.id && styles.categoryTextActive,
+                styles.categoryPill,
+                selectedCategory === cat.id && styles.categoryPillActive,
               ]}
+              onPress={() => setSelectedCategory(cat.id)}
+              activeOpacity={0.7}
             >
-              {cat.name}
-            </Text>
-          </TouchableOpacity>
-        ))}
-      </ScrollView>
+              <View style={[styles.categoryIconBox, selectedCategory === cat.id && styles.categoryIconBoxActive]}>
+                <UtensilsCrossed size={14} color={selectedCategory === cat.id ? colors.white : colors.primary} />
+              </View>
+              <Text
+                style={[
+                  styles.categoryText,
+                  selectedCategory === cat.id && styles.categoryTextActive,
+                ]}
+              >
+                {cat.name}
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </ScrollView>
+      </View>
 
       {/* Featured Section */}
       <View style={styles.featuredSection}>
-        <Text style={styles.featuredTitle}>🔥 Top Picks for You</Text>
+        <View style={styles.sectionHeader}>
+          <Text style={styles.featuredTitle}>Top Picks</Text>
+          <TouchableOpacity activeOpacity={0.7}>
+            <Text style={styles.seeAllText}>See all</Text>
+          </TouchableOpacity>
+        </View>
         <ScrollView
           horizontal
           showsHorizontalScrollIndicator={false}
           contentContainerStyle={styles.featuredScroll}
           decelerationRate="fast"
-          snapToInterval={220}
+          snapToInterval={210}
         >
           {FEATURED_ITEMS.map((item) => (
             <View key={item.id} style={styles.featuredCard}>
               <Image source={{ uri: item.image }} style={styles.featuredImage} />
-              <View style={styles.featuredOverlay} />
+              <View style={styles.featuredGradient} />
               <View style={styles.featuredPromo}>
                 <Text style={styles.featuredPromoText}>{item.promo}</Text>
               </View>
               <View style={styles.featuredInfo}>
                 <Text style={styles.featuredName} numberOfLines={1}>{item.name}</Text>
-                <Text style={styles.featuredMeta}>⭐ {item.rating} • {item.time}</Text>
+                <View style={styles.featuredMeta}>
+                  <Star size={11} color={colors.accent} fill={colors.accent} />
+                  <Text style={styles.featuredMetaText}>{item.rating}</Text>
+                  <View style={styles.metaDot} />
+                  <Clock size={11} color="rgba(255,255,255,0.7)" />
+                  <Text style={styles.featuredMetaText}>{item.time}</Text>
+                </View>
               </View>
             </View>
           ))}
         </ScrollView>
       </View>
 
-      {/* Restaurants Section Header */}
-      <View style={styles.restaurantsHeader}>
-        <Text style={styles.sectionTitle}>🍽️ Restaurants near you</Text>
-        <Text style={styles.restaurantCount}>{restaurants.length} places</Text>
+      {/* Restaurants Section */}
+      <View style={styles.restaurantsSection}>
+        <View style={styles.restaurantsHeaderRow}>
+          <Text style={styles.sectionTitle}>Restaurants</Text>
+          <Text style={styles.restaurantCount}>{restaurants.length} places</Text>
+        </View>
       </View>
     </View>
   );
 
   const renderEmpty = () => (
     <View style={styles.emptyContainer}>
-      <Text style={styles.emptyIcon}>🍽️</Text>
+      <View style={styles.emptyIconContainer}>
+        <UtensilsCrossed size={40} color={colors.textTertiary} />
+      </View>
       <Text style={styles.emptyTitle}>No restaurants found</Text>
       <Text style={styles.emptySubtext}>Try adjusting your search or check back later</Text>
     </View>
   );
 
-  const renderRestaurantItem = useCallback(({ item, index }: { item: Restaurant; index: number }) => (
-    <AnimatedRestaurantCard restaurant={item} index={index} onPress={handleRestaurantPress} />
+  const renderRestaurantItem = useCallback(({ item }: { item: Restaurant }) => (
+    <RestaurantCard restaurant={item} onPress={() => handleRestaurantPress(item)} />
   ), [handleRestaurantPress]);
 
   const renderSkeletonLoader = () => (
@@ -224,17 +232,19 @@ export default function HomeScreen() {
         <View style={[styles.fixedHeader, { paddingTop: spacing.lg }]}>
           <View style={styles.glassHeader}>
             <TouchableOpacity style={styles.locationSelector} activeOpacity={0.7}>
-              <Text style={styles.locationIcon}>📍</Text>
+              <View style={styles.locationIconBox}>
+                <MapPin size={16} color={colors.primary} />
+              </View>
               <View style={styles.locationInfo}>
                 <Text style={styles.locationLabel}>Deliver to</Text>
                 <View style={styles.locationRow}>
                   <Text style={styles.locationText}>Hyderabad</Text>
-                  <Text style={styles.locationArrow}>▼</Text>
+                  <ChevronDown size={14} color={colors.primary} />
                 </View>
               </View>
             </TouchableOpacity>
             <TouchableOpacity style={styles.searchBar} activeOpacity={0.8}>
-              <Text style={styles.searchIcon}>🔍</Text>
+              <Search size={16} color={colors.textTertiary} />
               <Text style={styles.searchPlaceholder}>Search restaurants or cuisines...</Text>
             </TouchableOpacity>
           </View>
@@ -249,10 +259,14 @@ export default function HomeScreen() {
       <SafeAreaView style={styles.container} edges={["top"]}>
         <StatusBar barStyle="light-content" backgroundColor={colors.background} />
         <View style={styles.errorContainer}>
-          <Text style={styles.errorIcon}>😔</Text>
+          <View style={styles.errorIconContainer}>
+            <Search size={40} color={colors.error} />
+          </View>
           <Text style={styles.errorTitle}>Something went wrong</Text>
           <Text style={styles.errorText}>{error}</Text>
-          <Button title="Try Again" onPress={() => fetchRestaurants(1, true)} variant="primary" size="md" />
+          <TouchableOpacity style={styles.retryButton} onPress={() => fetchRestaurants(1, true)}>
+            <Text style={styles.retryButtonText}>Try Again</Text>
+          </TouchableOpacity>
         </View>
       </SafeAreaView>
     );
@@ -263,30 +277,36 @@ export default function HomeScreen() {
       <StatusBar barStyle="light-content" backgroundColor={colors.background} />
 
       {/* Fixed Glassmorphism Header */}
-      <View style={[styles.fixedHeader, { paddingTop: insets.top + spacing.sm }]}>
+      <Animated.View style={[styles.fixedHeader, { paddingTop: insets.top + spacing.sm }, { opacity: headerOpacity }]}>
         <View style={styles.glassHeader}>
           {/* Location Selector */}
           <TouchableOpacity style={styles.locationSelector} activeOpacity={0.7}>
-            <Text style={styles.locationIcon}>📍</Text>
+            <View style={styles.locationIconBox}>
+              <MapPin size={16} color={colors.primary} />
+            </View>
             <View style={styles.locationInfo}>
               <Text style={styles.locationLabel}>Deliver to</Text>
               <View style={styles.locationRow}>
                 <Text style={styles.locationText}>Hyderabad</Text>
-                <Text style={styles.locationArrow}>▼</Text>
+                <ChevronDown size={14} color={colors.primary} />
               </View>
             </View>
           </TouchableOpacity>
 
           {/* Search Bar */}
-          <TouchableOpacity style={styles.searchBar} activeOpacity={0.8}>
-            <Text style={styles.searchIcon}>🔍</Text>
+          <TouchableOpacity
+            style={styles.searchBar}
+            activeOpacity={0.8}
+            onPress={() => router.push("/(tabs)/search")}
+          >
+            <Search size={16} color={colors.textTertiary} />
             <Text style={styles.searchPlaceholder}>Search restaurants or cuisines...</Text>
           </TouchableOpacity>
         </View>
-      </View>
+      </Animated.View>
 
       {/* Scrollable Content */}
-      <FlatList
+      <Animated.FlatList
         data={restaurants}
         keyExtractor={(item) => item.id}
         renderItem={renderRestaurantItem}
@@ -304,6 +324,11 @@ export default function HomeScreen() {
         onEndReached={handleLoadMore}
         onEndReachedThreshold={0.5}
         showsVerticalScrollIndicator={false}
+        onScroll={Animated.event(
+          [{ nativeEvent: { contentOffset: { y: scrollY } } }],
+          { useNativeDriver: true }
+        )}
+        scrollEventThrottle={16}
       />
     </View>
   );
@@ -323,7 +348,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.md,
   },
   glassHeader: {
-    backgroundColor: "rgba(11, 11, 15, 0.85)",
+    backgroundColor: "rgba(11, 11, 15, 0.92)",
     borderRadius: borderRadius.xl,
     padding: spacing.md,
     borderWidth: 1,
@@ -335,8 +360,13 @@ const styles = StyleSheet.create({
     alignItems: "center",
     marginBottom: spacing.sm,
   },
-  locationIcon: {
-    fontSize: 20,
+  locationIconBox: {
+    width: 32,
+    height: 32,
+    borderRadius: borderRadius.sm,
+    backgroundColor: colors.primaryGlow,
+    alignItems: "center",
+    justifyContent: "center",
     marginRight: spacing.sm,
   },
   locationInfo: {
@@ -354,43 +384,47 @@ const styles = StyleSheet.create({
     ...typography.bodyBold,
     color: colors.textPrimary,
     marginRight: spacing.xs,
-  },
-  locationArrow: {
-    fontSize: 10,
-    color: colors.primary,
+    fontSize: 15,
   },
   searchBar: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: colors.glass,
-    borderRadius: borderRadius.lg,
+    backgroundColor: colors.backgroundCard,
+    borderRadius: borderRadius.md,
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.sm + 2,
     borderWidth: 1,
     borderColor: colors.border,
   },
-  searchIcon: {
-    fontSize: 16,
-    marginRight: spacing.sm,
-  },
   searchPlaceholder: {
     ...typography.body,
     color: colors.textTertiary,
     flex: 1,
+    marginLeft: spacing.sm,
   },
   headerContent: {
-    paddingTop: 140,
     paddingHorizontal: spacing.md,
   },
+  categoriesSection: {
+    marginBottom: spacing.lg,
+  },
+  sectionLabel: {
+    ...typography.caption,
+    color: colors.textTertiary,
+    textTransform: "uppercase",
+    letterSpacing: 1.5,
+    fontWeight: "600",
+    marginBottom: spacing.sm,
+  },
   categoriesContainer: {
-    paddingVertical: spacing.sm,
+    paddingVertical: spacing.xs,
     gap: spacing.sm,
   },
   categoryPill: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: colors.glass,
-    paddingHorizontal: spacing.md,
+    backgroundColor: colors.backgroundCard,
+    paddingRight: spacing.md,
     paddingVertical: spacing.sm,
     borderRadius: borderRadius.full,
     marginRight: spacing.sm,
@@ -401,9 +435,17 @@ const styles = StyleSheet.create({
     backgroundColor: colors.primary,
     borderColor: colors.primary,
   },
-  categoryEmoji: {
-    fontSize: 16,
+  categoryIconBox: {
+    width: 28,
+    height: 28,
+    borderRadius: borderRadius.sm,
+    backgroundColor: colors.primaryGlow,
+    alignItems: "center",
+    justifyContent: "center",
     marginRight: spacing.xs,
+  },
+  categoryIconBoxActive: {
+    backgroundColor: "rgba(255,255,255,0.2)",
   },
   categoryText: {
     ...typography.bodySmall,
@@ -415,21 +457,31 @@ const styles = StyleSheet.create({
     fontWeight: "600",
   },
   featuredSection: {
-    marginTop: spacing.lg,
     marginBottom: spacing.lg,
   },
+  sectionHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: spacing.sm,
+  },
   featuredTitle: {
-    ...typography.h4,
+    ...typography.h3,
     color: colors.textPrimary,
     fontWeight: "700",
-    marginBottom: spacing.sm,
+    letterSpacing: -0.2,
+  },
+  seeAllText: {
+    ...typography.bodySmall,
+    color: colors.primary,
+    fontWeight: "600",
   },
   featuredScroll: {
     paddingRight: spacing.md,
   },
   featuredCard: {
     width: 200,
-    height: 140,
+    height: 150,
     borderRadius: borderRadius.lg,
     overflow: "hidden",
     marginRight: spacing.md,
@@ -440,16 +492,16 @@ const styles = StyleSheet.create({
     height: "100%",
     resizeMode: "cover",
   },
-  featuredOverlay: {
+  featuredGradient: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: "rgba(0,0,0,0.2)",
+    backgroundColor: "rgba(0,0,0,0.15)",
   },
   featuredPromo: {
     position: "absolute",
     top: spacing.sm,
     left: spacing.sm,
     backgroundColor: colors.primary,
-    paddingHorizontal: spacing.sm,
+    paddingHorizontal: spacing.sm + 2,
     paddingVertical: spacing.xs,
     borderRadius: borderRadius.sm,
   },
@@ -458,6 +510,7 @@ const styles = StyleSheet.create({
     color: colors.white,
     fontWeight: "700",
     fontSize: 9,
+    letterSpacing: 0.3,
   },
   featuredInfo: {
     position: "absolute",
@@ -465,19 +518,35 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     padding: spacing.sm,
-    backgroundColor: "rgba(0,0,0,0.5)",
+    backgroundColor: "rgba(0,0,0,0.55)",
   },
   featuredName: {
-    ...typography.bodySmall,
-    color: colors.white,
+    fontSize: 14,
     fontWeight: "700",
+    color: colors.white,
+    marginBottom: 3,
   },
   featuredMeta: {
-    ...typography.caption,
-    color: "rgba(255,255,255,0.85)",
-    marginTop: 2,
+    flexDirection: "row",
+    alignItems: "center",
   },
-  restaurantsHeader: {
+  featuredMetaText: {
+    ...typography.small,
+    color: "rgba(255,255,255,0.85)",
+    marginLeft: 3,
+    fontWeight: "500",
+  },
+  metaDot: {
+    width: 3,
+    height: 3,
+    borderRadius: 1.5,
+    backgroundColor: "rgba(255,255,255,0.5)",
+    marginHorizontal: spacing.xs,
+  },
+  restaurantsSection: {
+    marginBottom: spacing.sm,
+  },
+  restaurantsHeaderRow: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
@@ -487,6 +556,7 @@ const styles = StyleSheet.create({
     ...typography.h4,
     color: colors.textPrimary,
     fontWeight: "700",
+    letterSpacing: -0.2,
   },
   restaurantCount: {
     ...typography.bodySmall,
@@ -509,13 +579,20 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     paddingVertical: spacing.xxl * 2,
   },
-  emptyIcon: {
-    fontSize: 64,
+  emptyIconContainer: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    backgroundColor: colors.backgroundCard,
+    alignItems: "center",
+    justifyContent: "center",
     marginBottom: spacing.md,
+    borderWidth: 1,
+    borderColor: colors.border,
   },
   emptyTitle: {
     ...typography.h3,
-    color: colors.textPrimary,
+    color: colors.textSecondary,
     marginBottom: spacing.xs,
   },
   emptySubtext: {
@@ -529,8 +606,13 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     padding: spacing.xl,
   },
-  errorIcon: {
-    fontSize: 64,
+  errorIconContainer: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    backgroundColor: colors.errorBg,
+    alignItems: "center",
+    justifyContent: "center",
     marginBottom: spacing.md,
   },
   errorTitle: {
@@ -543,5 +625,16 @@ const styles = StyleSheet.create({
     color: colors.textTertiary,
     textAlign: "center",
     marginBottom: spacing.lg,
+  },
+  retryButton: {
+    backgroundColor: colors.primary,
+    paddingVertical: spacing.sm + 2,
+    paddingHorizontal: spacing.lg,
+    borderRadius: borderRadius.md,
+  },
+  retryButtonText: {
+    ...typography.button,
+    color: colors.white,
+    fontWeight: "600",
   },
 });

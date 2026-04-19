@@ -1,3 +1,4 @@
+// Premium Profile Screen - Liquid Glass Design
 import React from "react";
 import {
   View,
@@ -7,45 +8,78 @@ import {
   TouchableOpacity,
   Alert,
 } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
+import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 import { router } from "expo-router";
-import { Button } from "@/components/ui/Button";
-import { colors, typography, spacing, borderRadius } from "@/theme";
+import {
+  MapPin,
+  CreditCard,
+  Bell,
+  HelpCircle,
+  FileText,
+  LogOut,
+  Settings,
+  ChevronRight,
+  Shield,
+  User,
+  Mail,
+  Phone,
+} from "lucide-react-native";
+import { colors, typography, spacing, borderRadius, shadows } from "@/theme";
 import { useAuthStore } from "@/store";
 
 interface MenuItemProps {
-  icon: string;
+  icon: React.ReactNode;
   title: string;
+  subtitle?: string;
   onPress: () => void;
   isLast?: boolean;
   isDestructive?: boolean;
 }
 
-const MenuItem: React.FC<MenuItemProps> = ({ icon, title, onPress, isLast, isDestructive }) => (
+const MenuItem: React.FC<MenuItemProps> = ({ icon, title, subtitle, onPress, isLast, isDestructive }) => (
   <TouchableOpacity
     style={[styles.menuItem, isLast && styles.menuItemLast]}
     onPress={onPress}
     activeOpacity={0.7}
   >
     <View style={styles.menuItemLeft}>
-      <Text style={styles.menuIcon}>{icon}</Text>
-      <Text style={[styles.menuTitle, isDestructive && styles.menuTitleDestructive]}>
-        {title}
-      </Text>
+      <View style={[styles.menuIconBox, isDestructive && styles.menuIconBoxDestructive]}>
+        {icon}
+      </View>
+      <View style={styles.menuItemContent}>
+        <Text style={[styles.menuTitle, isDestructive && styles.menuTitleDestructive]}>
+          {title}
+        </Text>
+        {subtitle && <Text style={styles.menuSubtitle}>{subtitle}</Text>}
+      </View>
     </View>
-    <Text style={[styles.menuArrow, isDestructive && styles.menuArrowDestructive]}>›</Text>
+    <ChevronRight size={18} color={colors.textTertiary} />
   </TouchableOpacity>
 );
 
+function getInitials(name: string): string {
+  return name
+    .split(" ")
+    .map((n) => n[0])
+    .slice(0, 2)
+    .join("")
+    .toUpperCase();
+}
+
 export default function ProfileScreen() {
   const { user } = useAuthStore();
+  const insets = useSafeAreaInsets();
 
   const menuItems = [
-    { icon: "🏠", title: "Addresses", onPress: () => router.push("/profile/addresses" as any) },
-    { icon: "💳", title: "Payment Methods", onPress: () => Alert.alert("Coming Soon", "Payment methods will be available soon") },
-    { icon: "🔔", title: "Notifications", onPress: () => Alert.alert("Coming Soon", "Notification settings will be available soon") },
-    { icon: "❓", title: "Help & Support", onPress: () => Alert.alert("Help & Support", "Contact us at support@andhraessence.com") },
-    { icon: "📜", title: "Terms & Conditions", onPress: () => Alert.alert("Terms", "Terms & Conditions will be displayed here") },
+    { icon: <MapPin size={18} color={colors.primary} />, title: "My Addresses", subtitle: "Manage delivery addresses", onPress: () => router.push("/profile/addresses") },
+    { icon: <CreditCard size={18} color={colors.primary} />, title: "Payment Methods", subtitle: "Cards, wallets, UPI", onPress: () => Alert.alert("Coming Soon", "Payment methods will be available soon") },
+    { icon: <Bell size={18} color={colors.primary} />, title: "Notifications", subtitle: "Preferences and history", onPress: () => Alert.alert("Coming Soon", "Notification settings will be available soon") },
+  ];
+
+  const supportItems = [
+    { icon: <HelpCircle size={18} color={colors.textSecondary} />, title: "Help & Support", onPress: () => Alert.alert("Help & Support", "Contact us at support@andhraessence.com") },
+    { icon: <FileText size={18} color={colors.textSecondary} />, title: "Terms & Conditions", onPress: () => Alert.alert("Terms", "Terms & Conditions will be displayed here") },
+    { icon: <Shield size={18} color={colors.textSecondary} />, title: "Privacy Policy", onPress: () => Alert.alert("Privacy", "Privacy Policy will be displayed here") },
   ];
 
   const handleLogout = () => {
@@ -62,9 +96,14 @@ export default function ProfileScreen() {
     ]);
   };
 
+  const initials = getInitials(user?.full_name || "GU");
+
   return (
     <SafeAreaView style={styles.container} edges={["top"]}>
-      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={[styles.scrollContent, { paddingBottom: insets.bottom > 0 ? insets.bottom + spacing.lg : spacing.lg }]}
+      >
         <View style={styles.header}>
           <Text style={styles.title}>Profile</Text>
         </View>
@@ -74,25 +113,67 @@ export default function ProfileScreen() {
           <View style={styles.avatarContainer}>
             <View style={styles.avatarGlow} />
             <View style={styles.avatar}>
-              <Text style={styles.avatarEmoji}>👤</Text>
+              <Text style={styles.avatarInitials}>{initials}</Text>
             </View>
           </View>
           <Text style={styles.userName}>{user?.full_name || "Guest User"}</Text>
           <Text style={styles.userEmail}>{user?.email || "Welcome to AndhraEssence"}</Text>
+          {user?.phone && (
+            <View style={styles.phoneRow}>
+              <Phone size={13} color={colors.textTertiary} />
+              <Text style={styles.userPhone}>{user.phone}</Text>
+            </View>
+          )}
         </View>
 
-        {/* Settings Menu */}
+        {/* Account Settings */}
         <View style={styles.menuSection}>
+          <Text style={styles.sectionLabel}>Account</Text>
           <View style={styles.glassCard}>
             {menuItems.map((item, index) => (
               <MenuItem
                 key={index}
                 icon={item.icon}
                 title={item.title}
+                subtitle={item.subtitle}
                 onPress={item.onPress}
                 isLast={index === menuItems.length - 1}
               />
             ))}
+          </View>
+        </View>
+
+        {/* Support */}
+        <View style={styles.menuSection}>
+          <Text style={styles.sectionLabel}>Support</Text>
+          <View style={styles.glassCard}>
+            {supportItems.map((item, index) => (
+              <MenuItem
+                key={index}
+                icon={item.icon}
+                title={item.title}
+                onPress={item.onPress}
+                isLast={index === supportItems.length - 1}
+              />
+            ))}
+          </View>
+        </View>
+
+        {/* App Info */}
+        <View style={styles.appInfoSection}>
+          <View style={styles.appInfoCard}>
+            <View style={styles.appInfoLeft}>
+              <View style={styles.appIconBox}>
+                <Text style={styles.appIconText}>AE</Text>
+              </View>
+              <View>
+                <Text style={styles.appName}>AndhraEssence</Text>
+                <Text style={styles.appVersion}>Version 1.0.0</Text>
+              </View>
+            </View>
+            <View style={styles.appBadge}>
+              <Text style={styles.appBadgeText}>v1.0</Text>
+            </View>
           </View>
         </View>
 
@@ -103,13 +184,12 @@ export default function ProfileScreen() {
             onPress={handleLogout}
             activeOpacity={0.7}
           >
-            <Text style={styles.logoutIcon}>🚪</Text>
+            <View style={styles.logoutIconBox}>
+              <LogOut size={18} color={colors.error} />
+            </View>
             <Text style={styles.logoutText}>Logout</Text>
           </TouchableOpacity>
         </View>
-
-        {/* App Version */}
-        <Text style={styles.version}>AndhraEssence v1.0.0</Text>
       </ScrollView>
     </SafeAreaView>
   );
@@ -141,27 +221,30 @@ const styles = StyleSheet.create({
   },
   avatarGlow: {
     position: "absolute",
-    top: -8,
-    left: -8,
-    right: -8,
-    bottom: -8,
-    borderRadius: 58,
+    top: -10,
+    left: -10,
+    right: -10,
+    bottom: -10,
+    borderRadius: 60,
     backgroundColor: colors.primary,
-    opacity: 0.2,
+    opacity: 0.15,
   },
   avatar: {
-    width: 100,
-    height: 100,
-    borderRadius: 50,
-    backgroundColor: colors.glass,
+    width: 96,
+    height: 96,
+    borderRadius: 48,
+    backgroundColor: colors.primaryGlow,
     borderWidth: 2,
-    borderColor: colors.glassBorder,
+    borderColor: colors.primary,
     alignItems: "center",
     justifyContent: "center",
     ...shadows.glass,
   },
-  avatarEmoji: {
-    fontSize: 48,
+  avatarInitials: {
+    fontSize: 32,
+    fontWeight: "700",
+    color: colors.primary,
+    letterSpacing: 1,
   },
   userName: {
     ...typography.h2,
@@ -172,17 +255,35 @@ const styles = StyleSheet.create({
     ...typography.body,
     color: colors.textSecondary,
   },
+  phoneRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginTop: spacing.xs,
+    gap: spacing.xs,
+  },
+  userPhone: {
+    ...typography.bodySmall,
+    color: colors.textTertiary,
+  },
   menuSection: {
     paddingHorizontal: spacing.md,
     marginBottom: spacing.lg,
   },
+  sectionLabel: {
+    ...typography.caption,
+    color: colors.textTertiary,
+    textTransform: "uppercase",
+    letterSpacing: 1.5,
+    fontWeight: "600",
+    marginBottom: spacing.sm,
+    paddingLeft: spacing.xs,
+  },
   glassCard: {
-    backgroundColor: colors.glass,
-    borderRadius: borderRadius.xl,
+    backgroundColor: colors.backgroundCard,
+    borderRadius: borderRadius.lg,
     borderWidth: 1,
-    borderColor: colors.glassBorder,
+    borderColor: colors.border,
     overflow: "hidden",
-    ...shadows.glass,
   },
   menuItem: {
     flexDirection: "row",
@@ -198,24 +299,89 @@ const styles = StyleSheet.create({
   menuItemLeft: {
     flexDirection: "row",
     alignItems: "center",
+    flex: 1,
   },
-  menuIcon: {
-    fontSize: 20,
+  menuIconBox: {
+    width: 36,
+    height: 36,
+    borderRadius: borderRadius.sm,
+    backgroundColor: colors.primaryGlow,
+    alignItems: "center",
+    justifyContent: "center",
     marginRight: spacing.md,
+  },
+  menuIconBoxDestructive: {
+    backgroundColor: colors.errorBg,
+  },
+  menuItemContent: {
+    flex: 1,
   },
   menuTitle: {
     ...typography.body,
     color: colors.textPrimary,
+    fontWeight: "500",
   },
   menuTitleDestructive: {
     color: colors.error,
   },
-  menuArrow: {
-    fontSize: 24,
+  menuSubtitle: {
+    ...typography.caption,
     color: colors.textTertiary,
+    marginTop: 2,
   },
-  menuArrowDestructive: {
-    color: colors.error,
+  appInfoSection: {
+    paddingHorizontal: spacing.md,
+    marginBottom: spacing.lg,
+  },
+  appInfoCard: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    backgroundColor: colors.backgroundCard,
+    borderRadius: borderRadius.lg,
+    borderWidth: 1,
+    borderColor: colors.border,
+    padding: spacing.md,
+  },
+  appInfoLeft: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  appIconBox: {
+    width: 40,
+    height: 40,
+    borderRadius: borderRadius.sm,
+    backgroundColor: colors.primaryGlow,
+    alignItems: "center",
+    justifyContent: "center",
+    marginRight: spacing.sm,
+  },
+  appIconText: {
+    fontSize: 16,
+    fontWeight: "800",
+    color: colors.primary,
+  },
+  appName: {
+    ...typography.bodyBold,
+    color: colors.textPrimary,
+  },
+  appVersion: {
+    ...typography.caption,
+    color: colors.textTertiary,
+    marginTop: 2,
+  },
+  appBadge: {
+    backgroundColor: colors.background,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.xs,
+    borderRadius: borderRadius.sm,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  appBadgeText: {
+    ...typography.small,
+    color: colors.textSecondary,
+    fontWeight: "600",
   },
   logoutSection: {
     paddingHorizontal: spacing.md,
@@ -225,25 +391,23 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: colors.glass,
-    borderRadius: borderRadius.xl,
+    backgroundColor: colors.backgroundCard,
+    borderRadius: borderRadius.lg,
     borderWidth: 1,
     borderColor: colors.error,
     padding: spacing.md,
-    ...shadows.glass,
+    gap: spacing.sm,
   },
-  logoutIcon: {
-    fontSize: 20,
-    marginRight: spacing.sm,
+  logoutIconBox: {
+    width: 36,
+    height: 36,
+    borderRadius: borderRadius.sm,
+    backgroundColor: colors.errorBg,
+    alignItems: "center",
+    justifyContent: "center",
   },
   logoutText: {
     ...typography.bodyBold,
     color: colors.error,
-  },
-  version: {
-    ...typography.caption,
-    color: colors.textTertiary,
-    textAlign: "center",
-    marginBottom: spacing.xl,
   },
 });

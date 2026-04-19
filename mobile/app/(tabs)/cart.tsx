@@ -1,3 +1,4 @@
+// Premium Cart Screen - Liquid Glass Design
 import React, { useState, useCallback } from "react";
 import {
   View,
@@ -10,8 +11,9 @@ import {
   KeyboardAvoidingView,
   Platform,
 } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
+import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
+import { Tag, Trash2, ShoppingBag } from "lucide-react-native";
 import { GlassCard } from "@/components/ui/GlassCard";
 import { Button } from "@/components/ui/Button";
 import { CartItem } from "@/components/ui/CartItem";
@@ -19,12 +21,13 @@ import { colors, typography, spacing, borderRadius, shadows } from "@/theme";
 import { useCartStore } from "@/store";
 import { formatCurrency } from "@/utils/formatters";
 
-const TAX_RATE = 0.05; // 5% GST
+const TAX_RATE = 0.05;
 const DELIVERY_FEE = 40;
 const PLATFORM_FEE = 5;
 
 export default function CartScreen() {
   const router = useRouter();
+  const insets = useSafeAreaInsets();
   const {
     items,
     restaurantName,
@@ -47,9 +50,8 @@ export default function CartScreen() {
       Alert.alert("Error", "Please enter a promo code");
       return;
     }
-    // Demo: accept any code starting with "SAVE"
     if (promoCode.toUpperCase().startsWith("SAVE")) {
-      const discount = Math.round(subtotal * 0.1); // 10% off
+      const discount = Math.round(subtotal * 0.1);
       setDiscountAmount(discount);
       setAppliedPromo(promoCode.toUpperCase());
       Alert.alert("Success", `Promo code applied! You save ${formatCurrency(discount)}`);
@@ -188,7 +190,9 @@ export default function CartScreen() {
       {appliedPromo ? (
         <View style={styles.appliedPromo}>
           <View style={styles.appliedPromoInfo}>
-            <Text style={styles.promoIcon}>🎟</Text>
+            <View style={styles.promoIconBox}>
+              <Tag size={16} color={colors.success} />
+            </View>
             <View>
               <Text style={styles.appliedPromoText}>{appliedPromo}</Text>
               <Text style={styles.appliedPromoSubtext}>Promo applied</Text>
@@ -201,7 +205,7 @@ export default function CartScreen() {
       ) : (
         <View style={styles.promoInputRow}>
           <View style={styles.promoInputContainer}>
-            <Text style={styles.promoInputIcon}>🎟</Text>
+            <Tag size={16} color={colors.textTertiary} />
             <TextInput
               style={styles.promoInput}
               placeholder="Enter promo code"
@@ -227,7 +231,7 @@ export default function CartScreen() {
   const renderEmpty = () => (
     <View style={styles.emptyContainer}>
       <View style={styles.emptyIconContainer}>
-        <Text style={styles.emptyIcon}>🛒</Text>
+        <ShoppingBag size={40} color={colors.textTertiary} />
       </View>
       <Text style={styles.emptyTitle}>Your cart is empty</Text>
       <Text style={styles.emptySubtext}>
@@ -258,7 +262,8 @@ export default function CartScreen() {
     <SafeAreaView style={styles.container} edges={["top"]}>
       <KeyboardAvoidingView
         style={styles.keyboardView}
-        behavior={Platform.OS === "ios" ? "padding" : undefined}
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
+        keyboardShouldPersistTaps="handled"
       >
         {/* Header */}
         <View style={styles.header}>
@@ -269,7 +274,8 @@ export default function CartScreen() {
             )}
           </View>
           <TouchableOpacity onPress={handleClearCart} style={styles.clearButton}>
-            <Text style={styles.clearText}>Clear All</Text>
+            <Trash2 size={16} color={colors.error} />
+            <Text style={styles.clearText}>Clear</Text>
           </TouchableOpacity>
         </View>
 
@@ -284,14 +290,13 @@ export default function CartScreen() {
             <View style={styles.footer}>
               {renderPromoCode()}
               {renderBillBreakdown()}
-              {/* Spacer for sticky button */}
               <View style={styles.footerSpacer} />
             </View>
           }
         />
 
         {/* Sticky Checkout Button */}
-        <View style={styles.stickyFooter}>
+        <View style={[styles.stickyFooter, { paddingBottom: insets.bottom > 0 ? insets.bottom + spacing.md : spacing.md }]}>
           <View style={styles.stickyContent}>
             <View style={styles.totalInfo}>
               <Text style={styles.stickyTotalLabel}>Total</Text>
@@ -337,8 +342,11 @@ const styles = StyleSheet.create({
     marginTop: 2,
   },
   clearButton: {
+    flexDirection: "row",
+    alignItems: "center",
     paddingVertical: spacing.xs,
     paddingHorizontal: spacing.sm,
+    gap: spacing.xs,
   },
   clearText: {
     ...typography.body,
@@ -348,85 +356,6 @@ const styles = StyleSheet.create({
   list: {
     paddingHorizontal: spacing.md,
     paddingBottom: spacing.md,
-  },
-  cartItemAnimated: {
-    marginBottom: spacing.sm,
-  },
-  cartItem: {
-    marginBottom: 0,
-  },
-  cartItemInner: {
-    flexDirection: "row",
-    alignItems: "center",
-  },
-  imageContainer: {
-    position: "relative",
-    marginRight: spacing.md,
-  },
-  foodImage: {
-    width: 80,
-    height: 80,
-    borderRadius: borderRadius.md,
-  },
-  imagePlaceholder: {
-    width: 80,
-    height: 80,
-    borderRadius: borderRadius.md,
-    backgroundColor: colors.backgroundSecondary,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  placeholderEmoji: {
-    fontSize: 32,
-  },
-  vegBadge: {
-    position: "absolute",
-    top: -4,
-    left: -4,
-    width: 20,
-    height: 20,
-    borderRadius: 4,
-    borderWidth: 1.5,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  vegDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-  },
-  itemDetails: {
-    flex: 1,
-    justifyContent: "center",
-  },
-  itemName: {
-    ...typography.bodyBold,
-    color: colors.textPrimary,
-    marginBottom: 2,
-  },
-  itemVariant: {
-    ...typography.caption,
-    color: colors.textSecondary,
-    marginBottom: 4,
-  },
-  itemPrice: {
-    ...typography.body,
-    color: colors.accent,
-    fontWeight: "600",
-  },
-  itemActions: {
-    alignItems: "flex-end",
-    justifyContent: "space-between",
-    height: 80,
-  },
-  removeButton: {
-    padding: spacing.xs,
-    marginTop: spacing.xs,
-  },
-  removeIcon: {
-    fontSize: 16,
-    color: colors.textTertiary,
-    fontWeight: "500",
   },
   footer: {
     marginTop: spacing.sm,
@@ -449,15 +378,12 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.sm,
     marginRight: spacing.sm,
   },
-  promoInputIcon: {
-    fontSize: 16,
-    marginRight: spacing.xs,
-  },
   promoInput: {
     flex: 1,
     ...typography.body,
     color: colors.textPrimary,
     paddingVertical: spacing.sm,
+    marginLeft: spacing.xs,
   },
   applyButton: {
     minWidth: 80,
@@ -471,8 +397,13 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
   },
-  promoIcon: {
-    fontSize: 20,
+  promoIconBox: {
+    width: 32,
+    height: 32,
+    borderRadius: borderRadius.sm,
+    backgroundColor: colors.successBg,
+    alignItems: "center",
+    justifyContent: "center",
     marginRight: spacing.sm,
   },
   appliedPromoText: {
@@ -566,7 +497,6 @@ const styles = StyleSheet.create({
     borderTopColor: colors.border,
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.md,
-    paddingBottom: Platform.OS === "ios" ? spacing.xl : spacing.md,
     ...shadows.glass,
   },
   stickyContent: {
@@ -606,9 +536,6 @@ const styles = StyleSheet.create({
     marginBottom: spacing.lg,
     borderWidth: 1,
     borderColor: colors.border,
-  },
-  emptyIcon: {
-    fontSize: 56,
   },
   emptyTitle: {
     ...typography.h2,

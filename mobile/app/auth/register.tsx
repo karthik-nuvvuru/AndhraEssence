@@ -1,9 +1,9 @@
+// Premium Register Screen - Glassmorphism Dark Theme
 import React, { useState, useEffect, useRef } from "react";
 import {
   View,
   Text,
   StyleSheet,
-  Platform,
   Animated,
   TextInput,
   Pressable,
@@ -13,7 +13,8 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { router } from "expo-router";
-import { spacing } from "@/theme";
+import { Mail, Lock, Phone, User, Eye, EyeOff } from "lucide-react-native";
+import { spacing, colors, typography, borderRadius } from "@/theme";
 import { authApi } from "@/services/api/endpoints";
 import { useAuthStore } from "@/store";
 
@@ -24,13 +25,18 @@ export default function RegisterScreen() {
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const { setAuth } = useAuthStore();
 
-  // Animations
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const slideAnim = useRef(new Animated.Value(40)).current;
   const buttonScaleAnim = useRef(new Animated.Value(1)).current;
+  const orb1Y = useRef(new Animated.Value(0)).current;
+  const orb1Scale = useRef(new Animated.Value(1)).current;
+  const orb2Y = useRef(new Animated.Value(0)).current;
+  const orb2Scale = useRef(new Animated.Value(1)).current;
 
   useEffect(() => {
     Animated.parallel([
@@ -44,6 +50,30 @@ export default function RegisterScreen() {
         duration: 800,
         useNativeDriver: true,
       }),
+      Animated.loop(
+        Animated.sequence([
+          Animated.parallel([
+            Animated.timing(orb1Y, { toValue: -30, duration: 3000, useNativeDriver: true }),
+            Animated.timing(orb1Scale, { toValue: 1.15, duration: 3000, useNativeDriver: true }),
+          ]),
+          Animated.parallel([
+            Animated.timing(orb1Y, { toValue: 0, duration: 3000, useNativeDriver: true }),
+            Animated.timing(orb1Scale, { toValue: 1, duration: 3000, useNativeDriver: true }),
+          ]),
+        ])
+      ),
+      Animated.loop(
+        Animated.sequence([
+          Animated.parallel([
+            Animated.timing(orb2Y, { toValue: 25, duration: 2500, useNativeDriver: true }),
+            Animated.timing(orb2Scale, { toValue: 1.1, duration: 2500, useNativeDriver: true }),
+          ]),
+          Animated.parallel([
+            Animated.timing(orb2Y, { toValue: 0, duration: 2500, useNativeDriver: true }),
+            Animated.timing(orb2Scale, { toValue: 1, duration: 2500, useNativeDriver: true }),
+          ]),
+        ])
+      ),
     ]).start();
   }, []);
 
@@ -100,7 +130,6 @@ export default function RegisterScreen() {
 
       const { access_token, refresh_token } = loginResponse.data;
 
-      // Auto-login after registration
       const tempUser = {
         id: "",
         email: email,
@@ -147,17 +176,38 @@ export default function RegisterScreen() {
 
   return (
     <View style={styles.wrapper}>
-      {/* Dark gradient background */}
+      {/* Animated Background */}
       <View style={styles.gradientBg}>
         <View style={styles.bgLayer1} />
-        <View style={styles.purpleOrb} />
-        <View style={styles.cyanOrb} />
+        <Animated.View
+          style={[
+            styles.purpleOrb,
+            {
+              transform: [
+                { translateY: orb1Y },
+                { scale: orb1Scale },
+              ],
+            },
+          ]}
+        />
+        <Animated.View
+          style={[
+            styles.cyanOrb,
+            {
+              transform: [
+                { translateY: orb2Y },
+                { scale: orb2Scale },
+              ],
+            },
+          ]}
+        />
       </View>
 
       <SafeAreaView style={styles.container} edges={["top", "bottom"]}>
         <KeyboardAvoidingView
-          behavior={Platform.OS === "ios" ? "padding" : "height"}
+          behavior="padding"
           style={styles.keyboardView}
+          keyboardShouldPersistTaps="handled"
         >
           <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
             <Animated.View style={[styles.card, { opacity: fadeAnim }]}>
@@ -170,20 +220,20 @@ export default function RegisterScreen() {
                 Create Account
               </Animated.Text>
               <Animated.Text style={[styles.subtitle, { opacity: fadeAnim }]}>
-                Sign up to get started
+                Sign up to start ordering
               </Animated.Text>
 
-              {/* Inputs */}
+              {/* Form */}
               <Animated.View style={[styles.form, { opacity: fadeAnim, transform: [{ translateY: slideAnim }] }]}>
                 {/* Full Name */}
                 <View style={styles.inputGroup}>
                   <Text style={styles.label}>Full Name</Text>
                   <View style={[styles.inputWrapper, errors.fullName && styles.inputError]}>
-                    <Text style={styles.inputIcon}>👤</Text>
+                    <User size={18} color={colors.textTertiary} />
                     <TextInput
                       style={styles.input}
                       placeholder="Enter your full name"
-                      placeholderTextColor="rgba(255,255,255,0.3)"
+                      placeholderTextColor={colors.textTertiary}
                       value={fullName}
                       onChangeText={setFullName}
                       autoCapitalize="words"
@@ -196,11 +246,11 @@ export default function RegisterScreen() {
                 <View style={styles.inputGroup}>
                   <Text style={styles.label}>Email</Text>
                   <View style={[styles.inputWrapper, errors.email && styles.inputError]}>
-                    <Text style={styles.inputIcon}>✉️</Text>
+                    <Mail size={18} color={colors.textTertiary} />
                     <TextInput
                       style={styles.input}
                       placeholder="Enter your email"
-                      placeholderTextColor="rgba(255,255,255,0.3)"
+                      placeholderTextColor={colors.textTertiary}
                       value={email}
                       onChangeText={setEmail}
                       keyboardType="email-address"
@@ -215,11 +265,11 @@ export default function RegisterScreen() {
                 <View style={styles.inputGroup}>
                   <Text style={styles.label}>Phone</Text>
                   <View style={[styles.inputWrapper, errors.phone && styles.inputError]}>
-                    <Text style={styles.inputIcon}>📱</Text>
+                    <Phone size={18} color={colors.textTertiary} />
                     <TextInput
                       style={styles.input}
                       placeholder="Enter your phone number"
-                      placeholderTextColor="rgba(255,255,255,0.3)"
+                      placeholderTextColor={colors.textTertiary}
                       value={phone}
                       onChangeText={setPhone}
                       keyboardType="phone-pad"
@@ -232,15 +282,22 @@ export default function RegisterScreen() {
                 <View style={styles.inputGroup}>
                   <Text style={styles.label}>Password</Text>
                   <View style={[styles.inputWrapper, errors.password && styles.inputError]}>
-                    <Text style={styles.inputIcon}>🔐</Text>
+                    <Lock size={18} color={colors.textTertiary} />
                     <TextInput
                       style={styles.input}
                       placeholder="Create a password"
-                      placeholderTextColor="rgba(255,255,255,0.3)"
+                      placeholderTextColor={colors.textTertiary}
                       value={password}
                       onChangeText={setPassword}
-                      secureTextEntry
+                      secureTextEntry={!showPassword}
                     />
+                    <Pressable onPress={() => setShowPassword(!showPassword)} hitSlop={8}>
+                      {showPassword ? (
+                        <EyeOff size={18} color={colors.textTertiary} />
+                      ) : (
+                        <Eye size={18} color={colors.textTertiary} />
+                      )}
+                    </Pressable>
                   </View>
                   {errors.password ? <Text style={styles.errorText}>{errors.password}</Text> : null}
                 </View>
@@ -249,15 +306,22 @@ export default function RegisterScreen() {
                 <View style={styles.inputGroup}>
                   <Text style={styles.label}>Confirm Password</Text>
                   <View style={[styles.inputWrapper, errors.confirmPassword && styles.inputError]}>
-                    <Text style={styles.inputIcon}>🔐</Text>
+                    <Lock size={18} color={colors.textTertiary} />
                     <TextInput
                       style={styles.input}
                       placeholder="Confirm your password"
-                      placeholderTextColor="rgba(255,255,255,0.3)"
+                      placeholderTextColor={colors.textTertiary}
                       value={confirmPassword}
                       onChangeText={setConfirmPassword}
-                      secureTextEntry
+                      secureTextEntry={!showConfirmPassword}
                     />
+                    <Pressable onPress={() => setShowConfirmPassword(!showConfirmPassword)} hitSlop={8}>
+                      {showConfirmPassword ? (
+                        <EyeOff size={18} color={colors.textTertiary} />
+                      ) : (
+                        <Eye size={18} color={colors.textTertiary} />
+                      )}
+                    </Pressable>
                   </View>
                   {errors.confirmPassword ? <Text style={styles.errorText}>{errors.confirmPassword}</Text> : null}
                 </View>
@@ -266,17 +330,16 @@ export default function RegisterScreen() {
               {/* CTA Button */}
               <Animated.View style={{ transform: [{ scale: buttonScaleAnim }] }}>
                 <Pressable
-                  style={({ pressed }) => [
-                    styles.ctaButton,
-                    pressed && styles.ctaButtonPressed,
-                  ]}
+                  style={({ pressed }) => [styles.ctaButton, pressed && styles.ctaButtonPressed]}
                   onPress={handleRegister}
                   disabled={loading}
                 >
                   <View style={styles.ctaInner}>
-                    <Text style={styles.ctaText}>
-                      {loading ? "Creating account..." : "Sign Up"}
-                    </Text>
+                    {loading ? (
+                      <Text style={styles.ctaLoadingText}>Creating account...</Text>
+                    ) : (
+                      <Text style={styles.ctaText}>Create Account</Text>
+                    )}
                   </View>
                 </Pressable>
               </Animated.View>
@@ -300,32 +363,32 @@ const styles = StyleSheet.create({
   wrapper: {
     flex: 1,
     position: "relative",
-    backgroundColor: "#0B0B0F",
+    backgroundColor: colors.background,
   },
   gradientBg: {
     ...StyleSheet.absoluteFillObject,
   },
   bgLayer1: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: "#0A0A14",
+    backgroundColor: colors.background,
   },
   purpleOrb: {
     position: "absolute",
-    top: "-20%",
-    left: "-25%",
-    width: 350,
-    height: 350,
-    borderRadius: 175,
-    backgroundColor: "rgba(124, 58, 237, 0.25)",
+    top: "-15%",
+    left: "-20%",
+    width: 320,
+    height: 320,
+    borderRadius: 160,
+    backgroundColor: colors.primaryGlow,
   },
   cyanOrb: {
     position: "absolute",
-    bottom: "-25%",
+    bottom: "-20%",
     right: "-15%",
-    width: 400,
-    height: 400,
-    borderRadius: 200,
-    backgroundColor: "rgba(6, 182, 212, 0.15)",
+    width: 380,
+    height: 380,
+    borderRadius: 190,
+    backgroundColor: "rgba(6, 182, 212, 0.12)",
   },
   container: {
     flex: 1,
@@ -342,11 +405,11 @@ const styles = StyleSheet.create({
   },
   card: {
     width: "100%",
-    maxWidth: 380,
-    backgroundColor: "rgba(255, 255, 255, 0.035)",
-    borderRadius: 28,
+    maxWidth: 400,
+    backgroundColor: colors.backgroundCard,
+    borderRadius: borderRadius.xl,
     borderWidth: 1,
-    borderColor: "rgba(255, 255, 255, 0.08)",
+    borderColor: colors.border,
     padding: spacing.xl,
     alignItems: "center",
   },
@@ -354,9 +417,9 @@ const styles = StyleSheet.create({
     width: 64,
     height: 64,
     borderRadius: 18,
-    backgroundColor: "rgba(124, 58, 237, 0.15)",
+    backgroundColor: colors.primaryGlow,
     borderWidth: 1,
-    borderColor: "rgba(124, 58, 237, 0.3)",
+    borderColor: colors.border,
     alignItems: "center",
     justifyContent: "center",
     marginBottom: spacing.lg,
@@ -364,18 +427,19 @@ const styles = StyleSheet.create({
   logoText: {
     fontSize: 24,
     fontWeight: "800",
-    color: "#7C3AED",
+    color: colors.primary,
     letterSpacing: 2,
   },
   title: {
     fontSize: 30,
     fontWeight: "800",
-    color: "#FFFFFF",
+    color: colors.textPrimary,
     marginBottom: spacing.xs,
+    letterSpacing: -0.3,
   },
   subtitle: {
     fontSize: 14,
-    color: "rgba(255, 255, 255, 0.45)",
+    color: colors.textSecondary,
     fontWeight: "500",
     marginBottom: spacing.xl,
   },
@@ -389,7 +453,7 @@ const styles = StyleSheet.create({
   label: {
     fontSize: 11,
     fontWeight: "700",
-    color: "rgba(255, 255, 255, 0.4)",
+    color: colors.textSecondary,
     marginBottom: spacing.xs,
     textTransform: "uppercase",
     letterSpacing: 1.2,
@@ -397,34 +461,31 @@ const styles = StyleSheet.create({
   inputWrapper: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: "rgba(255, 255, 255, 0.04)",
-    borderRadius: 14,
+    backgroundColor: colors.background,
+    borderRadius: borderRadius.md,
     borderWidth: 1,
-    borderColor: "rgba(255, 255, 255, 0.07)",
+    borderColor: colors.border,
     paddingHorizontal: spacing.md,
     paddingVertical: 14,
+    gap: spacing.sm,
   },
   inputError: {
-    borderColor: "rgba(239, 68, 68, 0.5)",
-  },
-  inputIcon: {
-    fontSize: 17,
-    marginRight: spacing.sm,
+    borderColor: colors.error,
   },
   input: {
     flex: 1,
     fontSize: 16,
-    color: "#FFFFFF",
+    color: colors.textPrimary,
     padding: 0,
   },
   errorText: {
     fontSize: 12,
-    color: "#EF4444",
+    color: colors.error,
     marginTop: 4,
   },
   ctaButton: {
     width: "100%",
-    borderRadius: 16,
+    borderRadius: borderRadius.md,
     overflow: "hidden",
     marginBottom: spacing.lg,
   },
@@ -432,14 +493,20 @@ const styles = StyleSheet.create({
     opacity: 0.85,
   },
   ctaInner: {
-    backgroundColor: "#7C3AED",
+    backgroundColor: colors.primary,
     paddingVertical: 17,
     alignItems: "center",
   },
   ctaText: {
     fontSize: 17,
     fontWeight: "700",
-    color: "#FFFFFF",
+    color: colors.white,
+    letterSpacing: 0.3,
+  },
+  ctaLoadingText: {
+    fontSize: 17,
+    fontWeight: "700",
+    color: colors.white,
     letterSpacing: 0.3,
   },
   footer: {
@@ -449,11 +516,11 @@ const styles = StyleSheet.create({
   },
   footerText: {
     fontSize: 14,
-    color: "rgba(255, 255, 255, 0.4)",
+    color: colors.textSecondary,
   },
   signInText: {
     fontSize: 14,
     fontWeight: "600",
-    color: "#7C3AED",
+    color: colors.primary,
   },
 });

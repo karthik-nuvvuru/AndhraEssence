@@ -147,7 +147,6 @@ const styles = StyleSheet.create({
     ...typography.caption,
     color: colors.textSecondary,
     fontWeight: "500",
-    textTransform: "uppercase",
     letterSpacing: 0.5,
     backgroundColor: colors.backgroundCard,
     paddingHorizontal: 4,

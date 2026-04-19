@@ -1,30 +1,30 @@
-import React, { useEffect, useRef, useState } from "react";
-import { View, StyleSheet } from "react-native";
+import React, { useEffect } from "react";
+import { View, Text, StyleSheet } from "react-native";
 import { useRouter } from "expo-router";
-import { LoadingSpinner } from "@/components/ui/LoadingSpinner";
-import { useAuthStore } from "@/store";
+import { useAuth } from "@/context/AuthContext";
 import { colors } from "@/theme";
 
 export default function Index() {
   const router = useRouter();
-  const { isAuthenticated } = useAuthStore();
-  const hasNavigated = useRef(false);
+  const { isAuthenticated } = useAuth();
 
   useEffect(() => {
-    // Only navigate once
-    if (!hasNavigated.current) {
-      hasNavigated.current = true;
+    console.log("Index: isAuthenticated =", isAuthenticated);
+    // Simple navigation after a short delay
+    const timeout = setTimeout(() => {
+      console.log("Index: Navigating to", isAuthenticated ? "/(tabs)" : "/auth");
       if (isAuthenticated) {
         router.replace("/(tabs)");
       } else {
         router.replace("/auth");
       }
-    }
-  }, [isAuthenticated]);
+    }, 500);
+    return () => clearTimeout(timeout);
+  }, [isAuthenticated, router]);
 
   return (
     <View style={styles.container}>
-      <LoadingSpinner text="Loading..." fullScreen />
+      <Text style={styles.text}>Loading... isAuthenticated: {String(isAuthenticated)}</Text>
     </View>
   );
 }
@@ -33,5 +33,11 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: colors.background,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  text: {
+    color: "#FFFFFF",
+    fontSize: 18,
   },
 });

@@ -11,6 +11,7 @@ import {
 } from "react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { Check, Phone, Package, UtensilsCrossed, Clock, MapPin, Copy } from "lucide-react-native";
 import { colors, typography, spacing, borderRadius, shadows } from "@/theme";
 import { orderApi } from "@/services/api/endpoints";
 import { useOrderStore, useAuthStore } from "@/store";
@@ -21,13 +22,13 @@ import type { OrderStatus } from "@/types/api";
 const { width: SCREEN_WIDTH } = Dimensions.get("window");
 
 // Status flow for timeline
-const statusSteps: { status: OrderStatus; label: string; icon: string }[] = [
-  { status: "pending", label: "Order Placed", icon: "📋" },
-  { status: "confirmed", label: "Confirmed", icon: "✓" },
-  { status: "preparing", label: "Preparing", icon: "👨‍🍳" },
-  { status: "ready", label: "Ready for Pickup", icon: "📦" },
-  { status: "picked_up", label: "Out for Delivery", icon: "🚴" },
-  { status: "delivered", label: "Delivered", icon: "✅" },
+const statusSteps: { status: OrderStatus; label: string }[] = [
+  { status: "pending", label: "Order Placed" },
+  { status: "confirmed", label: "Confirmed" },
+  { status: "preparing", label: "Preparing" },
+  { status: "ready", label: "Ready for Pickup" },
+  { status: "picked_up", label: "Out for Delivery" },
+  { status: "delivered", label: "Delivered" },
 ];
 
 const statusIndex: Record<string, number> = {
@@ -175,12 +176,11 @@ export default function OrderTrackingScreen() {
       <ScrollView
         contentContainerStyle={styles.content}
         showsVerticalScrollIndicator={false}
-        bounces={false}
       >
         {/* Header */}
         <View style={styles.header}>
           <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-            <Text style={styles.backIcon}>←</Text>
+            <ChevronLeft size={24} color={colors.textPrimary} />
           </TouchableOpacity>
           <View>
             <Text style={styles.headerTitle}>Track Order</Text>
@@ -209,7 +209,7 @@ export default function OrderTrackingScreen() {
           <View style={styles.mapContent}>
             <View style={styles.mapGradient}>
               <View style={styles.mapPinContainer}>
-                <Text style={styles.mapPin}>📍</Text>
+                <MapPin size={48} color={colors.primary} />
               </View>
               <View style={styles.mapOverlay}>
                 <Text style={styles.mapLabel}>Live Tracking</Text>
@@ -264,7 +264,7 @@ export default function OrderTrackingScreen() {
                         ]}
                       >
                         {isCompleted ? (
-                          <Text style={styles.timelineCheck}>✓</Text>
+                          <Check size={10} color={colors.white} />
                         ) : isCurrent ? (
                           <View style={styles.timelinePulse} />
                         ) : null}
@@ -305,7 +305,7 @@ export default function OrderTrackingScreen() {
             <View style={styles.riderCardGlass}>
               <View style={styles.riderInfo}>
                 <View style={styles.riderAvatar}>
-                  <Text style={styles.riderEmoji}>🏍️</Text>
+                  <Package size={28} color={colors.primary} />
                 </View>
                 <View style={styles.riderDetails}>
                   <Text style={styles.riderLabel}>Your Rider</Text>
@@ -314,7 +314,7 @@ export default function OrderTrackingScreen() {
               </View>
               <View style={styles.riderActions}>
                 <TouchableOpacity style={styles.callButton} onPress={handleCallRider}>
-                  <Text style={styles.callIcon}>📞</Text>
+                  <Phone size={16} color={colors.white} />
                   <Text style={styles.callText}>Call</Text>
                 </TouchableOpacity>
               </View>
@@ -326,7 +326,7 @@ export default function OrderTrackingScreen() {
         <View style={styles.detailsCard}>
           <View style={styles.detailsCardGlass}>
             <View style={styles.restaurantHeader}>
-              <Text style={styles.restaurantEmoji}>🍽️</Text>
+              <UtensilsCrossed size={28} color={colors.primary} />
               <View>
                 <Text style={styles.restaurantName}>
                   {currentOrder.restaurant_name || "Restaurant Name"}
@@ -432,10 +432,6 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: colors.border,
   },
-  backIcon: {
-    fontSize: 24,
-    color: colors.textPrimary,
-  },
   headerTitle: {
     ...typography.h3,
     color: colors.textPrimary,
@@ -495,12 +491,6 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
     position: "relative",
-  },
-  mapPinContainer: {
-    marginBottom: spacing.md,
-  },
-  mapPin: {
-    fontSize: 48,
   },
   mapOverlay: {
     alignItems: "center",
@@ -605,11 +595,6 @@ const styles = StyleSheet.create({
     backgroundColor: colors.backgroundElevated,
     borderColor: colors.border,
   },
-  timelineCheck: {
-    color: colors.white,
-    fontSize: 10,
-    fontWeight: "bold",
-  },
   timelinePulse: {
     width: 6,
     height: 6,
@@ -671,9 +656,6 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: colors.borderLight,
   },
-  riderEmoji: {
-    fontSize: 28,
-  },
   riderDetails: {},
   riderLabel: {
     ...typography.caption,
@@ -692,9 +674,6 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.sm,
     borderRadius: borderRadius.full,
     gap: spacing.xs,
-  },
-  callIcon: {
-    fontSize: 16,
   },
   callText: {
     ...typography.button,
@@ -716,10 +695,6 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     marginBottom: spacing.md,
-  },
-  restaurantEmoji: {
-    fontSize: 32,
-    marginRight: spacing.md,
   },
   restaurantName: {
     ...typography.h4,

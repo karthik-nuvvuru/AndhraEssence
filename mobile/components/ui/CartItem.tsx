@@ -1,3 +1,4 @@
+// Premium Cart Item Component with Swipe-to-Delete
 import React from "react";
 import { View, Text, Image, StyleSheet, TouchableOpacity } from "react-native";
 import { Gesture, GestureDetector } from "react-native-gesture-handler";
@@ -7,6 +8,7 @@ import Animated, {
   withSpring,
   runOnJS,
 } from "react-native-reanimated";
+import { Trash2, UtensilsCrossed } from "lucide-react-native";
 import { GlassCard } from "@/components/ui/GlassCard";
 import { QuantityStepper } from "@/components/ui/QuantityStepper";
 import { colors, typography, spacing, borderRadius } from "@/theme";
@@ -20,7 +22,7 @@ interface CartItemProps {
   onRemove: (item: CartItem) => void;
 }
 
-export function CartItem({
+export const CartItem = React.memo(function CartItem({
   item,
   onIncrease,
   onDecrease,
@@ -58,7 +60,7 @@ export function CartItem({
                 />
               ) : (
                 <View style={styles.imagePlaceholder}>
-                  <Text style={styles.placeholderEmoji}>🍽</Text>
+                  <UtensilsCrossed size={28} color={colors.textTertiary} />
                 </View>
               )}
               {/* Veg/Non-veg Badge */}
@@ -112,7 +114,7 @@ export function CartItem({
                 onPress={() => onRemove(item)}
                 hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
               >
-                <Text style={styles.removeIcon}>✕</Text>
+                <Trash2 size={16} color={colors.error} />
               </TouchableOpacity>
             </View>
           </View>
@@ -120,7 +122,7 @@ export function CartItem({
       </Animated.View>
     </GestureDetector>
   );
-}
+});
 
 const styles = StyleSheet.create({
   cartItemAnimated: {
@@ -149,9 +151,6 @@ const styles = StyleSheet.create({
     backgroundColor: colors.backgroundSecondary,
     alignItems: "center",
     justifyContent: "center",
-  },
-  placeholderEmoji: {
-    fontSize: 32,
   },
   vegBadge: {
     position: "absolute",
@@ -196,10 +195,5 @@ const styles = StyleSheet.create({
   removeButton: {
     padding: spacing.xs,
     marginTop: spacing.xs,
-  },
-  removeIcon: {
-    fontSize: 16,
-    color: colors.textTertiary,
-    fontWeight: "500",
   },
 });

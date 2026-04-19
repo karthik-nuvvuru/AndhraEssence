@@ -83,6 +83,14 @@ yarn-error.log*
 # Mac
 .DS_Store
 
+# Screenshots
+*.png
+*.jpg
+*.jpeg
+
+# Design system (auto-generated)
+design-system/
+
 # Terraform
 *.tfstate
 *.tfstate.*

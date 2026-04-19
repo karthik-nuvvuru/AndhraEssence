@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from "react";
+// Premium Orders Screen - Liquid Glass Design
+import React, { useState, useEffect, useRef } from "react";
 import {
   View,
   Text,
@@ -6,18 +7,17 @@ import {
   FlatList,
   RefreshControl,
   TouchableOpacity,
+  Animated,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
+import { Package, ChevronRight, Star } from "lucide-react-native";
 import { Badge } from "@/components/ui/Badge";
-import { LoadingSpinner } from "@/components/ui/LoadingSpinner";
-import { Button } from "@/components/ui/Button";
 import { colors, typography, spacing, borderRadius, shadows } from "@/theme";
 import { orderApi } from "@/services/api/endpoints";
 import { formatCurrency, formatDate } from "@/utils/formatters";
 import type { Order } from "@/types/api";
 
-// Status color mapping using design system colors
 const statusColors: Record<string, "warning" | "info" | "success" | "error" | "gray" | "primary"> = {
   pending: "warning",
   confirmed: "info",
@@ -30,7 +30,6 @@ const statusColors: Record<string, "warning" | "info" | "success" | "error" | "g
   refunded: "gray",
 };
 
-// Status display labels
 const statusLabels: Record<string, string> = {
   pending: "Pending",
   confirmed: "Confirmed",
@@ -42,6 +41,18 @@ const statusLabels: Record<string, string> = {
   cancelled: "Cancelled",
   refunded: "Refunded",
 };
+
+const statusSteps = [
+  { key: "confirmed", label: "Confirmed" },
+  { key: "preparing", label: "Preparing" },
+  { key: "ready", label: "Ready" },
+  { key: "in_transit", label: "On the way" },
+  { key: "delivered", label: "Delivered" },
+];
+
+function getStepIndex(status: string): number {
+  return statusSteps.findIndex((s) => s.key === status);
+}
 
 export default function OrdersScreen() {
   const router = useRouter();
@@ -60,7 +71,7 @@ export default function OrdersScreen() {
       setOrders(response.data.items);
     } catch (err: any) {
       console.error("Failed to fetch orders:", err);
-      setError(err?.message || "Failed to load orders. Please try again.");
+      setError(err?.message || "Failed to load orders.");
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -80,75 +91,116 @@ export default function OrdersScreen() {
     fetchOrders(true);
   };
 
-  const renderOrder = ({ item }: { item: Order }) => (
-    <TouchableOpacity
-      style={styles.orderCard}
-      onPress={() => router.push(`/order/${item.id}`)}
-      activeOpacity={0.85}
-    >
-      {/* Glassmorphism overlay */}
-      <View style={styles.glassOverlay} />
+  const renderOrderCard = ({ item, index }: { item: Order; index: number }) => {
+    const stepIndex = getStepIndex(item.status);
+    const isDeliveredOrCancelled = item.status === "delivered" || item.status === "cancelled";
 
-      <View style={styles.orderHeader}>
-        <View style={styles.orderHeaderLeft}>
-          <Text style={styles.restaurantName}>
-            {item.restaurant_name || "Restaurant"}
-          </Text>
-          <Text style={styles.orderDate}>
-            {formatDate(item.placed_at)} {item.placed_at && new Date(item.placed_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+    return (
+      <TouchableOpacity
+        style={[styles.orderCard, item.status === "cancelled" && styles.orderCardCancelled]}
+        onPress={() => router.push(`/order/${item.id}`)}
+        activeOpacity={0.85}
+      >
+        {/* Status Timeline - only for active orders */}
+        {!isDeliveredOrCancelled && item.status !== "pending" && (
+          <View style={styles.statusTimeline}>
+            {statusSteps.map((step, idx) => (
+              <View key={step.key} style={styles.timelineStep}>
+                <View
+                  style={[
+                    styles.timelineDot,
+                    idx <= stepIndex ? styles.timelineDotActive : styles.timelineDotInactive,
+                  ]}
+                />
+                {idx < statusSteps.length - 1 && (
+                  <View
+                    style={[
+                      styles.timelineLine,
+                      idx < stepIndex ? styles.timelineLineActive : styles.timelineLineInactive,
+                    ]}
+                  />
+                )}
+              </View>
+            ))}
+          </View>
+        )}
+
+        <View style={styles.orderHeader}>
+          <View style={styles.orderHeaderLeft}>
+            <View style={styles.restaurantIconBox}>
+              <Package size={16} color={colors.primary} />
+            </View>
+            <View>
+              <Text style={styles.restaurantName}>
+                {item.restaurant_name || "Restaurant"}
+              </Text>
+              <Text style={styles.orderDate}>
+                {formatDate(item.placed_at)} {item.placed_at && new Date(item.placed_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+              </Text>
+            </View>
+          </View>
+          <Badge
+            text={statusLabels[item.status] || item.status}
+            variant={statusColors[item.status]}
+            size="sm"
+          />
+        </View>
+
+        {/* Items Summary */}
+        <View style={styles.itemsSummary}>
+          <Text style={styles.itemsText} numberOfLines={1}>
+            {(item.items ?? []).slice(0, 3).map(i => i.item_name).join(", ")}
+            {(item.items?.length ?? 0) > 3 ? ` +${item.items!.length - 3} more` : ""}
           </Text>
         </View>
-        <Badge
-          text={statusLabels[item.status] || item.status}
-          variant={statusColors[item.status]}
-          size="sm"
-        />
-      </View>
 
-      {/* Items Summary */}
-      <View style={styles.itemsSummary}>
-        <Text style={styles.itemsText}>
-          {(item.items ?? []).slice(0, 3).map(i => i.item_name).join(", ")}
-          {(item.items?.length ?? 0) > 3 ? ` +${item.items!.length - 3} more` : ""}
-        </Text>
-      </View>
-
-      <View style={styles.orderFooter}>
-        <View style={styles.orderFooterLeft}>
-          <Text style={styles.totalLabel}>Total</Text>
-          <Text style={styles.orderAmount}>
-            {formatCurrency(item.total_amount)}
-          </Text>
+        <View style={styles.orderFooter}>
+          <View style={styles.orderFooterLeft}>
+            <Text style={styles.totalLabel}>Total</Text>
+            <Text style={styles.orderAmount}>
+              {formatCurrency(item.total_amount)}
+            </Text>
+          </View>
+          <View style={styles.viewDetailsContainer}>
+            <Text style={styles.viewDetails}>View Details</Text>
+            <ChevronRight size={16} color={colors.primary} />
+          </View>
         </View>
-        <View style={styles.viewDetailsContainer}>
-          <Text style={styles.viewDetails}>View Details</Text>
-          <Text style={styles.viewDetailsArrow}>›</Text>
-        </View>
-      </View>
-    </TouchableOpacity>
-  );
+      </TouchableOpacity>
+    );
+  };
 
   const renderEmpty = () => (
     <View style={styles.emptyContainer}>
       <View style={styles.emptyIconContainer}>
-        <Text style={styles.emptyIcon}>📦</Text>
+        <Package size={40} color={colors.textTertiary} />
       </View>
       <Text style={styles.emptyTitle}>No orders yet</Text>
       <Text style={styles.emptySubtext}>
         Your order history will appear here
       </Text>
-      <Button
-        title="Start Ordering"
-        onPress={() => router.push("/")}
-        variant="primary"
-        size="lg"
+      <TouchableOpacity
         style={styles.startOrderingButton}
-      />
+        onPress={() => router.push("/")}
+      >
+        <Text style={styles.startOrderingText}>Start Ordering</Text>
+      </TouchableOpacity>
     </View>
   );
 
   if (loading) {
-    return <LoadingSpinner fullScreen text="Loading orders..." />;
+    return (
+      <SafeAreaView style={styles.container} edges={["top"]}>
+        <View style={styles.header}>
+          <Text style={styles.title}>My Orders</Text>
+        </View>
+        <View style={styles.skeletonContainer}>
+          {[1, 2, 3, 4].map((i) => (
+            <View key={i} style={styles.skeletonCard} />
+          ))}
+        </View>
+      </SafeAreaView>
+    );
   }
 
   if (error && orders.length === 0) {
@@ -158,15 +210,13 @@ export default function OrdersScreen() {
           <Text style={styles.title}>My Orders</Text>
         </View>
         <View style={styles.errorContainer}>
-          <Text style={styles.errorIcon}>⚠️</Text>
+          <View style={styles.errorIconContainer}>
+            <Package size={40} color={colors.error} />
+          </View>
           <Text style={styles.errorText}>{error}</Text>
-          <Button
-            title="Retry"
-            onPress={handleRetry}
-            variant="primary"
-            size="md"
-            style={styles.retryButton}
-          />
+          <TouchableOpacity style={styles.retryButton} onPress={handleRetry}>
+            <Text style={styles.retryButtonText}>Try Again</Text>
+          </TouchableOpacity>
         </View>
       </SafeAreaView>
     );
@@ -176,12 +226,15 @@ export default function OrdersScreen() {
     <SafeAreaView style={styles.container} edges={["top"]}>
       <View style={styles.header}>
         <Text style={styles.title}>My Orders</Text>
+        {orders.length > 0 && (
+          <Text style={styles.orderCountBadge}>{orders.length}</Text>
+        )}
       </View>
 
       <FlatList
         data={orders}
         keyExtractor={(item) => item.id}
-        renderItem={renderOrder}
+        renderItem={renderOrderCard}
         ListEmptyComponent={renderEmpty}
         contentContainerStyle={styles.list}
         refreshControl={
@@ -205,35 +258,75 @@ const styles = StyleSheet.create({
     backgroundColor: colors.background,
   },
   header: {
+    flexDirection: "row",
+    alignItems: "center",
     padding: spacing.md,
+    gap: spacing.sm,
   },
   title: {
     ...typography.h1,
     color: colors.textPrimary,
+  },
+  orderCountBadge: {
+    backgroundColor: colors.primary,
+    color: colors.white,
+    fontSize: 12,
+    fontWeight: "700",
+    paddingHorizontal: spacing.sm,
+    paddingVertical: 2,
+    borderRadius: borderRadius.full,
+    overflow: "hidden",
   },
   list: {
     padding: spacing.md,
     paddingTop: 0,
   },
   orderCard: {
-    backgroundColor: colors.glass,
-    borderRadius: borderRadius.xl,
+    backgroundColor: colors.backgroundCard,
+    borderRadius: borderRadius.lg,
     borderWidth: 1,
-    borderColor: colors.glassBorder,
+    borderColor: colors.border,
     padding: spacing.lg,
     marginBottom: spacing.md,
     overflow: "hidden",
-    ...shadows.glass,
+    ...shadows.sm,
   },
-  glassOverlay: {
-    position: "absolute",
-    top: 0,
-    left: 0,
-    right: 0,
-    height: 80,
-    backgroundColor: colors.glass,
-    borderTopLeftRadius: borderRadius.xl,
-    borderTopRightRadius: borderRadius.xl,
+  orderCardCancelled: {
+    opacity: 0.7,
+  },
+  statusTimeline: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: spacing.md,
+    paddingBottom: spacing.md,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border,
+  },
+  timelineStep: {
+    flex: 1,
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  timelineDot: {
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+  },
+  timelineDotActive: {
+    backgroundColor: colors.primary,
+  },
+  timelineDotInactive: {
+    backgroundColor: colors.border,
+  },
+  timelineLine: {
+    flex: 1,
+    height: 2,
+  },
+  timelineLineActive: {
+    backgroundColor: colors.primary,
+  },
+  timelineLineInactive: {
+    backgroundColor: colors.border,
   },
   orderHeader: {
     flexDirection: "row",
@@ -242,21 +335,32 @@ const styles = StyleSheet.create({
     marginBottom: spacing.md,
   },
   orderHeaderLeft: {
+    flexDirection: "row",
+    alignItems: "center",
     flex: 1,
+    marginRight: spacing.sm,
+  },
+  restaurantIconBox: {
+    width: 36,
+    height: 36,
+    borderRadius: borderRadius.sm,
+    backgroundColor: colors.primaryGlow,
+    alignItems: "center",
+    justifyContent: "center",
     marginRight: spacing.sm,
   },
   restaurantName: {
     ...typography.bodyBold,
     color: colors.textPrimary,
-    fontSize: 18,
-    marginBottom: 4,
+    fontSize: 16,
+    marginBottom: 3,
   },
   orderDate: {
     ...typography.caption,
     color: colors.textSecondary,
   },
   itemsSummary: {
-    backgroundColor: colors.backgroundCard,
+    backgroundColor: colors.background,
     borderRadius: borderRadius.md,
     padding: spacing.sm,
     marginBottom: spacing.md,
@@ -287,37 +391,28 @@ const styles = StyleSheet.create({
   viewDetailsContainer: {
     flexDirection: "row",
     alignItems: "center",
+    gap: 4,
   },
   viewDetails: {
     ...typography.bodySmall,
     color: colors.primary,
     fontWeight: "600",
   },
-  viewDetailsArrow: {
-    fontSize: 18,
-    color: colors.primary,
-    marginLeft: 4,
-  },
   emptyContainer: {
-    flex: 1,
     alignItems: "center",
     justifyContent: "center",
     paddingVertical: spacing.xxl,
   },
   emptyIconContainer: {
-    width: 120,
-    height: 120,
-    borderRadius: 60,
-    backgroundColor: colors.glass,
+    width: 100,
+    height: 100,
+    borderRadius: 50,
+    backgroundColor: colors.backgroundCard,
     borderWidth: 1,
-    borderColor: colors.glassBorder,
+    borderColor: colors.border,
     alignItems: "center",
     justifyContent: "center",
     marginBottom: spacing.xl,
-    ...shadows.glass,
-  },
-  emptyIcon: {
-    fontSize: 56,
   },
   emptyTitle: {
     ...typography.h2,
@@ -331,7 +426,25 @@ const styles = StyleSheet.create({
     marginBottom: spacing.xl,
   },
   startOrderingButton: {
-    minWidth: 180,
+    backgroundColor: colors.primary,
+    paddingVertical: spacing.sm + 2,
+    paddingHorizontal: spacing.xl,
+    borderRadius: borderRadius.md,
+  },
+  startOrderingText: {
+    ...typography.button,
+    color: colors.white,
+    fontWeight: "600",
+  },
+  skeletonContainer: {
+    flex: 1,
+    padding: spacing.md,
+    gap: spacing.md,
+  },
+  skeletonCard: {
+    height: 120,
+    backgroundColor: colors.backgroundCard,
+    borderRadius: borderRadius.lg,
   },
   errorContainer: {
     flex: 1,
@@ -339,8 +452,13 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     padding: spacing.xl,
   },
-  errorIcon: {
-    fontSize: 64,
+  errorIconContainer: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    backgroundColor: colors.errorBg,
+    alignItems: "center",
+    justifyContent: "center",
     marginBottom: spacing.md,
   },
   errorText: {
@@ -350,6 +468,14 @@ const styles = StyleSheet.create({
     marginBottom: spacing.lg,
   },
   retryButton: {
-    minWidth: 120,
+    backgroundColor: colors.primary,
+    paddingVertical: spacing.sm + 2,
+    paddingHorizontal: spacing.lg,
+    borderRadius: borderRadius.md,
+  },
+  retryButtonText: {
+    ...typography.button,
+    color: colors.white,
+    fontWeight: "600",
   },
 });
