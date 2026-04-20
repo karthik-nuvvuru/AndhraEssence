@@ -27,8 +27,11 @@ const getBackendUrl = () => {
 
 export const API_BASE_URL = getBackendUrl();
 
+// WebSocket URL - uses EXPO_PUBLIC_WS_URL if set
+// For physical device development, run: npx expo start --host --tunnel
+// or set EXPO_PUBLIC_WS_URL environment variable to your machine's IP
 export const WS_BASE_URL = wsUrl ||
-  (__DEV__ ? "ws://localhost:8000" : "wss://api.andhraessence.com");
+  (__DEV__ ? "ws://192.168.1.8:8000" : "wss://api.andhraessence.com");
 
 // Storage Keys
 export const STORAGE_KEYS = {
@@ -37,6 +40,7 @@ export const STORAGE_KEYS = {
   USER: "user",
   ONBOARDING_COMPLETED: "onboarding_completed",
   CART: "cart",
+  RECENT_SEARCHES: "recent_searches",
 };
 
 // Order Status

@@ -1,7 +1,8 @@
 // Tab Navigation - Lucide Icon Design
-import React from "react";
+import React, { useEffect, useRef } from "react";
 import { Tabs } from "expo-router";
 import { View, Text, StyleSheet } from "react-native";
+import { useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Animated, {
   useAnimatedStyle,
@@ -15,11 +16,15 @@ import {
   Package,
   User,
 } from "lucide-react-native";
-import { colors, typography, spacing, borderRadius, shadows } from "@/theme";
-import { useCartStore } from "@/store";
+import { colors, typography, spacing } from "@/theme";
+import { useAuthStore, useCartStore } from "@/store";
 
 function TabBarIcon({ name, focused }: { name: string; focused: boolean }) {
   const scale = useSharedValue(focused ? 1.15 : 1);
+
+  useEffect(() => {
+    scale.value = withSpring(focused ? 1.15 : 1, { damping: 15, stiffness: 200 });
+  }, [focused, scale]);
 
   const iconColor = focused ? colors.primary : colors.textTertiary;
 
@@ -38,7 +43,7 @@ function TabBarIcon({ name, focused }: { name: string; focused: boolean }) {
     transform: [{ scale: scale.value }],
   }));
 
-  const cartCount = name === "cart" ? useCartStore.getState().getItemCount() : 0;
+  const cartCount = useCartStore((state) => state.items.reduce((sum, item) => sum + item.quantity, 0));
 
   return (
     <View style={styles.iconWrapper} testID={`tab-${name}`}>
@@ -59,6 +64,18 @@ function TabBarIcon({ name, focused }: { name: string; focused: boolean }) {
 
 export default function TabsLayout() {
   const insets = useSafeAreaInsets();
+  const router = useRouter();
+  const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
+  const initDone = useRef(false);
+
+  useEffect(() => {
+    if (!initDone.current) {
+      initDone.current = true;
+      if (!isAuthenticated) {
+        router.replace("/auth/login");
+      }
+    }
+  }, [isAuthenticated, router]);
 
   return (
     <Tabs

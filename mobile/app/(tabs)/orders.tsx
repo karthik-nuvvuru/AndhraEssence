@@ -90,7 +90,7 @@ export default function OrdersScreen() {
       else setLoading(true);
 
       const response = await orderApi.list();
-      setOrders(response.data.items);
+      setOrders(response.data.items ?? []);
     } catch (err: any) {
       // Orders fetch failed
       setError(err?.message || "Failed to load orders.");

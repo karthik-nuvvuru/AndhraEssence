@@ -2,12 +2,12 @@
 // World-class food delivery design system
 
 export const colors = {
-  // Background Colors (Deep Dark)
-  background: "#0D0D0D",
-  backgroundSecondary: "#161616",
-  backgroundCard: "#1E1E1E",
-  backgroundElevated: "#282828",
-  backgroundHover: "#333333",
+  // Background Colors (Warm Charcoal)
+  background: "#18181B",
+  backgroundSecondary: "#1F1F23",
+  backgroundCard: "#27272A",
+  backgroundElevated: "#2E2E32",
+  backgroundHover: "#3A3A3F",
 
   // Brand Primary (Coral/Orange)
   primary: "#FF4500",

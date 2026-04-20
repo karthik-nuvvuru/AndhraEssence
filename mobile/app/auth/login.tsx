@@ -8,6 +8,7 @@ import {
   TextInput,
   Pressable,
   KeyboardAvoidingView,
+  Alert,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { router } from "expo-router";
@@ -15,6 +16,7 @@ import { Mail, Lock, Eye, EyeOff } from "lucide-react-native";
 import { spacing, colors, typography, borderRadius } from "@/theme";
 import { authApi } from "@/services/api/endpoints";
 import { useAuthStore } from "@/store";
+import { useToast } from "@/components/ui/Toast";
 
 export default function LoginScreen() {
   const [email, setEmail] = useState("");
@@ -24,6 +26,7 @@ export default function LoginScreen() {
   const [passwordError, setPasswordError] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const { setAuth } = useAuthStore();
+  const { showToast } = useToast();
 
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const slideAnim = useRef(new Animated.Value(40)).current;
@@ -138,12 +141,14 @@ export default function LoginScreen() {
         refresh_token
       );
       router.replace("/");
-    } catch {
+    } catch (err: any) {
       Animated.sequence([
         Animated.timing(buttonScaleAnim, { toValue: 0.95, duration: 50, useNativeDriver: true }),
         Animated.timing(buttonScaleAnim, { toValue: 1.02, duration: 100, useNativeDriver: true }),
         Animated.timing(buttonScaleAnim, { toValue: 1, duration: 50, useNativeDriver: true }),
       ]).start();
+      const message = err.response?.data?.detail || "Invalid email or password. Please try again.";
+      showToast(message, "error");
     } finally {
       setLoading(false);
     }
@@ -252,7 +257,7 @@ export default function LoginScreen() {
               </View>
 
               {/* Forgot */}
-              <Pressable style={styles.forgotRow} testID="btn-forgot-password">
+              <Pressable style={styles.forgotRow} onPress={() => Alert.alert("Reset Password", "Password reset flow will be available soon")} testID="btn-forgot-password">
                 <Text style={styles.forgotText}>Forgot Password?</Text>
               </Pressable>
             </Animated.View>

@@ -172,7 +172,7 @@ export default function OrderTrackingScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.container} edges={["bottom"]} testID="screen-order-tracking">
+    <SafeAreaView style={styles.container} edges={["top", "bottom"]} testID="screen-order-tracking">
       <ScrollView
         contentContainerStyle={styles.content}
         showsVerticalScrollIndicator={false}

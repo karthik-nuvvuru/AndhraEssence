@@ -3,7 +3,7 @@ import React, { useState, useEffect, useRef, useCallback } from "react";
 import { View, Text, StyleSheet, FlatList, RefreshControl, TouchableOpacity, ScrollView, Image, StatusBar, Animated, Dimensions, Platform } from "react-native";
 import { useRouter } from "expo-router";
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
-import { Search, MapPin, ChevronDown, Clock, Star, UtensilsCrossed, Flame, Bell, X } from "lucide-react-native";
+import { Search, MapPin, ChevronDown, Clock, Star, UtensilsCrossed, Flame, Bell, X, Soup, Cookie, Coffee, Pizza, Sandwich, IceCream, GlassWater, Fish, Salad, PartyPopper, Heart } from "lucide-react-native";
 import { RestaurantCard } from "@/components/restaurant/RestaurantCard";
 import { ShimmerCard } from "@/components/ui/Shimmer";
 import { colors, typography, spacing, borderRadius, shadows } from "@/theme";
@@ -13,19 +13,35 @@ import * as Haptics from "expo-haptics";
 
 const { width: SCREEN_WIDTH } = Dimensions.get("window");
 
+// Lucide icon components mapped to food categories — no emojis
+const CATEGORY_ICONS: Record<string, React.ComponentType<{ size: number; color: string }>> = {
+  "biryani": UtensilsCrossed,
+  "south-indian": Soup,
+  "starters": Flame,
+  "curry": Flame,
+  "chinese": Soup,
+  "pizza": Pizza,
+  "burgers": Sandwich,
+  "rolls": Sandwich,
+  "desserts": IceCream,
+  "beverages": Coffee,
+  "thali": Salad,
+  "seafood": Fish,
+};
+
 const FOOD_CATEGORIES = [
-  { id: "biryani", name: "Biryani", emoji: "🍚" },
-  { id: "south-indian", name: "South Indian", emoji: "🥘" },
-  { id: "starters", name: "Starters", emoji: "🍗" },
-  { id: "curry", name: "Curry", emoji: "🍛" },
-  { id: "chinese", name: "Chinese", emoji: "🥡" },
-  { id: "pizza", name: "Pizza", emoji: "🍕" },
-  { id: "burgers", name: "Burgers", emoji: "🍔" },
-  { id: "rolls", name: "Rolls", emoji: "🌯" },
-  { id: "desserts", name: "Desserts", emoji: "🍨" },
-  { id: "beverages", name: "Beverages", emoji: "🥤" },
-  { id: "thali", name: "Thali", emoji: "🍱" },
-  { id: "seafood", name: "Seafood", emoji: "🦐" },
+  { id: "biryani", name: "Biryani" },
+  { id: "south-indian", name: "South Indian" },
+  { id: "starters", name: "Starters" },
+  { id: "curry", name: "Curry" },
+  { id: "chinese", name: "Chinese" },
+  { id: "pizza", name: "Pizza" },
+  { id: "burgers", name: "Burgers" },
+  { id: "rolls", name: "Rolls" },
+  { id: "desserts", name: "Desserts" },
+  { id: "beverages", name: "Beverages" },
+  { id: "thali", name: "Thali" },
+  { id: "seafood", name: "Seafood" },
 ];
 
 const OFFER_BANNERS = [
@@ -102,10 +118,27 @@ export default function HomeScreen() {
   useEffect(() => {
     if (showVegOnly) {
       setFilteredRestaurants(restaurants.filter((r: any) => r.cuisine_type?.toLowerCase().includes("vegetarian") || r.promo_text?.toLowerCase().includes("veg")));
+    } else if (selectedCategory) {
+      const categoryMap: Record<string, string[]> = {
+        "biryani": ["biryani"],
+        "south-indian": ["south indian", "dosa"],
+        "starters": ["starters", "appetizer"],
+        "curry": ["curry", "gravy"],
+        "chinese": ["chinese"],
+        "pizza": ["pizza"],
+        "burgers": ["burger", "burgers"],
+        "rolls": ["rolls", "wrap"],
+        "desserts": ["dessert", "sweets", "ice cream"],
+        "beverages": ["beverage", "drinks", "juice"],
+        "thali": ["thali"],
+        "seafood": ["seafood", "fish", "prawn"],
+      };
+      const keywords = categoryMap[selectedCategory] || [selectedCategory];
+      setFilteredRestaurants(restaurants.filter((r: any) => keywords.some((kw: string) => r.cuisine_type?.toLowerCase().includes(kw))));
     } else {
       setFilteredRestaurants(restaurants);
     }
-  }, [showVegOnly, restaurants]);
+  }, [showVegOnly, selectedCategory, restaurants]);
 
   const handleRefresh = () => {
     if (Platform.OS !== "web") Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
@@ -174,7 +207,9 @@ export default function HomeScreen() {
               <Text style={[styles.bannerTitle, { color: banner.textColor }]}>{banner.title}</Text>
               <Text style={[styles.bannerSubtitle, { color: banner.textColor }]}>{banner.subtitle}</Text>
             </View>
-            <View style={styles.bannerDecor}><Text style={styles.bannerDecorText}>🎉</Text></View>
+            <View style={styles.bannerDecor}>
+              <PartyPopper size={36} color={banner.textColor} />
+            </View>
           </View>
         ))}
       </ScrollView>
@@ -196,10 +231,13 @@ export default function HomeScreen() {
       <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.categoriesScroll} decelerationRate="fast">
         {FOOD_CATEGORIES.map((cat) => {
           const isActive = selectedCategory === cat.id;
+          const IconComponent = CATEGORY_ICONS[cat.id] || UtensilsCrossed;
           return (
             <TouchableOpacity key={cat.id} style={[styles.categoryChip, isActive && styles.categoryChipActive]}
               onPress={() => handleCategoryPress(cat.id)} activeOpacity={0.7} testID={`chip-category-${cat.id}`}>
-              <Text style={styles.categoryEmoji}>{cat.emoji}</Text>
+              <View style={[styles.categoryIconBox, isActive && styles.categoryIconBoxActive]}>
+                <IconComponent size={20} color={isActive ? colors.white : colors.primary} />
+              </View>
               <Text style={[styles.categoryName, isActive && styles.categoryNameActive]}>{cat.name}</Text>
             </TouchableOpacity>
           );
@@ -221,7 +259,7 @@ export default function HomeScreen() {
             <Image source={{ uri: item.image }} style={styles.topPickImage} />
             <View style={styles.topPickGradient} />
             <View style={styles.topPickPromo}><Text style={styles.topPickPromoText}>{item.promo}</Text></View>
-            <TouchableOpacity style={styles.topPickHeart} activeOpacity={0.7}><Text style={styles.topPickHeartIcon}>♡</Text></TouchableOpacity>
+            <TouchableOpacity style={styles.topPickHeart} activeOpacity={0.7}><Heart size={16} color={colors.error} /></TouchableOpacity>
             <View style={styles.topPickInfo}>
               <Text style={styles.topPickName} numberOfLines={1}>{item.name}</Text>
               <Text style={styles.topPickRestaurant} numberOfLines={1}>{item.restaurant}</Text>
@@ -372,8 +410,12 @@ const styles = StyleSheet.create({
   bannerContent: { flex: 1 },
   bannerTitle: { fontSize: 22, fontWeight: "800", marginBottom: spacing.xs },
   bannerSubtitle: { fontSize: 13, fontWeight: "500", opacity: 0.9 },
-  bannerDecor: { width: 80, height: 80, alignItems: "center", justifyContent: "center" },
-  bannerDecorText: { fontSize: 48 },
+  bannerDecor: {
+    width: 60,
+    height: 60,
+    alignItems: "center",
+    justifyContent: "center",
+  },
   bannerDots: { flexDirection: "row", justifyContent: "center", gap: 6, marginTop: spacing.sm },
   bannerDot: { width: 8, height: 8, borderRadius: 4, backgroundColor: "rgba(255,255,255,0.5)" },
   categoriesSection: { marginBottom: spacing.lg },
@@ -381,10 +423,24 @@ const styles = StyleSheet.create({
   sectionTitleRow: { flexDirection: "row", alignItems: "center", gap: spacing.xs },
   sectionTitle: { ...typography.h3, color: colors.textPrimary, fontWeight: "700", letterSpacing: -0.2 },
   seeAllLink: { ...typography.bodySmall, color: colors.primary, fontWeight: "600" },
-  categoriesScroll: { paddingHorizontal: spacing.md, gap: spacing.sm },
-  categoryChip: { width: 72, alignItems: "center", paddingVertical: spacing.sm, paddingHorizontal: spacing.xs },
+  categoriesScroll: { paddingHorizontal: spacing.md, gap: spacing.md },
+  categoryChip: { width: 80, alignItems: "center", paddingVertical: spacing.md, paddingHorizontal: spacing.xs },
   categoryChipActive: {},
-  categoryEmoji: { fontSize: 32, marginBottom: spacing.xs },
+  categoryIconBox: {
+    width: 52,
+    height: 52,
+    borderRadius: borderRadius.lg,
+    backgroundColor: colors.primaryGlow,
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: spacing.sm,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  categoryIconBoxActive: {
+    backgroundColor: colors.primary,
+    borderColor: colors.primary,
+  },
   categoryName: { ...typography.small, color: colors.textSecondary, textAlign: "center", fontWeight: "500" },
   categoryNameActive: { color: colors.primary, fontWeight: "700" },
   topPicksSection: { marginBottom: spacing.lg },

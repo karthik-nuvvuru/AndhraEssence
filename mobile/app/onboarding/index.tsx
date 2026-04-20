@@ -11,30 +11,33 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { router } from "expo-router";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { MapPin, Search, UtensilsCrossed } from "lucide-react-native";
 import { colors, spacing } from "@/theme";
 import { Button } from "@/components/ui/Button";
+import { STORAGE_KEYS } from "@/utils/constants";
 
 const { width: SCREEN_WIDTH } = Dimensions.get("window");
 
 interface Slide {
-  emoji: string;
+  IconComponent: React.ComponentType<{ size: number; color: string }>;
   title: string;
   subtitle: string;
 }
 
 const SLIDES: Slide[] = [
   {
-    emoji: "🍽️",
+    IconComponent: MapPin,
     title: "Discover",
     subtitle: "Find the best restaurants near you",
   },
   {
-    emoji: "🔍",
+    IconComponent: Search,
     title: "Browse",
     subtitle: "Explore cuisines and menus from top-rated restaurants",
   },
   {
-    emoji: "🛵",
+    IconComponent: UtensilsCrossed,
     title: "Order",
     subtitle: "Get your favorite food delivered to your doorstep",
   },
@@ -80,8 +83,10 @@ export default function OnboardingScreen() {
     handleScrollIndex(event);
   };
 
-  const completeOnboarding = () => {
-    // For now, just navigate - onboarding state can be stored later
+  const completeOnboarding = async () => {
+    try {
+      await AsyncStorage.setItem(STORAGE_KEYS.ONBOARDING_COMPLETED, "true");
+    } catch {}
     router.replace("/auth/login");
   };
 
@@ -148,9 +153,9 @@ export default function OnboardingScreen() {
                 },
               ]}
             >
-              {/* Emoji illustration */}
+              {/* Icon illustration */}
               <View style={styles.emojiContainer}>
-                <Text style={styles.emoji}>{slide.emoji}</Text>
+                <slide.IconComponent size={64} color={colors.primary} />
               </View>
 
               {/* Title */}
@@ -296,15 +301,12 @@ const styles = StyleSheet.create({
     width: 140,
     height: 140,
     borderRadius: 70,
-    backgroundColor: "rgba(124, 58, 237, 0.15)",
+    backgroundColor: colors.primaryGlow,
     borderWidth: 1,
-    borderColor: "rgba(124, 58, 237, 0.3)",
+    borderColor: colors.primary,
     alignItems: "center",
     justifyContent: "center",
     marginBottom: spacing.xxl,
-  },
-  emoji: {
-    fontSize: 64,
   },
   title: {
     fontSize: 36,

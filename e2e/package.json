@@ -16,5 +16,7 @@
     "maestro:edge": "maestro test maestro/edge-cases/ --platform ios",
     "maestro:report": "npm run test:e2e:report"
   },
-  "devDependencies": {}
+  "devDependencies": {
+    "maestro": "^2.1.1"
+  }
 }

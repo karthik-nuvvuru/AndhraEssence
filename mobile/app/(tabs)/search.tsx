@@ -16,12 +16,14 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
 import { Search, X, TrendingUp, Clock, MapPin, Flame, ChefHat } from "lucide-react-native";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { RestaurantCard } from "@/components/restaurant/RestaurantCard";
 import { ShimmerCard } from "@/components/ui/Shimmer";
 import { colors, typography, spacing, borderRadius } from "@/theme";
 import { restaurantApi } from "@/services/api/endpoints";
 import type { Restaurant } from "@/types/api";
 import * as Haptics from "expo-haptics";
+import { STORAGE_KEYS } from "@/utils/constants";
 
 const MOCK_RESTAURANTS: Restaurant[] = [
   { id: "mock-1", name: "Paradise Biryani", cuisine_type: "Biryani, South Indian", address: "Road No. 36, Jubilee Hills", address_line1: "Jubilee Hills", city: "Hyderabad", rating: 4.5, review_count: 2340, delivery_fee: 40, minimum_order: 200, is_open: true, is_active: true, cover_image_url: "https://images.unsplash.com/photo-1563379091339-03b21ab4a4f8?w=500", promo_text: "FREE DELIVERY", estimated_delivery_time: "25-35 min", opening_time: "11:00", closing_time: "23:00", created_at: new Date().toISOString() },
@@ -65,9 +67,16 @@ export default function SearchScreen() {
     return () => clearTimeout(timer);
   }, []);
 
-  // Load recent searches
+  // Load recent searches from AsyncStorage
   useEffect(() => {
     Animated.timing(fadeAnim, { toValue: 1, duration: 400, useNativeDriver: true }).start();
+    const loadRecent = async () => {
+      try {
+        const stored = await AsyncStorage.getItem(STORAGE_KEYS.RECENT_SEARCHES || "recent_searches");
+        if (stored) setRecentSearches(JSON.parse(stored));
+      } catch {}
+    };
+    loadRecent();
   }, []);
 
   // Filter results based on active filters
@@ -102,6 +111,7 @@ export default function SearchScreen() {
       );
       setAllResults(filtered);
       setResults(filtered);
+      addToRecentSearches(trimmed);
     } catch {
       const filtered = MOCK_RESTAURANTS.filter(r =>
         r.name?.toLowerCase().includes(trimmed.toLowerCase()) ||
@@ -109,6 +119,7 @@ export default function SearchScreen() {
       );
       setAllResults(filtered);
       setResults(filtered);
+      addToRecentSearches(trimmed);
     } finally {
       setLoading(false);
     }
@@ -117,6 +128,7 @@ export default function SearchScreen() {
   const handleQuickSearch = (term: string) => {
     if (Platform.OS !== "web") Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     setQuery(term);
+    addToRecentSearches(term.trim());
     setTimeout(() => handleSearchWithQuery(term), 100);
   };
 
@@ -159,6 +171,14 @@ export default function SearchScreen() {
 
   const handleRemoveRecent = (term: string) => {
     setRecentSearches(prev => prev.filter(t => t !== term));
+  };
+
+  const addToRecentSearches = async (term: string) => {
+    try {
+      const updated = [term, ...recentSearches.filter(t => t !== term)].slice(0, 10);
+      setRecentSearches(updated);
+      await AsyncStorage.setItem(STORAGE_KEYS.RECENT_SEARCHES || "recent_searches", JSON.stringify(updated));
+    } catch {}
   };
 
   const toggleFilter = (filterId: string) => {
