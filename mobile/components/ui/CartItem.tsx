@@ -20,6 +20,7 @@ interface CartItemProps {
   onIncrease: (itemId: string) => void;
   onDecrease: (itemId: string) => void;
   onRemove: (item: CartItemType) => void;
+  itemIndex?: number;
 }
 
 export const CartItem = React.memo(function CartItem({
@@ -27,6 +28,7 @@ export const CartItem = React.memo(function CartItem({
   onIncrease,
   onDecrease,
   onRemove,
+  itemIndex = 0,
 }: CartItemProps) {
   const translateX = useSharedValue(0);
 
@@ -108,11 +110,13 @@ export const CartItem = React.memo(function CartItem({
                 onIncrease={() => onIncrease(item.menuItem.id)}
                 onDecrease={() => onDecrease(item.menuItem.id)}
                 size="sm"
+                itemIndex={itemIndex}
               />
               <TouchableOpacity
                 style={styles.removeButton}
                 onPress={() => onRemove(item)}
                 hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                testID={`btn-remove-${itemIndex}`}
               >
                 <Trash2 size={16} color={colors.error} />
               </TouchableOpacity>

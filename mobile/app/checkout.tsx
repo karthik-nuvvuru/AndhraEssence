@@ -32,7 +32,7 @@ import {
 import { colors, typography, spacing, borderRadius, shadows } from "@/theme";
 import { useCartStore } from "@/store";
 import { orderApi, userApi } from "@/services/api/endpoints";
-import { formatCurrency } from "@/utils/formatters";
+import { formatCurrency, pluralize } from "@/utils/formatters";
 import * as Haptics from "expo-haptics";
 import type { Address, PaymentMethod } from "@/types/api";
 type TipAmount = 0 | 20 | 50 | 100 | "custom";
@@ -69,7 +69,7 @@ export default function CheckoutScreen() {
         setSelectedAddressId(defaultAddress.id);
       }
     } catch (error) {
-      console.error("Failed to fetch addresses:", error);
+      // Address fetch failed
     } finally {
       setLoadingAddresses(false);
     }
@@ -149,7 +149,7 @@ export default function CheckoutScreen() {
           quantity: item.quantity,
           special_instructions: item.specialInstructions,
         })),
-        payment_method: paymentMethod === "cod" ? "cash" : paymentMethod === "wallet" ? "wallet" : paymentMethod,
+        payment_method: (paymentMethod === "cod" ? "cash" : paymentMethod === "wallet" ? "wallet" : paymentMethod) as any,
         delivery_instructions: deliveryInstructions,
         tip_amount: displayTip,
       });
@@ -183,10 +183,10 @@ export default function CheckoutScreen() {
   }
 
   return (
-    <SafeAreaView style={styles.container} edges={["top"]}>
+    <SafeAreaView style={styles.container} edges={["top"]} testID="screen-checkout">
       {/* Header */}
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
+        <TouchableOpacity onPress={() => router.back()} style={styles.backButton} testID="btn-back">
           <ChevronLeft size={22} color={colors.textPrimary} />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Checkout</Text>
@@ -209,7 +209,7 @@ export default function CheckoutScreen() {
         )}
 
         {/* Delivery Address Section */}
-        <View style={styles.section}>
+        <View style={styles.section} testID="section-delivery-address">
           <Text style={styles.sectionTitle}>Delivery Address</Text>
           <GlassCard style={styles.addressCard}>
             {loadingAddresses ? (
@@ -237,7 +237,7 @@ export default function CheckoutScreen() {
                   {selectedAddress ? (
                     <>
                       <View style={styles.addressHeader}>
-                        <Text style={styles.addressLabel}>{selectedAddress.label}</Text>
+                        <Text style={styles.addressLabel} testID="text-address-label">{selectedAddress.label}</Text>
                         {selectedAddress.is_default && (
                           <View style={styles.defaultBadge}>
                             <Text style={styles.defaultBadgeText}>Default</Text>
@@ -255,7 +255,7 @@ export default function CheckoutScreen() {
                     <Text style={styles.addressPlaceholder}>Select an address</Text>
                   )}
                 </View>
-                <TouchableOpacity style={styles.changeButton}>
+                <TouchableOpacity style={styles.changeButton} testID="btn-change-address">
                   <Text style={styles.changeButtonText}>Change</Text>
                 </TouchableOpacity>
               </TouchableOpacity>
@@ -276,6 +276,7 @@ export default function CheckoutScreen() {
               multiline
               numberOfLines={3}
               textAlignVertical="top"
+              testID="input-delivery-instructions"
             />
           </View>
         </View>
@@ -284,35 +285,81 @@ export default function CheckoutScreen() {
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Payment Method</Text>
           <View style={styles.paymentOptions}>
-            {[
-              { id: "razorpay", label: "Cards", icon: <CreditCard size={18} color={paymentMethod === "razorpay" ? colors.primary : colors.textSecondary} /> },
-              { id: "wallet", label: "Wallet", icon: <Wallet size={18} color={paymentMethod === "wallet" ? colors.primary : colors.textSecondary} /> },
-              { id: "cod", label: "Cash on Delivery", icon: <MapPin size={18} color={paymentMethod === "cod" ? colors.primary : colors.textSecondary} /> },
-            ].map((method) => (
-              <TouchableOpacity
-                key={method.id}
+            <TouchableOpacity
+              style={[
+                styles.paymentPill,
+                paymentMethod === "razorpay" && styles.paymentPillSelected,
+              ]}
+              onPress={() => setPaymentMethod("razorpay")}
+              testID="pill-payment-razorpay"
+            >
+              <View style={styles.paymentIconBox}>
+                <CreditCard size={18} color={paymentMethod === "razorpay" ? colors.primary : colors.textSecondary} />
+              </View>
+              <Text
                 style={[
-                  styles.paymentPill,
-                  paymentMethod === method.id && styles.paymentPillSelected,
+                  styles.paymentLabel,
+                  paymentMethod === "razorpay" && styles.paymentLabelSelected,
                 ]}
-                onPress={() => setPaymentMethod(method.id as PaymentMethod)}
               >
-              <View style={styles.paymentIconBox}>{method.icon}</View>
-                <Text
-                  style={[
-                    styles.paymentLabel,
-                    paymentMethod === method.id && styles.paymentLabelSelected,
-                  ]}
-                >
-                  {method.label}
-                </Text>
-                {paymentMethod === method.id && (
-                  <View style={styles.paymentCheckmark}>
-                    <Text style={styles.checkmarkText}>✓</Text>
-                  </View>
-                )}
-              </TouchableOpacity>
-            ))}
+                Cards
+              </Text>
+              {paymentMethod === "razorpay" && (
+                <View style={styles.paymentCheckmark}>
+                  <Text style={styles.checkmarkText}>✓</Text>
+                </View>
+              )}
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[
+                styles.paymentPill,
+                paymentMethod === "wallet" && styles.paymentPillSelected,
+              ]}
+              onPress={() => setPaymentMethod("wallet")}
+              testID="pill-payment-wallet"
+            >
+              <View style={styles.paymentIconBox}>
+                <Wallet size={18} color={paymentMethod === "wallet" ? colors.primary : colors.textSecondary} />
+              </View>
+              <Text
+                style={[
+                  styles.paymentLabel,
+                  paymentMethod === "wallet" && styles.paymentLabelSelected,
+                ]}
+              >
+                Wallet
+              </Text>
+              {paymentMethod === "wallet" && (
+                <View style={styles.paymentCheckmark}>
+                  <Text style={styles.checkmarkText}>✓</Text>
+                </View>
+              )}
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[
+                styles.paymentPill,
+                paymentMethod === "cod" && styles.paymentPillSelected,
+              ]}
+              onPress={() => setPaymentMethod("cod")}
+              testID="pill-payment-cod"
+            >
+              <View style={styles.paymentIconBox}>
+                <MapPin size={18} color={paymentMethod === "cod" ? colors.primary : colors.textSecondary} />
+              </View>
+              <Text
+                style={[
+                  styles.paymentLabel,
+                  paymentMethod === "cod" && styles.paymentLabelSelected,
+                ]}
+              >
+                Cash on Delivery
+              </Text>
+              {paymentMethod === "cod" && (
+                <View style={styles.paymentCheckmark}>
+                  <Text style={styles.checkmarkText}>✓</Text>
+                </View>
+              )}
+            </TouchableOpacity>
           </View>
         </View>
 
@@ -329,6 +376,7 @@ export default function CheckoutScreen() {
                   tipAmount === amount && styles.tipButtonActive,
                 ]}
                 onPress={() => handleTipSelect(amount)}
+                testID={`chip-tip-${amount}`}
               >
                 <Text style={[styles.tipText, tipAmount === amount && styles.tipTextActive]}>
                   {amount === 0 ? "No Tip" : `₹${amount}`}
@@ -343,6 +391,7 @@ export default function CheckoutScreen() {
                 tipAmount === "custom" && styles.customTipButtonActive,
               ]}
               onPress={() => handleTipSelect("custom")}
+              testID="chip-tip-custom"
             >
               <Text style={[styles.customTipLabel, tipAmount === "custom" && styles.customTipLabelActive]}>
                 Custom
@@ -363,15 +412,16 @@ export default function CheckoutScreen() {
         </View>
 
         {/* Order Summary Section */}
-        <View style={styles.section}>
+        <View style={styles.section} testID="section-order-summary">
           <TouchableOpacity
             style={styles.summaryHeader}
             onPress={() => setSummaryExpanded(!summaryExpanded)}
+            testID="btn-toggle-summary"
           >
             <Text style={styles.sectionTitle}>Order Summary</Text>
             <View style={styles.summaryToggle}>
               <Text style={styles.itemCountText}>
-                {items.length} item{items.length !== 1 ? "s" : ""}
+                {pluralize(items.length, "item")}
               </Text>
               <Text style={styles.expandIcon}>{summaryExpanded ? "▲" : "▼"}</Text>
             </View>
@@ -432,7 +482,7 @@ export default function CheckoutScreen() {
               )}
               <View style={[styles.billRow, styles.totalRow]}>
                 <Text style={styles.totalLabel}>Total</Text>
-                <Text style={styles.totalValue}>{formatCurrency(total)}</Text>
+                <Text style={styles.totalValue} testID="text-final-total">{formatCurrency(total)}</Text>
               </View>
             </View>
           </GlassCard>
@@ -447,13 +497,14 @@ export default function CheckoutScreen() {
         <View style={styles.footerContent}>
           <View style={styles.footerTotalContainer}>
             <Text style={styles.footerTotalLabel}>Total</Text>
-            <Text style={styles.footerTotalValue}>{formatCurrency(total)}</Text>
+            <Text style={styles.footerTotalValue} testID="text-footer-total">{formatCurrency(total)}</Text>
           </View>
           <TouchableOpacity
             style={styles.placeOrderButton}
             onPress={confirmPlaceOrder}
             disabled={loading || !selectedAddressId || loadingAddresses}
             activeOpacity={0.85}
+            testID="btn-place-order"
           >
             <View style={styles.gradientButtonInner}>
               <View style={styles.gradientButtonOverlay} />

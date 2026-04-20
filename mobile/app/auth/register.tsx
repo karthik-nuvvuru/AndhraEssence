@@ -175,7 +175,7 @@ export default function RegisterScreen() {
   };
 
   return (
-    <View style={styles.wrapper}>
+    <View style={styles.wrapper} testID="screen-register">
       {/* Animated Background */}
       <View style={styles.gradientBg}>
         <View style={styles.bgLayer1} />
@@ -236,6 +236,7 @@ export default function RegisterScreen() {
                       value={fullName}
                       onChangeText={setFullName}
                       autoCapitalize="words"
+                      testID="input-fullname"
                     />
                   </View>
                   {errors.fullName ? <Text style={styles.errorText}>{errors.fullName}</Text> : null}
@@ -255,6 +256,7 @@ export default function RegisterScreen() {
                       keyboardType="email-address"
                       autoCapitalize="none"
                       autoCorrect={false}
+                      testID="input-register-email"
                     />
                   </View>
                   {errors.email ? <Text style={styles.errorText}>{errors.email}</Text> : null}
@@ -272,6 +274,7 @@ export default function RegisterScreen() {
                       value={phone}
                       onChangeText={setPhone}
                       keyboardType="phone-pad"
+                      testID="input-phone"
                     />
                   </View>
                   {errors.phone ? <Text style={styles.errorText}>{errors.phone}</Text> : null}
@@ -289,8 +292,9 @@ export default function RegisterScreen() {
                       value={password}
                       onChangeText={setPassword}
                       secureTextEntry={!showPassword}
+                      testID="input-register-password"
                     />
-                    <Pressable onPress={() => setShowPassword(!showPassword)} hitSlop={8}>
+                    <Pressable onPress={() => setShowPassword(!showPassword)} hitSlop={8} testID="btn-toggle-register-password">
                       {showPassword ? (
                         <EyeOff size={18} color={colors.textTertiary} />
                       ) : (
@@ -313,8 +317,9 @@ export default function RegisterScreen() {
                       value={confirmPassword}
                       onChangeText={setConfirmPassword}
                       secureTextEntry={!showConfirmPassword}
+                      testID="input-confirm-password"
                     />
-                    <Pressable onPress={() => setShowConfirmPassword(!showConfirmPassword)} hitSlop={8}>
+                    <Pressable onPress={() => setShowConfirmPassword(!showConfirmPassword)} hitSlop={8} testID="btn-toggle-confirm-password">
                       {showConfirmPassword ? (
                         <EyeOff size={18} color={colors.textTertiary} />
                       ) : (
@@ -332,6 +337,7 @@ export default function RegisterScreen() {
                   style={({ pressed }) => [styles.ctaButton, pressed && styles.ctaButtonPressed]}
                   onPress={handleRegister}
                   disabled={loading}
+                  testID="btn-create-account"
                 >
                   <View style={styles.ctaInner}>
                     {loading ? (
@@ -346,7 +352,7 @@ export default function RegisterScreen() {
               {/* Footer */}
               <View style={styles.footer}>
                 <Text style={styles.footerText}>Already have an account?</Text>
-                <Pressable onPress={() => router.replace("/auth/login" as any)}>
+                <Pressable onPress={() => router.replace("/auth/login")} testID="btn-signin-link">
                   <Text style={styles.signInText}>Sign In</Text>
                 </Pressable>
               </View>

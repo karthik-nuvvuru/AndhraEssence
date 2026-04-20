@@ -1,0 +1,19 @@
+# Helper: Common assertions
+appId: com.andhraessence.app
+name: Assertion Helpers
+
+assertScreenVisible:
+  name: Assert Screen Visible
+  params:
+    screenId: null
+  actions:
+    - assertVisible: { id: ${SCREEN_ID} }
+
+assertElementContains:
+  name: Assert Element Contains Text
+  params:
+    elementId: null
+    text: null
+  actions:
+    - assertVisible: { id: ${ELEMENT_ID} }
+    - waitFor: { text: ${TEXT}, timeout: 3000 }

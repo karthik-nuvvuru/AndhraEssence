@@ -119,7 +119,7 @@ export default function OrderTrackingScreen() {
     try {
       setLoading(true);
       const response = await orderApi.getById(id!);
-      setCurrentOrder(response.data);
+      setCurrentOrder(response.data as any);
       // Mock rider info for demo if order is in transit
       if (response.data.status === "picked_up" || response.data.status === "in_transit") {
         setRiderInfo({
@@ -129,7 +129,7 @@ export default function OrderTrackingScreen() {
         });
       }
     } catch (error) {
-      console.error("Failed to fetch order:", error);
+      // Order fetch failed
     } finally {
       setLoading(false);
     }
@@ -172,14 +172,14 @@ export default function OrderTrackingScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.container} edges={["bottom"]}>
+    <SafeAreaView style={styles.container} edges={["bottom"]} testID="screen-order-tracking">
       <ScrollView
         contentContainerStyle={styles.content}
         showsVerticalScrollIndicator={false}
       >
         {/* Header */}
         <View style={styles.header}>
-          <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
+          <TouchableOpacity onPress={() => router.back()} style={styles.backButton} testID="btn-back">
             <ChevronLeft size={24} color={colors.textPrimary} />
           </TouchableOpacity>
           <View>
@@ -190,22 +190,22 @@ export default function OrderTrackingScreen() {
         </View>
 
         {/* Status Banner */}
-        <View style={[styles.statusBanner, { backgroundColor: statusStyle.bg, borderColor: statusStyle.border }]}>
+        <View style={[styles.statusBanner, { backgroundColor: statusStyle.bg, borderColor: statusStyle.border }]} testID="banner-status">
           <View style={styles.statusBannerContent}>
-            <Text style={[styles.statusBannerText, { color: statusStyle.text }]}>
+            <Text style={[styles.statusBannerText, { color: statusStyle.text }]} testID="text-status">
               {orderStatus.replace("_", " ").toUpperCase()}
             </Text>
             {!isCancelled && (
               <View style={styles.etaContainer}>
                 <Text style={styles.etaLabel}>ETA</Text>
-                <Text style={[styles.etaValue, { color: statusStyle.text }]}>{getETA()}</Text>
+                <Text style={[styles.etaValue, { color: statusStyle.text }]} testID="text-eta">{getETA()}</Text>
               </View>
             )}
           </View>
         </View>
 
         {/* Map Placeholder */}
-        <View style={styles.mapCard}>
+        <View style={styles.mapCard} testID="map-placeholder">
           <View style={styles.mapContent}>
             <View style={styles.mapGradient}>
               <View style={styles.mapPinContainer}>
@@ -323,7 +323,7 @@ export default function OrderTrackingScreen() {
         )}
 
         {/* Order Details Card */}
-        <View style={styles.detailsCard}>
+        <View style={styles.detailsCard} testID="card-order-details">
           <View style={styles.detailsCardGlass}>
             <View style={styles.restaurantHeader}>
               <UtensilsCrossed size={28} color={colors.primary} />
@@ -331,7 +331,7 @@ export default function OrderTrackingScreen() {
                 <Text style={styles.restaurantName}>
                   {currentOrder.restaurant_name || "Restaurant Name"}
                 </Text>
-                <Text style={styles.orderIdText}>Order #{currentOrder.order_number}</Text>
+                <Text style={styles.orderIdText} testID="text-order-number">Order #{currentOrder.order_number}</Text>
               </View>
             </View>
 

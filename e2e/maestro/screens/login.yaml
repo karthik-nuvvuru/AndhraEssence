@@ -1,0 +1,199 @@
+# Login Screen Tests
+appId: com.andhraessence.app
+name: TC-LOGIN-001 Login Screen Renders
+env:
+  EMAIL: customer@example.com
+  PASSWORD: customer123
+actions:
+  - launchApp
+  - waitFor: { id: screen-login, timeout: 8000 }
+  - assertVisible: { id: screen-login }
+  - assertVisible: { id: input-email }
+  - assertVisible: { id: input-password }
+  - assertVisible: { id: btn-signin }
+  - assertVisible: { text: "Sign In" }
+  - takeScreenshot: { name: login-screen }
+
+---
+appId: com.andhraessence.app
+name: TC-LOGIN-002 Email Validation Shows Error For Empty
+env:
+  EMAIL: customer@example.com
+  PASSWORD: customer123
+actions:
+  - launchApp
+  - waitFor: { id: screen-login, timeout: 8000 }
+  - tapOn: { id: input-email }
+  - inputText: ""
+  - tapOn: { id: input-password }
+  - tapOn: { id: btn-signin }
+  - wait: 500
+  - assertVisible: { text: "Email is required" }
+  - takeScreenshot: { name: login-empty-email }
+
+---
+appId: com.andhraessence.app
+name: TC-LOGIN-003 Email Validation Shows Error For Invalid Format
+env:
+  EMAIL: customer@example.com
+  PASSWORD: customer123
+actions:
+  - launchApp
+  - waitFor: { id: screen-login, timeout: 8000 }
+  - tapOn: { id: input-email }
+  - inputText: "notanemail"
+  - tapOn: { id: input-password }
+  - tapOn: { id: btn-signin }
+  - wait: 500
+  - assertVisible: { text: "Invalid email" }
+  - takeScreenshot: { name: login-invalid-email }
+
+---
+appId: com.andhraessence.app
+name: TC-LOGIN-004 Password Validation Shows Error For Empty
+env:
+  EMAIL: customer@example.com
+  PASSWORD: customer123
+actions:
+  - launchApp
+  - waitFor: { id: screen-login, timeout: 8000 }
+  - tapOn: { id: input-email }
+  - inputText: "test@test.com"
+  - tapOn: { id: input-password }
+  - inputText: ""
+  - tapOn: { id: input-email }
+  - tapOn: { id: btn-signin }
+  - wait: 500
+  - assertVisible: { text: "Password is required" }
+  - takeScreenshot: { name: login-empty-password }
+
+---
+appId: com.andhraessence.app
+name: TC-LOGIN-005 Password Validation Shows Error For Short Password
+env:
+  EMAIL: customer@example.com
+  PASSWORD: customer123
+actions:
+  - launchApp
+  - waitFor: { id: screen-login, timeout: 8000 }
+  - tapOn: { id: input-email }
+  - inputText: "test@test.com"
+  - tapOn: { id: input-password }
+  - inputText: "12345"
+  - tapOn: { id: input-email }
+  - tapOn: { id: btn-signin }
+  - wait: 500
+  - assertVisible: { text: "Password must be at least" }
+  - takeScreenshot: { name: login-short-password }
+
+---
+appId: com.andhraessence.app
+name: TC-LOGIN-006 Toggle Password Visibility
+env:
+  EMAIL: customer@example.com
+  PASSWORD: customer123
+actions:
+  - launchApp
+  - waitFor: { id: screen-login, timeout: 8000 }
+  - tapOn: { id: input-password }
+  - inputText: "secretpass"
+  - tapOn: { id: btn-toggle-password }
+  - takeScreenshot: { name: login-password-visible }
+  - tapOn: { id: btn-toggle-password }
+  - takeScreenshot: { name: login-password-hidden }
+
+---
+appId: com.andhraessence.app
+name: TC-LOGIN-007 Successful Login With Valid Credentials
+env:
+  EMAIL: customer@example.com
+  PASSWORD: customer123
+actions:
+  - launchApp
+  - waitFor: { id: screen-login, timeout: 8000 }
+  - tapOn: { id: input-email }
+  - inputText: ${EMAIL}
+  - tapOn: { id: input-password }
+  - inputText: ${PASSWORD}
+  - tapOn: { id: btn-signin }
+  - waitFor: { id: screen-home, timeout: 12000 }
+  - takeScreenshot: { name: login-success }
+  - assertVisible: { id: screen-home }
+
+---
+appId: com.andhraessence.app
+name: TC-LOGIN-008 Login Fails With Wrong Password
+env:
+  EMAIL: customer@example.com
+  PASSWORD: customer123
+actions:
+  - launchApp
+  - waitFor: { id: screen-login, timeout: 8000 }
+  - tapOn: { id: input-email }
+  - inputText: ${EMAIL}
+  - tapOn: { id: input-password }
+  - inputText: "wrongpassword"
+  - tapOn: { id: btn-signin }
+  - wait: 2000
+  - takeScreenshot: { name: login-failure }
+  - assertVisible: { id: screen-login }
+
+---
+appId: com.andhraessence.app
+name: TC-LOGIN-009 Forgot Password Link Shows Alert
+env:
+  EMAIL: customer@example.com
+  PASSWORD: customer123
+actions:
+  - launchApp
+  - waitFor: { id: screen-login, timeout: 8000 }
+  - tapOn: { id: btn-forgot-password }
+  - wait: 500
+  - takeScreenshot: { name: login-forgot-password }
+  - pressKey: Back
+  - wait: 300
+
+---
+appId: com.andhraessence.app
+name: TC-LOGIN-010 Navigate To Register Screen
+env:
+  EMAIL: customer@example.com
+  PASSWORD: customer123
+actions:
+  - launchApp
+  - waitFor: { id: screen-login, timeout: 8000 }
+  - tapOn: { id: btn-signup-link }
+  - waitFor: { id: screen-register, timeout: 5000 }
+  - takeScreenshot: { name: login-navigate-register }
+  - assertVisible: { id: screen-register }
+
+---
+appId: com.andhraessence.app
+name: TC-LOGIN-011 Sign In Button Shows Loading State
+env:
+  EMAIL: customer@example.com
+  PASSWORD: customer123
+actions:
+  - launchApp
+  - waitFor: { id: screen-login, timeout: 8000 }
+  - tapOn: { id: input-email }
+  - inputText: ${EMAIL}
+  - tapOn: { id: input-password }
+  - inputText: ${PASSWORD}
+  - tapOn: { id: btn-signin }
+  - wait: 500
+  - takeScreenshot: { name: login-loading }
+  - assertVisible: { id: screen-login }
+    optional: true
+
+---
+appId: com.andhraessence.app
+name: TC-LOGIN-012 Animated Orbs Present On Screen
+env:
+  EMAIL: customer@example.com
+  PASSWORD: customer123
+actions:
+  - launchApp
+  - waitFor: { id: screen-login, timeout: 8000 }
+  - takeScreenshot: { name: login-animated }
+  - assertVisible: { id: screen-login }

@@ -1,0 +1,6 @@
+# Helper: Launch app to clean state
+appId: com.andhraessence.app
+name: Launch App
+actions:
+  - launchApp
+  - waitForAnimationToEnd

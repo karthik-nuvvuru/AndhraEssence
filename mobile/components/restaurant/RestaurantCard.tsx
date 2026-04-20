@@ -1,6 +1,6 @@
 // Premium Restaurant Card - Liquid Glass Design
-import React from "react";
-import { View, Text, Image, StyleSheet, TouchableOpacity } from "react-native";
+import React, { useState } from "react";
+import { View, Text, Image, StyleSheet, TouchableOpacity, ImageErrorEventData, NativeSyntheticEvent } from "react-native";
 import { Star, MapPin, Clock } from "lucide-react-native";
 import { colors, typography, spacing, borderRadius, shadows } from "@/theme";
 import { formatCurrency } from "@/utils/formatters";
@@ -11,35 +11,93 @@ interface RestaurantCardProps {
   onPress: () => void;
 }
 
+// Fallback placeholder data - vibrant colors that look good as food placeholders
+const FALLBACK_IMAGE_COLORS = [
+  "#8B5CF6", // violet
+  "#10B981", // emerald
+  "#EF4444", // red
+  "#3B82F6", // blue
+  "#F59E0B", // amber
+  "#EC4899", // pink
+  "#14B8A6", // teal
+  "#F97316", // orange
+];
+
+function getFallbackColor(name: string): string {
+  if (!name) return FALLBACK_IMAGE_COLORS[0];
+  const charCode = name.charCodeAt(0);
+  return FALLBACK_IMAGE_COLORS[charCode % FALLBACK_IMAGE_COLORS.length];
+}
+
+function getInitials(name: string): string {
+  if (!name) return "?";
+  // Get first letter only for cleaner fallback
+  return name.charAt(0).toUpperCase();
+}
+
 export const RestaurantCard: React.FC<RestaurantCardProps> = React.memo(({
   restaurant,
   onPress,
 }) => {
+  const [imageError, setImageError] = useState(false);
+  const [_imageLoading, setImageLoading] = useState(true);
+
+  // Null guards for all props
+  const restaurantName = restaurant?.name ?? "Restaurant";
+  const cuisineType = restaurant?.cuisine_type ?? "Indian";
+  const addressLine1 = restaurant?.address_line1 ?? restaurant?.address ?? "";
+  const city = restaurant?.city ?? "Hyderabad";
+  const rating = typeof restaurant?.rating === "number" ? restaurant.rating : 0;
+  const deliveryFee = typeof restaurant?.delivery_fee === "number" ? restaurant.delivery_fee : 40;
+  const isOpen = restaurant?.is_open === true;
+  const coverImageUrl = restaurant?.cover_image_url || restaurant?.image_url;
+
+  const handleImageError = (e: NativeSyntheticEvent<ImageErrorEventData>) => {
+    setImageError(true);
+    setImageLoading(false);
+  };
+
+  const handleImageLoad = () => {
+    setImageLoading(false);
+  };
+
+  // Determine what to show in the image area
+  // Only show placeholder if no URL or image errored (not while loading)
+  const showPlaceholder = !coverImageUrl || imageError;
+  const placeholderColor = getFallbackColor(restaurantName);
+
   return (
     <TouchableOpacity onPress={onPress} activeOpacity={0.85} style={styles.wrapper}>
       <View style={styles.card}>
         {/* Image section with gradient overlay */}
         <View style={styles.imageContainer}>
-          {restaurant.cover_image_url ? (
-            <Image source={{ uri: restaurant.cover_image_url }} style={styles.coverImage} />
-          ) : (
-            <View style={styles.placeholderImage}>
-              <Text style={styles.placeholderText}>{restaurant.name.charAt(0)}</Text>
+          {showPlaceholder ? (
+            // Placeholder with initials
+            <View style={[styles.placeholderImage, { backgroundColor: placeholderColor }]}>
+              <Text style={styles.placeholderText}>{getInitials(restaurantName)}</Text>
             </View>
+          ) : (
+            <Image
+              source={{ uri: coverImageUrl }}
+              style={styles.coverImage}
+              onError={handleImageError}
+              onLoad={handleImageLoad}
+              resizeMode="cover"
+            />
           )}
           <View style={styles.gradientOverlay} />
 
           {/* Status Badge */}
           <View style={styles.statusBadge}>
-            <View style={[styles.statusDot, { backgroundColor: restaurant.is_open ? colors.success : colors.error }]} />
-            <Text style={styles.statusText}>{restaurant.is_open ? "Open" : "Closed"}</Text>
+            <View style={[styles.statusDot, { backgroundColor: isOpen ? colors.success : colors.error }]} />
+            <Text style={styles.statusText}>{isOpen ? "Open" : "Closed"}</Text>
           </View>
 
           {/* Delivery Info */}
           <View style={styles.deliveryBadge}>
             <Clock size={11} color={colors.textPrimary} />
             <Text style={styles.deliveryTimeText}>
-              {restaurant.delivery_fee ? `₹${restaurant.delivery_fee}` : '₹40'} delivery
+              ₹{deliveryFee} delivery
             </Text>
           </View>
         </View>
@@ -47,29 +105,29 @@ export const RestaurantCard: React.FC<RestaurantCardProps> = React.memo(({
         {/* Content Section */}
         <View style={styles.content}>
           <View style={styles.nameRow}>
-            <Text style={styles.name} numberOfLines={1}>{restaurant.name}</Text>
-            {restaurant.rating > 0 && (
+            <Text style={styles.name} numberOfLines={1}>{restaurantName}</Text>
+            {rating > 0 && (
               <View style={styles.ratingBadge}>
-                <Star size={10} color={colors.accent} fill={colors.accent} />
-                <Text style={styles.ratingText}>{restaurant.rating.toFixed(1)}</Text>
+                <Star size={10} color={colors.accent} />
+                <Text style={styles.ratingText}>{rating.toFixed(1)}</Text>
               </View>
             )}
           </View>
 
-          {restaurant.cuisine_type && (
+          {cuisineType && (
             <View style={styles.cuisineRow}>
               <MapPin size={12} color={colors.textTertiary} />
-              <Text style={styles.cuisine}>{restaurant.cuisine_type}</Text>
+              <Text style={styles.cuisine} numberOfLines={1}>{cuisineType}</Text>
             </View>
           )}
 
           <Text style={styles.address} numberOfLines={1}>
-            {restaurant.address_line1}{restaurant.city && `, ${restaurant.city}`}
+            {addressLine1}{addressLine1 && city ? `, ${city}` : city}
           </Text>
 
-          {restaurant.delivery_fee > 0 && (
+          {deliveryFee > 0 && (
             <Text style={styles.deliveryFeeText}>
-              {formatCurrency(restaurant.delivery_fee)} delivery
+              {formatCurrency(deliveryFee)} delivery
             </Text>
           )}
         </View>
@@ -102,14 +160,13 @@ const styles = StyleSheet.create({
   placeholderImage: {
     width: "100%",
     height: "100%",
-    backgroundColor: colors.primaryGlow,
     alignItems: "center",
     justifyContent: "center",
   },
   placeholderText: {
     fontSize: 48,
     fontWeight: "bold",
-    color: colors.primary,
+    color: "rgba(255,255,255,0.9)",
   },
   gradientOverlay: {
     position: "absolute",
@@ -199,6 +256,7 @@ const styles = StyleSheet.create({
   cuisine: {
     ...typography.bodySmall,
     color: colors.textSecondary,
+    flex: 1,
   },
   address: {
     ...typography.caption,

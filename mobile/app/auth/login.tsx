@@ -150,7 +150,7 @@ export default function LoginScreen() {
   };
 
   return (
-    <View style={styles.wrapper}>
+    <View style={styles.wrapper} testID="screen-login">
       {/* Animated Background */}
       <View style={styles.gradientBg}>
         <View style={styles.bgLayer1} />
@@ -216,6 +216,7 @@ export default function LoginScreen() {
                     keyboardType="email-address"
                     autoCapitalize="none"
                     autoCorrect={false}
+                    testID="input-email"
                   />
                 </View>
                 {emailError ? <Text style={styles.errorText}>{emailError}</Text> : null}
@@ -237,8 +238,9 @@ export default function LoginScreen() {
                     }}
                     onBlur={() => validatePassword(password)}
                     secureTextEntry={!showPassword}
+                    testID="input-password"
                   />
-                  <Pressable onPress={() => setShowPassword(!showPassword)} hitSlop={8}>
+                  <Pressable onPress={() => setShowPassword(!showPassword)} hitSlop={8} testID="btn-toggle-password">
                     {showPassword ? (
                       <EyeOff size={18} color={colors.textTertiary} />
                     ) : (
@@ -250,7 +252,7 @@ export default function LoginScreen() {
               </View>
 
               {/* Forgot */}
-              <Pressable style={styles.forgotRow}>
+              <Pressable style={styles.forgotRow} testID="btn-forgot-password">
                 <Text style={styles.forgotText}>Forgot Password?</Text>
               </Pressable>
             </Animated.View>
@@ -261,6 +263,7 @@ export default function LoginScreen() {
                 style={({ pressed }) => [styles.ctaButton, pressed && styles.ctaButtonPressed]}
                 onPress={handleLogin}
                 disabled={loading}
+                testID="btn-signin"
               >
                 <View style={styles.ctaInner}>
                   {loading ? (
@@ -275,7 +278,7 @@ export default function LoginScreen() {
             {/* Footer */}
             <View style={styles.footer}>
               <Text style={styles.footerText}>Don't have an account?</Text>
-              <Pressable onPress={() => router.replace("/auth/register" as any)}>
+              <Pressable onPress={() => router.replace("/auth/register")} testID="btn-signup-link">
                 <Text style={styles.signUpText}>Sign Up</Text>
               </Pressable>
             </View>

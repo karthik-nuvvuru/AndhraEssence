@@ -1,0 +1,66 @@
+# Edge Case Tests - Error Handling
+appId: com.andhraessence.app
+name: TC-EDGE-ERR-001 Login With Invalid Credentials Shows Error
+env:
+  EMAIL: customer@example.com
+  PASSWORD: customer123
+actions:
+  - launchApp
+  - waitFor: { id: screen-login, timeout: 8000 }
+  - tapOn: { id: input-email }
+  - inputText: "wrong@test.com"
+  - tapOn: { id: input-password }
+  - inputText: "wrongpassword"
+  - tapOn: { id: btn-signin }
+  - wait: 2000
+  - takeScreenshot: { name: edge-login-error }
+  - assertVisible: { id: screen-login }
+
+---
+appId: com.andhraessence.app
+name: TC-EDGE-ERR-002 Invalid Promo Code Shows Error
+env:
+  EMAIL: customer@example.com
+  PASSWORD: customer123
+actions:
+  - launchApp
+  - waitFor: { id: screen-login, timeout: 8000 }
+  - tapOn: { id: input-email }
+  - inputText: ${EMAIL}
+  - tapOn: { id: input-password }
+  - inputText: ${PASSWORD}
+  - tapOn: { id: btn-signin }
+  - waitFor: { id: screen-home, timeout: 12000 }
+  - wait: 2000
+  - tapOn: { id: card-restaurant-0 }
+  - waitFor: { id: screen-restaurant, timeout: 5000 }
+  - wait: 1000
+  - tapOn: { id: btn-add-item-0 }
+  - wait: 500
+  - tapOn: { id: tab-cart }
+  - waitFor: { id: screen-cart, timeout: 5000 }
+  - tapOn: { id: input-promo-code }
+  - inputText: "FAKECODE999"
+  - tapOn: { id: btn-apply-promo }
+  - wait: 1500
+  - takeScreenshot: { name: edge-promo-error }
+
+---
+appId: com.andhraessence.app
+name: TC-EDGE-ERR-003 Field Validation Prevents Empty Submission
+env:
+  EMAIL: customer@example.com
+  PASSWORD: customer123
+actions:
+  - launchApp
+  - waitFor: { id: screen-login, timeout: 8000 }
+  - tapOn: { id: btn-signin }
+  - wait: 500
+  - assertVisible: { text: "Email is required" }
+  - takeScreenshot: { name: edge-validation-email }
+  - tapOn: { id: input-email }
+  - inputText: "test@test.com"
+  - tapOn: { id: btn-signin }
+  - wait: 500
+  - assertVisible: { text: "Password is required" }
+  - takeScreenshot: { name: edge-validation-password }

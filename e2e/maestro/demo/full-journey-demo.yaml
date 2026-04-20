@@ -1,0 +1,128 @@
+# DEMO: Full App Journey - Narrated Live Demo
+# Run with: maestro test e2e/maestro/demo/full-journey-demo.yaml --slow-factor 2
+appId: com.andhraessence.app
+name: "DEMO: Full Food Ordering Experience"
+env:
+  EMAIL: customer@example.com
+  PASSWORD: customer123
+actions:
+
+  # === STEP 1: APP LAUNCH ===
+  - launchApp
+  - waitFor: { id: screen-login, timeout: 8000 }
+  - wait: 2000
+  - takeScreenshot: { name: "demo-01-login-screen" }
+  - extendedOutput: { text: "DEMO: Step 1 — App launches, showing login screen" }
+
+  # === STEP 2: USER LOGIN ===
+  - extendedOutput: { text: "DEMO: Step 2 — User enters credentials and signs in" }
+  - tapOn: { id: input-email }
+  - inputText: ${EMAIL}
+  - wait: 500
+  - takeScreenshot: { name: "demo-02-email-entered" }
+  - tapOn: { id: input-password }
+  - inputText: ${PASSWORD}
+  - wait: 500
+  - takeScreenshot: { name: "demo-03-password-entered" }
+  - extendedOutput: { text: "DEMO: Tapping Sign In button..." }
+  - tapOn: { id: btn-signin }
+  - waitFor: { id: screen-home, timeout: 12000 }
+  - wait: 2000
+  - takeScreenshot: { name: "demo-04-home-loaded" }
+  - extendedOutput: { text: "DEMO: Login successful! Home screen loaded with restaurants." }
+
+  # === STEP 3: SEARCH FOR FOOD ===
+  - extendedOutput: { text: "DEMO: Step 3 — User taps search to find biryani" }
+  - tapOn: { id: btn-search }
+  - waitFor: { id: screen-search, timeout: 5000 }
+  - wait: 1000
+  - takeScreenshot: { name: "demo-05-search-screen" }
+  - extendedOutput: { text: "DEMO: Search screen opens with recent searches" }
+  - tapOn: { id: input-search }
+  - inputText: "Biryani"
+  - wait: 1500
+  - takeScreenshot: { name: "demo-06-search-results" }
+  - extendedOutput: { text: "DEMO: Search results appear for 'Biryani'" }
+
+  # === STEP 4: OPEN RESTAURANT ===
+  - extendedOutput: { text: "DEMO: Step 4 — User taps first restaurant from results" }
+  - tapOn: { id: card-restaurant-search-0 }
+  - waitFor: { id: screen-restaurant, timeout: 5000 }
+  - wait: 1500
+  - takeScreenshot: { name: "demo-07-restaurant-page" }
+  - extendedOutput: { text: "DEMO: Restaurant page opens with menu categories" }
+
+  # === STEP 5: BROWSE MENU AND ADD ITEMS ===
+  - extendedOutput: { text: "DEMO: Step 5 — User browses menu and adds Margherita Pizza" }
+  - wait: 1000
+  - tapOn: { id: btn-add-item-0 }
+  - wait: 800
+  - takeScreenshot: { name: "demo-08-item-added" }
+  - extendedOutput: { text: "DEMO: First item added to cart!" }
+  - extendedOutput: { text: "DEMO: Adding second item — Garlic Bread" }
+  - tapOn: { id: btn-add-item-1 }
+  - wait: 800
+  - takeScreenshot: { name: "demo-09-second-item" }
+  - extendedOutput: { text: "DEMO: Second item added! View Cart button appears." }
+
+  # === STEP 6: OPEN CART ===
+  - extendedOutput: { text: "DEMO: Step 6 — User opens cart to review items" }
+  - tapOn: { id: fab-view-cart }
+  - waitFor: { id: screen-cart, timeout: 5000 }
+  - wait: 1500
+  - takeScreenshot: { name: "demo-10-cart-open" }
+  - extendedOutput: { text: "DEMO: Cart shows both items with quantities and prices" }
+
+  # === STEP 7: APPLY COUPON ===
+  - extendedOutput: { text: "DEMO: Step 7 — User applies coupon 'SAVE10' for 10% off" }
+  - tapOn: { id: input-promo-code }
+  - inputText: "SAVE10"
+  - wait: 500
+  - takeScreenshot: { name: "demo-11-coupon-typed" }
+  - tapOn: { id: btn-apply-promo }
+  - wait: 1500
+  - takeScreenshot: { name: "demo-12-coupon-applied" }
+  - extendedOutput: { text: "DEMO: Coupon applied successfully! Discount shown." }
+
+  # === STEP 8: PROCEED TO CHECKOUT ===
+  - extendedOutput: { text: "DEMO: Step 8 — User proceeds to checkout" }
+  - tapOn: { id: btn-checkout }
+  - waitFor: { id: screen-checkout, timeout: 5000 }
+  - wait: 1500
+  - takeScreenshot: { name: "demo-13-checkout-screen" }
+  - extendedOutput: { text: "DEMO: Checkout screen with address, payment, and order summary" }
+
+  # === STEP 9: SELECT PAYMENT AND PLACE ORDER ===
+  - extendedOutput: { text: "DEMO: Step 9 — User selects Cash on Delivery and places order" }
+  - scrollDown
+  - wait: 500
+  - takeScreenshot: { name: "demo-14-checkout-scroll" }
+  - extendedOutput: { text: "DEMO: Selecting payment method..." }
+  - tapOn: { id: pill-payment-cash }
+  - wait: 500
+  - takeScreenshot: { name: "demo-15-payment-cash" }
+  - extendedOutput: { text: "DEMO: Payment selected. Tapping Place Order..." }
+  - tapOn: { id: btn-place-order }
+  - waitFor: { id: screen-order-tracking, timeout: 15000 }
+  - wait: 2000
+  - takeScreenshot: { name: "demo-16-order-placed" }
+  - extendedOutput: { text: "DEMO: ORDER PLACED SUCCESSFULLY!" }
+
+  # === STEP 10: TRACKING SCREEN ===
+  - extendedOutput: { text: "DEMO: Step 10 — Tracking screen shows live order status" }
+  - wait: 1000
+  - takeScreenshot: { name: "demo-17-tracking-screen" }
+  - extendedOutput: { text: "DEMO: Status banner shows current order state" }
+  - scrollDown
+  - wait: 500
+  - takeScreenshot: { name: "demo-18-tracking-timeline" }
+  - extendedOutput: { text: "DEMO: Timeline shows order progress steps" }
+  - scrollDown
+  - wait: 500
+  - takeScreenshot: { name: "demo-19-tracking-details" }
+  - extendedOutput: { text: "DEMO: Order details card with items and payment info" }
+
+  # === DEMO COMPLETE ===
+  - extendedOutput: { text: "DEMO COMPLETE! Full order flow executed successfully." }
+  - wait: 2000
+  - takeScreenshot: { name: "demo-20-complete" }

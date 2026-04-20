@@ -1,0 +1,103 @@
+# Onboarding Screen Tests
+appId: com.andhraessence.app
+name: TC-ONBOARD-001 Onboarding Renders First Slide
+env:
+  EMAIL: customer@example.com
+  PASSWORD: customer123
+actions:
+  - launchApp
+  - waitFor: { id: screen-onboarding, timeout: 8000 }
+  - assertVisible: { id: screen-onboarding }
+  - waitFor: { text: "Discover", timeout: 3000 }
+  - assertVisible: { text: "Discover" }
+  - assertVisible: { text: "Find the best local food" }
+  - takeScreenshot: { name: onboarding-slide-1 }
+
+---
+appId: com.andhraessence.app
+name: TC-ONBOARD-002 Second Slide Renders Correctly
+actions:
+  - launchApp
+  - waitFor: { id: screen-onboarding, timeout: 8000 }
+  - swipe: { direction: LEFT }
+  - wait: 800
+  - takeScreenshot: { name: onboarding-slide-2 }
+  - assertVisible: { text: "Browse" }
+  - assertVisible: { text: "Explore cuisines" }
+
+---
+appId: com.andhraessence.app
+name: TC-ONBOARD-003 Third Slide Renders Correctly
+actions:
+  - launchApp
+  - waitFor: { id: screen-onboarding, timeout: 8000 }
+  - swipe: { direction: LEFT }
+  - wait: 400
+  - swipe: { direction: LEFT }
+  - wait: 800
+  - takeScreenshot: { name: onboarding-slide-3 }
+  - assertVisible: { text: "Order" }
+  - assertVisible: { text: "Track your delivery" }
+
+---
+appId: com.andhraessence.app
+name: TC-ONBOARD-004 Dot Indicators Show Correct State
+actions:
+  - launchApp
+  - waitFor: { id: screen-onboarding, timeout: 8000 }
+  - assertVisible: { id: dot-indicator-0 }
+  - assertVisible: { id: dot-indicator-1 }
+  - assertVisible: { id: dot-indicator-2 }
+  - swipe: { direction: LEFT }
+  - wait: 400
+  - assertVisible: { id: dot-indicator-1 }
+  - takeScreenshot: { name: onboarding-dots }
+
+---
+appId: com.andhraessence.app
+name: TC-ONBOARD-005 Skip Button Navigates To Login
+actions:
+  - launchApp
+  - waitFor: { id: screen-onboarding, timeout: 8000 }
+  - tapOn: { id: btn-skip }
+  - waitFor: { id: screen-login, timeout: 5000 }
+  - takeScreenshot: { name: onboarding-skip-to-login }
+  - assertVisible: { id: screen-login }
+
+---
+appId: com.andhraessence.app
+name: TC-ONBOARD-006 Next Button Advances Slides
+actions:
+  - launchApp
+  - waitFor: { id: screen-onboarding, timeout: 8000 }
+  - tapOn: { id: btn-next }
+  - wait: 600
+  - assertVisible: { text: "Browse" }
+  - takeScreenshot: { name: onboarding-next }
+
+---
+appId: com.andhraessence.app
+name: TC-ONBOARD-007 Get Started Button Navigates To Login
+actions:
+  - launchApp
+  - waitFor: { id: screen-onboarding, timeout: 8000 }
+  - swipe: { direction: LEFT }
+  - wait: 400
+  - swipe: { direction: LEFT }
+  - wait: 600
+  - tapOn: { id: btn-get-started }
+  - waitFor: { id: screen-login, timeout: 5000 }
+  - takeScreenshot: { name: onboarding-get-started }
+
+---
+appId: com.andhraessence.app
+name: TC-ONBOARD-008 Can Swipe Back From Second Slide
+actions:
+  - launchApp
+  - waitFor: { id: screen-onboarding, timeout: 8000 }
+  - swipe: { direction: LEFT }
+  - wait: 600
+  - swipe: { direction: RIGHT }
+  - wait: 600
+  - assertVisible: { text: "Discover" }
+  - takeScreenshot: { name: onboarding-swipe-back }

@@ -1,0 +1,214 @@
+# Register Screen Tests
+appId: com.andhraessence.app
+name: TC-REG-001 Register Screen Renders All Fields
+env:
+  EMAIL: customer@example.com
+  PASSWORD: customer123
+actions:
+  - launchApp
+  - waitFor: { id: screen-login, timeout: 8000 }
+  - tapOn: { id: btn-signup-link }
+  - waitFor: { id: screen-register, timeout: 5000 }
+  - assertVisible: { id: input-fullname }
+  - assertVisible: { id: input-register-email }
+  - assertVisible: { id: input-phone }
+  - assertVisible: { id: input-register-password }
+  - assertVisible: { id: input-confirm-password }
+  - assertVisible: { id: btn-create-account }
+  - takeScreenshot: { name: register-screen }
+
+---
+appId: com.andhraessence.app
+name: TC-REG-002 Full Name Validation Shows Error When Empty
+env:
+  EMAIL: customer@example.com
+  PASSWORD: customer123
+actions:
+  - launchApp
+  - waitFor: { id: screen-login, timeout: 8000 }
+  - tapOn: { id: btn-signup-link }
+  - waitFor: { id: screen-register, timeout: 5000 }
+  - tapOn: { id: input-fullname }
+  - tapOn: { id: input-register-email }
+  - tapOn: { id: btn-create-account }
+  - wait: 500
+  - assertVisible: { text: "Full name is required" }
+  - takeScreenshot: { name: register-empty-name }
+
+---
+appId: com.andhraessence.app
+name: TC-REG-003 Email Validation Shows Error For Invalid Format
+env:
+  EMAIL: customer@example.com
+  PASSWORD: customer123
+actions:
+  - launchApp
+  - waitFor: { id: screen-login, timeout: 8000 }
+  - tapOn: { id: btn-signup-link }
+  - waitFor: { id: screen-register, timeout: 5000 }
+  - tapOn: { id: input-fullname }
+  - inputText: "Test User"
+  - tapOn: { id: input-register-email }
+  - inputText: "notvalidemail"
+  - tapOn: { id: input-fullname }
+  - tapOn: { id: btn-create-account }
+  - wait: 500
+  - assertVisible: { text: "Invalid email" }
+  - takeScreenshot: { name: register-invalid-email }
+
+---
+appId: com.andhraessence.app
+name: TC-REG-004 Phone Validation Shows Error When Too Short
+env:
+  EMAIL: customer@example.com
+  PASSWORD: customer123
+actions:
+  - launchApp
+  - waitFor: { id: screen-login, timeout: 8000 }
+  - tapOn: { id: btn-signup-link }
+  - waitFor: { id: screen-register, timeout: 5000 }
+  - tapOn: { id: input-fullname }
+  - inputText: "Test User"
+  - tapOn: { id: input-register-email }
+  - inputText: "test@test.com"
+  - tapOn: { id: input-phone }
+  - inputText: "12345"
+  - tapOn: { id: input-fullname }
+  - tapOn: { id: btn-create-account }
+  - wait: 500
+  - assertVisible: { text: "Phone must be at least" }
+  - takeScreenshot: { name: register-short-phone }
+
+---
+appId: com.andhraessence.app
+name: TC-REG-005 Password Validation Shows Error For Short Password
+env:
+  EMAIL: customer@example.com
+  PASSWORD: customer123
+actions:
+  - launchApp
+  - waitFor: { id: screen-login, timeout: 8000 }
+  - tapOn: { id: btn-signup-link }
+  - waitFor: { id: screen-register, timeout: 5000 }
+  - tapOn: { id: input-fullname }
+  - inputText: "Test User"
+  - tapOn: { id: input-register-email }
+  - inputText: "test@test.com"
+  - tapOn: { id: input-phone }
+  - inputText: "9876543210"
+  - tapOn: { id: input-register-password }
+  - inputText: "12345"
+  - tapOn: { id: input-fullname }
+  - tapOn: { id: btn-create-account }
+  - wait: 500
+  - assertVisible: { text: "Password must be at least" }
+  - takeScreenshot: { name: register-short-password }
+
+---
+appId: com.andhraessence.app
+name: TC-REG-006 Confirm Password Shows Error On Mismatch
+env:
+  EMAIL: customer@example.com
+  PASSWORD: customer123
+actions:
+  - launchApp
+  - waitFor: { id: screen-login, timeout: 8000 }
+  - tapOn: { id: btn-signup-link }
+  - waitFor: { id: screen-register, timeout: 5000 }
+  - tapOn: { id: input-fullname }
+  - inputText: "Test User"
+  - tapOn: { id: input-register-email }
+  - inputText: "test@test.com"
+  - tapOn: { id: input-phone }
+  - inputText: "9876543210"
+  - tapOn: { id: input-register-password }
+  - inputText: "password123"
+  - tapOn: { id: input-confirm-password }
+  - inputText: "differentpass"
+  - tapOn: { id: input-fullname }
+  - tapOn: { id: btn-create-account }
+  - wait: 500
+  - assertVisible: { text: "Passwords do not match" }
+  - takeScreenshot: { name: register-password-mismatch }
+
+---
+appId: com.andhraessence.app
+name: TC-REG-007 Toggle Password Visibility
+env:
+  EMAIL: customer@example.com
+  PASSWORD: customer123
+actions:
+  - launchApp
+  - waitFor: { id: screen-login, timeout: 8000 }
+  - tapOn: { id: btn-signup-link }
+  - waitFor: { id: screen-register, timeout: 5000 }
+  - tapOn: { id: input-register-password }
+  - inputText: "testpass"
+  - tapOn: { id: btn-toggle-register-password }
+  - takeScreenshot: { name: register-password-visible }
+  - tapOn: { id: btn-toggle-register-password }
+  - takeScreenshot: { name: register-password-hidden }
+
+---
+appId: com.andhraessence.app
+name: TC-REG-008 All Fields Accept Valid Input
+env:
+  EMAIL: customer@example.com
+  PASSWORD: customer123
+actions:
+  - launchApp
+  - waitFor: { id: screen-login, timeout: 8000 }
+  - tapOn: { id: btn-signup-link }
+  - waitFor: { id: screen-register, timeout: 5000 }
+  - tapOn: { id: input-fullname }
+  - inputText: "New Test User"
+  - tapOn: { id: input-register-email }
+  - inputText: "newuser@test.com"
+  - tapOn: { id: input-phone }
+  - inputText: "9876543210"
+  - tapOn: { id: input-register-password }
+  - inputText: "password123"
+  - tapOn: { id: input-confirm-password }
+  - inputText: "password123"
+  - takeScreenshot: { name: register-filled-form }
+
+---
+appId: com.andhraessence.app
+name: TC-REG-009 Navigate Back To Login
+env:
+  EMAIL: customer@example.com
+  PASSWORD: customer123
+actions:
+  - launchApp
+  - waitFor: { id: screen-login, timeout: 8000 }
+  - tapOn: { id: btn-signup-link }
+  - waitFor: { id: screen-register, timeout: 5000 }
+  - tapOn: { id: btn-signin-link }
+  - waitFor: { id: screen-login, timeout: 5000 }
+  - takeScreenshot: { name: register-back-to-login }
+  - assertVisible: { id: screen-login }
+
+---
+appId: com.andhraessence.app
+name: TC-REG-010 Loading State On Account Creation
+env:
+  EMAIL: customer@example.com
+  PASSWORD: customer123
+actions:
+  - launchApp
+  - waitFor: { id: screen-login, timeout: 8000 }
+  - tapOn: { id: btn-signup-link }
+  - waitFor: { id: screen-register, timeout: 5000 }
+  - tapOn: { id: input-fullname }
+  - inputText: "Test User"
+  - tapOn: { id: input-register-email }
+  - inputText: "test@test.com"
+  - tapOn: { id: input-phone }
+  - inputText: "9876543210"
+  - tapOn: { id: input-register-password }
+  - inputText: "password123"
+  - tapOn: { id: input-confirm-password }
+  - inputText: "password123"
+  - tapOn: { id: btn-create-account }
+  - wait: 1000
+  - takeScreenshot: { name: register-loading }

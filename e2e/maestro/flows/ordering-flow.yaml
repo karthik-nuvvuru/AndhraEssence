@@ -1,0 +1,103 @@
+# Complete Ordering Flow
+appId: com.andhraessence.app
+name: TC-FLOW-ORDER-001 Complete Order Flow Search To Delivery
+env:
+  EMAIL: customer@example.com
+  PASSWORD: customer123
+actions:
+  - launchApp
+  - waitFor: { id: screen-login, timeout: 8000 }
+  - tapOn: { id: input-email }
+  - inputText: ${EMAIL}
+  - tapOn: { id: input-password }
+  - inputText: ${PASSWORD}
+  - tapOn: { id: btn-signin }
+  - waitFor: { id: screen-home, timeout: 12000 }
+  - takeScreenshot: { name: flow-home }
+
+  # Search for biryani
+  - tapOn: { id: btn-search }
+  - waitFor: { id: screen-search, timeout: 5000 }
+  - tapOn: { id: input-search }
+  - inputText: "Biryani"
+  - wait: 1500
+  - takeScreenshot: { name: flow-search-results }
+
+  # Open first restaurant
+  - tapOn: { id: card-restaurant-search-0 }
+  - waitFor: { id: screen-restaurant, timeout: 5000 }
+  - takeScreenshot: { name: flow-restaurant }
+
+  # Add two items to cart
+  - wait: 1000
+  - tapOn: { id: btn-add-item-0 }
+  - wait: 500
+  - takeScreenshot: { name: flow-item-added }
+  - tapOn: { id: btn-add-item-1 }
+  - wait: 500
+  - takeScreenshot: { name: flow-two-items }
+
+  # View cart
+  - tapOn: { id: fab-view-cart }
+  - waitFor: { id: screen-cart, timeout: 5000 }
+  - takeScreenshot: { name: flow-cart }
+
+  # Apply coupon
+  - tapOn: { id: input-promo-code }
+  - inputText: "SAVE10"
+  - tapOn: { id: btn-apply-promo }
+  - wait: 1000
+  - takeScreenshot: { name: flow-coupon }
+
+  # Proceed to checkout
+  - tapOn: { id: btn-checkout }
+  - waitFor: { id: screen-checkout, timeout: 5000 }
+  - takeScreenshot: { name: flow-checkout }
+
+  # Select payment and place order
+  - scrollDown
+  - wait: 500
+  - tapOn: { id: btn-place-order }
+  - waitFor: { id: screen-order-tracking, timeout: 15000 }
+  - takeScreenshot: { name: flow-order-placed }
+
+  # Verify tracking screen
+  - assertVisible: { id: screen-order-tracking }
+  - assertVisible: { id: banner-status }
+  - scrollDown
+  - assertVisible: { id: card-order-details }
+  - takeScreenshot: { name: flow-tracking-complete }
+
+---
+appId: com.andhraessence.app
+name: TC-FLOW-ORDER-002 Quick Add From Home To Cart
+env:
+  EMAIL: customer@example.com
+  PASSWORD: customer123
+actions:
+  - launchApp
+  - waitFor: { id: screen-login, timeout: 8000 }
+  - tapOn: { id: input-email }
+  - inputText: ${EMAIL}
+  - tapOn: { id: input-password }
+  - inputText: ${PASSWORD}
+  - tapOn: { id: btn-signin }
+  - waitFor: { id: screen-home, timeout: 12000 }
+  - wait: 2000
+
+  # Open first restaurant directly
+  - tapOn: { id: card-restaurant-0 }
+  - waitFor: { id: screen-restaurant, timeout: 5000 }
+  - wait: 1000
+
+  # Add item
+  - tapOn: { id: btn-add-item-0 }
+  - wait: 500
+
+  # Go to cart tab
+  - tapOn: { id: tab-cart }
+  - waitFor: { id: screen-cart, timeout: 5000 }
+  - takeScreenshot: { name: flow-quick-add-cart }
+
+  # Verify item in cart
+  - assertVisible: { id: card-cart-item-0 }

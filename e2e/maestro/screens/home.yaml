@@ -1,0 +1,298 @@
+# Home Screen Tests
+appId: com.andhraessence.app
+name: TC-HOME-001 Home Screen Renders Search Bar
+env:
+  EMAIL: customer@example.com
+  PASSWORD: customer123
+actions:
+  - launchApp
+  - waitFor: { id: screen-login, timeout: 8000 }
+  - tapOn: { id: input-email }
+  - inputText: ${EMAIL}
+  - tapOn: { id: input-password }
+  - inputText: ${PASSWORD}
+  - tapOn: { id: btn-signin }
+  - waitFor: { id: screen-home, timeout: 12000 }
+  - assertVisible: { id: btn-search }
+  - takeScreenshot: { name: home-search-bar }
+
+---
+appId: com.andhraessence.app
+name: TC-HOME-002 Location Pill Shows City Name
+env:
+  EMAIL: customer@example.com
+  PASSWORD: customer123
+actions:
+  - launchApp
+  - waitFor: { id: screen-login, timeout: 8000 }
+  - tapOn: { id: input-email }
+  - inputText: ${EMAIL}
+  - tapOn: { id: input-password }
+  - inputText: ${PASSWORD}
+  - tapOn: { id: btn-signin }
+  - waitFor: { id: screen-home, timeout: 12000 }
+  - assertVisible: { id: pill-location }
+  - takeScreenshot: { name: home-location-pill }
+
+---
+appId: com.andhraessence.app
+name: TC-HOME-003 Category Chips Show Horizontal Scroll
+env:
+  EMAIL: customer@example.com
+  PASSWORD: customer123
+actions:
+  - launchApp
+  - waitFor: { id: screen-login, timeout: 8000 }
+  - tapOn: { id: input-email }
+  - inputText: ${EMAIL}
+  - tapOn: { id: input-password }
+  - inputText: ${PASSWORD}
+  - tapOn: { id: btn-signin }
+  - waitFor: { id: screen-home, timeout: 12000 }
+  - assertVisible: { id: chip-category-biryani }
+  - assertVisible: { id: chip-category-south-indian }
+  - swipe: { direction: RIGHT }
+  - wait: 300
+  - takeScreenshot: { name: home-category-scroll }
+  - swipe: { direction: LEFT }
+  - wait: 300
+
+---
+appId: com.andhraessence.app
+name: TC-HOME-004 Restaurant Cards Display On Load
+env:
+  EMAIL: customer@example.com
+  PASSWORD: customer123
+actions:
+  - launchApp
+  - waitFor: { id: screen-login, timeout: 8000 }
+  - tapOn: { id: input-email }
+  - inputText: ${EMAIL}
+  - tapOn: { id: input-password }
+  - inputText: ${PASSWORD}
+  - tapOn: { id: btn-signin }
+  - waitFor: { id: screen-home, timeout: 12000 }
+  - wait: 2000
+  - assertVisible: { id: card-restaurant-0 }
+  - takeScreenshot: { name: home-restaurants }
+
+---
+appId: com.andhraessence.app
+name: TC-HOME-005 Featured Items Scroll Horizontal
+env:
+  EMAIL: customer@example.com
+  PASSWORD: customer123
+actions:
+  - launchApp
+  - waitFor: { id: screen-login, timeout: 8000 }
+  - tapOn: { id: input-email }
+  - inputText: ${EMAIL}
+  - tapOn: { id: input-password }
+  - inputText: ${PASSWORD}
+  - tapOn: { id: btn-signin }
+  - waitFor: { id: screen-home, timeout: 12000 }
+  - wait: 2000
+  - swipe: { direction: RIGHT }
+  - wait: 300
+  - takeScreenshot: { name: home-featured-scroll }
+
+---
+appId: com.andhraessence.app
+name: TC-HOME-006 Greeting Shows Correct Time Of Day
+env:
+  EMAIL: customer@example.com
+  PASSWORD: customer123
+actions:
+  - launchApp
+  - waitFor: { id: screen-login, timeout: 8000 }
+  - tapOn: { id: input-email }
+  - inputText: ${EMAIL}
+  - tapOn: { id: input-password }
+  - inputText: ${PASSWORD}
+  - tapOn: { id: btn-signin }
+  - waitFor: { id: screen-home, timeout: 12000 }
+  - wait: 1000
+  - takeScreenshot: { name: home-greeting }
+
+---
+appId: com.andhraessence.app
+name: TC-HOME-010 Tapping Search Bar Opens Search Screen
+env:
+  EMAIL: customer@example.com
+  PASSWORD: customer123
+actions:
+  - launchApp
+  - waitFor: { id: screen-login, timeout: 8000 }
+  - tapOn: { id: input-email }
+  - inputText: ${EMAIL}
+  - tapOn: { id: input-password }
+  - inputText: ${PASSWORD}
+  - tapOn: { id: btn-signin }
+  - waitFor: { id: screen-home, timeout: 12000 }
+  - tapOn: { id: btn-search }
+  - waitFor: { id: screen-search, timeout: 5000 }
+  - takeScreenshot: { name: home-to-search }
+  - assertVisible: { id: screen-search }
+
+---
+appId: com.andhraessence.app
+name: TC-HOME-011 Tapping Category Chip Filters Restaurants
+env:
+  EMAIL: customer@example.com
+  PASSWORD: customer123
+actions:
+  - launchApp
+  - waitFor: { id: screen-login, timeout: 8000 }
+  - tapOn: { id: input-email }
+  - inputText: ${EMAIL}
+  - tapOn: { id: input-password }
+  - inputText: ${PASSWORD}
+  - tapOn: { id: btn-signin }
+  - waitFor: { id: screen-home, timeout: 12000 }
+  - wait: 2000
+  - tapOn: { id: chip-category-biryani }
+  - wait: 1000
+  - takeScreenshot: { name: home-category-filter }
+
+---
+appId: com.andhraessence.app
+name: TC-HOME-012 Tapping Restaurant Card Opens Restaurant Page
+env:
+  EMAIL: customer@example.com
+  PASSWORD: customer123
+actions:
+  - launchApp
+  - waitFor: { id: screen-login, timeout: 8000 }
+  - tapOn: { id: input-email }
+  - inputText: ${EMAIL}
+  - tapOn: { id: input-password }
+  - inputText: ${PASSWORD}
+  - tapOn: { id: btn-signin }
+  - waitFor: { id: screen-home, timeout: 12000 }
+  - wait: 2000
+  - tapOn: { id: card-restaurant-0 }
+  - waitFor: { id: screen-restaurant, timeout: 5000 }
+  - takeScreenshot: { name: home-to-restaurant }
+  - assertVisible: { id: screen-restaurant }
+
+---
+appId: com.andhraessence.app
+name: TC-HOME-013 Pull To Refresh Reloads Restaurant List
+env:
+  EMAIL: customer@example.com
+  PASSWORD: customer123
+actions:
+  - launchApp
+  - waitFor: { id: screen-login, timeout: 8000 }
+  - tapOn: { id: input-email }
+  - inputText: ${EMAIL}
+  - tapOn: { id: input-password }
+  - inputText: ${PASSWORD}
+  - tapOn: { id: btn-signin }
+  - waitFor: { id: screen-home, timeout: 12000 }
+  - wait: 2000
+  - pullToRefresh
+  - wait: 2000
+  - takeScreenshot: { name: home-refresh }
+
+---
+appId: com.andhraessence.app
+name: TC-HOME-014 Scrolling Down Loads More Restaurants
+env:
+  EMAIL: customer@example.com
+  PASSWORD: customer123
+actions:
+  - launchApp
+  - waitFor: { id: screen-login, timeout: 8000 }
+  - tapOn: { id: input-email }
+  - inputText: ${EMAIL}
+  - tapOn: { id: input-password }
+  - inputText: ${PASSWORD}
+  - tapOn: { id: btn-signin }
+  - waitFor: { id: screen-home, timeout: 12000 }
+  - wait: 2000
+  - scrollDown
+  - scrollDown
+  - wait: 1000
+  - takeScreenshot: { name: home-scroll-more }
+  - assertVisible: { id: screen-home }
+
+---
+appId: com.andhraessence.app
+name: TC-HOME-015 Tapping Location Pill Opens Address Picker
+env:
+  EMAIL: customer@example.com
+  PASSWORD: customer123
+actions:
+  - launchApp
+  - waitFor: { id: screen-login, timeout: 8000 }
+  - tapOn: { id: input-email }
+  - inputText: ${EMAIL}
+  - tapOn: { id: input-password }
+  - inputText: ${PASSWORD}
+  - tapOn: { id: btn-signin }
+  - waitFor: { id: screen-home, timeout: 12000 }
+  - tapOn: { id: pill-location }
+  - wait: 500
+  - takeScreenshot: { name: home-location-tap }
+
+---
+appId: com.andhraessence.app
+name: TC-HOME-016 Cart FAB Shows Count When Items Exist
+env:
+  EMAIL: customer@example.com
+  PASSWORD: customer123
+actions:
+  - launchApp
+  - waitFor: { id: screen-login, timeout: 8000 }
+  - tapOn: { id: input-email }
+  - inputText: ${EMAIL}
+  - tapOn: { id: input-password }
+  - inputText: ${PASSWORD}
+  - tapOn: { id: btn-signin }
+  - waitFor: { id: screen-home, timeout: 12000 }
+  - tapOn: { id: btn-search }
+  - waitFor: { id: screen-search, timeout: 5000 }
+  - takeScreenshot: { name: home-cart-fab-empty }
+  - back
+  - wait: 1000
+
+---
+appId: com.andhraessence.app
+name: TC-HOME-020 Skeleton Loader Shows While Fetching
+env:
+  EMAIL: customer@example.com
+  PASSWORD: customer123
+actions:
+  - launchApp
+  - waitFor: { id: screen-login, timeout: 8000 }
+  - tapOn: { id: input-email }
+  - inputText: ${EMAIL}
+  - tapOn: { id: input-password }
+  - inputText: ${PASSWORD}
+  - tapOn: { id: btn-signin }
+  - wait: 500
+  - takeScreenshot: { name: home-skeleton }
+  - waitFor: { id: screen-home, timeout: 12000 }
+
+---
+appId: com.andhraessence.app
+name: TC-HOME-021 Bottom Tab Bar Navigation Works
+env:
+  EMAIL: customer@example.com
+  PASSWORD: customer123
+actions:
+  - launchApp
+  - waitFor: { id: screen-login, timeout: 8000 }
+  - tapOn: { id: input-email }
+  - inputText: ${EMAIL}
+  - tapOn: { id: input-password }
+  - inputText: ${PASSWORD}
+  - tapOn: { id: btn-signin }
+  - waitFor: { id: screen-home, timeout: 12000 }
+  - tapOn: { id: tab-profile }
+  - waitFor: { id: screen-profile, timeout: 5000 }
+  - takeScreenshot: { name: home-tab-profile }
+  - tapOn: { id: tab-home }
+  - waitFor: { id: screen-home, timeout: 5000 }
+  - assertVisible: { id: screen-home }

@@ -1,0 +1,186 @@
+# Orders History Screen Tests
+appId: com.andhraessence.app
+name: TC-ORDERS-001 Orders Screen Renders
+env:
+  EMAIL: customer@example.com
+  PASSWORD: customer123
+actions:
+  - launchApp
+  - waitFor: { id: screen-login, timeout: 8000 }
+  - tapOn: { id: input-email }
+  - inputText: ${EMAIL}
+  - tapOn: { id: input-password }
+  - inputText: ${PASSWORD}
+  - tapOn: { id: btn-signin }
+  - waitFor: { id: screen-home, timeout: 12000 }
+  - tapOn: { id: tab-orders }
+  - waitFor: { id: screen-orders, timeout: 5000 }
+  - assertVisible: { id: screen-orders }
+  - takeScreenshot: { name: orders-screen }
+
+---
+appId: com.andhraessence.app
+name: TC-ORDERS-002 Pull To Refresh Reloads Orders
+env:
+  EMAIL: customer@example.com
+  PASSWORD: customer123
+actions:
+  - launchApp
+  - waitFor: { id: screen-login, timeout: 8000 }
+  - tapOn: { id: input-email }
+  - inputText: ${EMAIL}
+  - tapOn: { id: input-password }
+  - inputText: ${PASSWORD}
+  - tapOn: { id: btn-signin }
+  - waitFor: { id: screen-home, timeout: 12000 }
+  - tapOn: { id: tab-orders }
+  - waitFor: { id: screen-orders, timeout: 5000 }
+  - pullToRefresh
+  - wait: 2000
+  - takeScreenshot: { name: orders-refresh }
+
+---
+appId: com.andhraessence.app
+name: TC-ORDERS-003 Tapping Order Opens Order Tracking
+env:
+  EMAIL: customer@example.com
+  PASSWORD: customer123
+actions:
+  - launchApp
+  - waitFor: { id: screen-login, timeout: 8000 }
+  - tapOn: { id: input-email }
+  - inputText: ${EMAIL}
+  - tapOn: { id: input-password }
+  - inputText: ${PASSWORD}
+  - tapOn: { id: btn-signin }
+  - waitFor: { id: screen-home, timeout: 12000 }
+  - wait: 2000
+  - tapOn: { id: card-restaurant-0 }
+  - waitFor: { id: screen-restaurant, timeout: 5000 }
+  - wait: 1000
+  - tapOn: { id: btn-add-item-0 }
+  - wait: 500
+  - tapOn: { id: tab-cart }
+  - waitFor: { id: screen-cart, timeout: 5000 }
+  - tapOn: { id: btn-checkout }
+  - waitFor: { id: screen-checkout, timeout: 5000 }
+  - scrollDown
+  - tapOn: { id: btn-place-order }
+  - waitFor: { id: screen-order-tracking, timeout: 15000 }
+  - tapOn: { id: tab-orders }
+  - waitFor: { id: screen-orders, timeout: 5000 }
+  - wait: 2000
+  - tapOn: { id: card-order-0 }
+  - waitFor: { id: screen-order-tracking, timeout: 5000 }
+  - takeScreenshot: { name: orders-to-tracking }
+  - assertVisible: { id: screen-order-tracking }
+
+---
+appId: com.andhraessence.app
+name: TC-ORDERS-004 Status Badge Shows On Orders
+env:
+  EMAIL: customer@example.com
+  PASSWORD: customer123
+actions:
+  - launchApp
+  - waitFor: { id: screen-login, timeout: 8000 }
+  - tapOn: { id: input-email }
+  - inputText: ${EMAIL}
+  - tapOn: { id: input-password }
+  - inputText: ${PASSWORD}
+  - tapOn: { id: btn-signin }
+  - waitFor: { id: screen-home, timeout: 12000 }
+  - wait: 2000
+  - tapOn: { id: card-restaurant-0 }
+  - waitFor: { id: screen-restaurant, timeout: 5000 }
+  - wait: 1000
+  - tapOn: { id: btn-add-item-0 }
+  - wait: 500
+  - tapOn: { id: tab-cart }
+  - waitFor: { id: screen-cart, timeout: 5000 }
+  - tapOn: { id: btn-checkout }
+  - waitFor: { id: screen-checkout, timeout: 5000 }
+  - scrollDown
+  - tapOn: { id: btn-place-order }
+  - waitFor: { id: screen-order-tracking, timeout: 15000 }
+  - tapOn: { id: tab-orders }
+  - waitFor: { id: screen-orders, timeout: 5000 }
+  - wait: 2000
+  - assertVisible: { id: badge-status }
+  - takeScreenshot: { name: orders-status-badge }
+
+---
+appId: com.andhraessence.app
+name: TC-ORDERS-005 Order Total Amount Visible
+env:
+  EMAIL: customer@example.com
+  PASSWORD: customer123
+actions:
+  - launchApp
+  - waitFor: { id: screen-login, timeout: 8000 }
+  - tapOn: { id: input-email }
+  - inputText: ${EMAIL}
+  - tapOn: { id: input-password }
+  - inputText: ${PASSWORD}
+  - tapOn: { id: btn-signin }
+  - waitFor: { id: screen-home, timeout: 12000 }
+  - wait: 2000
+  - tapOn: { id: card-restaurant-0 }
+  - waitFor: { id: screen-restaurant, timeout: 5000 }
+  - wait: 1000
+  - tapOn: { id: btn-add-item-0 }
+  - wait: 500
+  - tapOn: { id: tab-cart }
+  - waitFor: { id: screen-cart, timeout: 5000 }
+  - tapOn: { id: btn-checkout }
+  - waitFor: { id: screen-checkout, timeout: 5000 }
+  - scrollDown
+  - tapOn: { id: btn-place-order }
+  - waitFor: { id: screen-order-tracking, timeout: 15000 }
+  - tapOn: { id: tab-orders }
+  - waitFor: { id: screen-orders, timeout: 5000 }
+  - wait: 2000
+  - assertVisible: { id: text-order-total }
+  - takeScreenshot: { name: orders-total }
+
+---
+appId: com.andhraessence.app
+name: TC-ORDERS-006 Active And Past Orders Separated
+env:
+  EMAIL: customer@example.com
+  PASSWORD: customer123
+actions:
+  - launchApp
+  - waitFor: { id: screen-login, timeout: 8000 }
+  - tapOn: { id: input-email }
+  - inputText: ${EMAIL}
+  - tapOn: { id: input-password }
+  - inputText: ${PASSWORD}
+  - tapOn: { id: btn-signin }
+  - waitFor: { id: screen-home, timeout: 12000 }
+  - tapOn: { id: tab-orders }
+  - waitFor: { id: screen-orders, timeout: 5000 }
+  - scrollDown
+  - wait: 500
+  - takeScreenshot: { name: orders-past }
+
+---
+appId: com.andhraessence.app
+name: TC-ORDERS-007 Empty State Shows When No Orders
+env:
+  EMAIL: customer@example.com
+  PASSWORD: customer123
+actions:
+  - launchApp
+  - waitFor: { id: screen-login, timeout: 8000 }
+  - tapOn: { id: input-email }
+  - inputText: ${EMAIL}
+  - tapOn: { id: input-password }
+  - inputText: ${PASSWORD}
+  - tapOn: { id: btn-signin }
+  - waitFor: { id: screen-home, timeout: 12000 }
+  - tapOn: { id: tab-orders }
+  - waitFor: { id: screen-orders, timeout: 5000 }
+  - wait: 2000
+  - assertVisible: { id: screen-orders }
+  - takeScreenshot: { name: orders-list }

@@ -1,0 +1,40 @@
+# Profile Flow - Profile management and settings
+appId: com.andhraessence.app
+name: TC-FLOW-PROFILE-001 Navigate All Profile Sections
+env:
+  EMAIL: customer@example.com
+  PASSWORD: customer123
+actions:
+  - launchApp
+  - waitFor: { id: screen-login, timeout: 8000 }
+  - tapOn: { id: input-email }
+  - inputText: ${EMAIL}
+  - tapOn: { id: input-password }
+  - inputText: ${PASSWORD}
+  - tapOn: { id: btn-signin }
+  - waitFor: { id: screen-home, timeout: 12000 }
+
+  # Navigate to profile
+  - tapOn: { id: tab-profile }
+  - waitFor: { id: screen-profile, timeout: 5000 }
+  - takeScreenshot: { name: flow-profile }
+
+  # Check addresses
+  - scrollDown
+  - wait: 300
+  - tapOn: { id: btn-my-addresses }
+  - waitFor: { id: screen-addresses, timeout: 5000 }
+  - wait: 1000
+  - takeScreenshot: { name: flow-addresses }
+  - tapOn: { id: btn-back }
+  - waitFor: { id: screen-profile, timeout: 5000 }
+
+  # Navigate to orders
+  - tapOn: { id: tab-orders }
+  - waitFor: { id: screen-orders, timeout: 5000 }
+  - takeScreenshot: { name: flow-orders }
+
+  # Back to home
+  - tapOn: { id: tab-home }
+  - waitFor: { id: screen-home, timeout: 5000 }
+  - assertVisible: { id: screen-home }

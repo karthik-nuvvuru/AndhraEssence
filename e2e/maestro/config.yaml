@@ -1,0 +1,15 @@
+# Maestro configuration for AndhraEssence E2E Tests
+appId: com.andhraessence.app
+platform: ios
+workspace: .
+sourceRoot: .
+tests:
+  - ./flows/**/*.yaml
+  - ./screens/**/*.yaml
+  - ./edge-cases/**/*.yaml
+  - ./demo/**/*.yaml
+artifactsDirectory: ./artifacts
+optimizeSkipping: true
+includeAnnotationsInReport: true
+maxRetries: 2
+failFast: false

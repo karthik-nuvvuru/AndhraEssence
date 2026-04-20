@@ -92,7 +92,7 @@ export default function OrdersScreen() {
       const response = await orderApi.list();
       setOrders(response.data.items);
     } catch (err: any) {
-      console.error("Failed to fetch orders:", err);
+      // Orders fetch failed
       setError(err?.message || "Failed to load orders.");
     } finally {
       setLoading(false);
@@ -122,6 +122,7 @@ export default function OrdersScreen() {
         style={[styles.orderCard, item.status === "cancelled" && styles.orderCardCancelled]}
         onPress={() => router.push(`/order/${item.id}`)}
         activeOpacity={0.85}
+        testID={`card-order-${index}`}
       >
         {/* Status Timeline - only for active orders */}
         {!isDeliveredOrCancelled && item.status !== "pending" && (
@@ -171,11 +172,13 @@ export default function OrdersScreen() {
               </Text>
             </View>
           </View>
-          <Badge
-            text={statusLabels[item.status] || item.status}
-            variant={statusColors[item.status]}
-            size="sm"
-          />
+          <View testID="badge-status">
+            <Badge
+              text={statusLabels[item.status] || item.status}
+              variant={statusColors[item.status]}
+              size="sm"
+            />
+          </View>
         </View>
 
         {/* Items Summary */}
@@ -189,7 +192,7 @@ export default function OrdersScreen() {
         <View style={styles.orderFooter}>
           <View style={styles.orderFooterLeft}>
             <Text style={styles.totalLabel}>Total</Text>
-            <Text style={styles.orderAmount}>
+            <Text style={styles.orderAmount} testID="text-order-total">
               {formatCurrency(item.total_amount)}
             </Text>
           </View>
@@ -255,7 +258,7 @@ export default function OrdersScreen() {
   }
 
   return (
-    <SafeAreaView style={styles.container} edges={["top"]}>
+    <SafeAreaView style={styles.container} edges={["top"]} testID="screen-orders">
       <View style={styles.header}>
         <Text style={styles.title}>My Orders</Text>
         {orders.length > 0 && (

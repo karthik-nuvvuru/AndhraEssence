@@ -41,7 +41,7 @@ function TabBarIcon({ name, focused }: { name: string; focused: boolean }) {
   const cartCount = name === "cart" ? useCartStore.getState().getItemCount() : 0;
 
   return (
-    <View style={styles.iconWrapper}>
+    <View style={styles.iconWrapper} testID={`tab-${name}`}>
       <Animated.View style={[styles.iconContainer, animatedStyle]}>
         {iconEl}
       </Animated.View>

@@ -8,12 +8,12 @@ import Animated, {
   withTiming,
   runOnJS,
 } from "react-native-reanimated";
-import { Check, X, Info } from "lucide-react-native";
+import { Check, X, Info, AlertTriangle } from "lucide-react-native";
 import { colors, typography, spacing, borderRadius } from "@/theme";
 
 const { width: SCREEN_WIDTH } = Dimensions.get("window");
 
-type ToastType = "success" | "error" | "info";
+type ToastType = "success" | "error" | "info" | "warning";
 
 interface Toast {
   id: string;
@@ -133,6 +133,7 @@ export function ToastProvider({ children }: ToastProviderProps) {
     success: { bg: colors.successBg, IconComponent: Check, iconColor: colors.success },
     error: { bg: colors.errorBg, IconComponent: X, iconColor: colors.error },
     info: { bg: colors.infoBg, IconComponent: Info, iconColor: colors.info },
+    warning: { bg: colors.warningBg, IconComponent: AlertTriangle, iconColor: colors.warning },
   };
 
   return (

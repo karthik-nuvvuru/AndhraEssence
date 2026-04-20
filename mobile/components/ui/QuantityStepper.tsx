@@ -19,6 +19,7 @@ interface QuantityStepperProps {
   min?: number;
   max?: number;
   size?: "sm" | "md" | "lg";
+  itemIndex?: number;
 }
 
 export const QuantityStepper: React.FC<QuantityStepperProps> = ({
@@ -28,6 +29,7 @@ export const QuantityStepper: React.FC<QuantityStepperProps> = ({
   min = 0,
   max = 99,
   size = "md",
+  itemIndex = 0,
 }) => {
   const [displayValue, setDisplayValue] = useState(value);
   const decreasePressed = useSharedValue(0);
@@ -79,7 +81,7 @@ export const QuantityStepper: React.FC<QuantityStepperProps> = ({
   };
 
   return (
-    <View style={[styles.container, { height: s.button }]}>
+    <View style={[styles.container, { height: s.button }]} testID={`stepper-${itemIndex}`}>
       <AnimatedTouchable
         onPress={handleDecrease}
         onPressIn={() => decreasePressed.value = 1}
@@ -92,6 +94,7 @@ export const QuantityStepper: React.FC<QuantityStepperProps> = ({
           { width: s.button, height: s.button, borderRadius: s.button / 2 },
           !canDecrease && styles.buttonDisabled,
         ]}
+        testID={`btn-decrement-${itemIndex}`}
       >
         <Text
           style={[
@@ -122,6 +125,7 @@ export const QuantityStepper: React.FC<QuantityStepperProps> = ({
           { width: s.button, height: s.button, borderRadius: s.button / 2 },
           !canIncrease && styles.buttonDisabled,
         ]}
+        testID={`btn-increment-${itemIndex}`}
       >
         <Text
           style={[

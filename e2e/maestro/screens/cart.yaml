@@ -1,0 +1,399 @@
+# Cart Screen Tests
+appId: com.andhraessence.app
+name: TC-CART-001 Cart Screen Renders With Empty State
+env:
+  EMAIL: customer@example.com
+  PASSWORD: customer123
+actions:
+  - launchApp
+  - waitFor: { id: screen-login, timeout: 8000 }
+  - tapOn: { id: input-email }
+  - inputText: ${EMAIL}
+  - tapOn: { id: input-password }
+  - inputText: ${PASSWORD}
+  - tapOn: { id: btn-signin }
+  - waitFor: { id: screen-home, timeout: 12000 }
+  - tapOn: { id: tab-cart }
+  - waitFor: { id: screen-cart, timeout: 5000 }
+  - assertVisible: { id: screen-cart }
+  - takeScreenshot: { name: cart-empty }
+
+---
+appId: com.andhraessence.app
+name: TC-CART-002 Empty Cart Shows Illustration And CTA
+env:
+  EMAIL: customer@example.com
+  PASSWORD: customer123
+actions:
+  - launchApp
+  - waitFor: { id: screen-login, timeout: 8000 }
+  - tapOn: { id: input-email }
+  - inputText: ${EMAIL}
+  - tapOn: { id: input-password }
+  - inputText: ${PASSWORD}
+  - tapOn: { id: btn-signin }
+  - waitFor: { id: screen-home, timeout: 12000 }
+  - tapOn: { id: tab-cart }
+  - waitFor: { id: screen-cart, timeout: 5000 }
+  - assertVisible: { id: screen-cart }
+  - assertVisible: { id: btn-start-ordering }
+  - takeScreenshot: { name: cart-empty-state }
+
+---
+appId: com.andhraessence.app
+name: TC-CART-003 Start Ordering CTA Navigates To Home
+env:
+  EMAIL: customer@example.com
+  PASSWORD: customer123
+actions:
+  - launchApp
+  - waitFor: { id: screen-login, timeout: 8000 }
+  - tapOn: { id: input-email }
+  - inputText: ${EMAIL}
+  - tapOn: { id: input-password }
+  - inputText: ${PASSWORD}
+  - tapOn: { id: btn-signin }
+  - waitFor: { id: screen-home, timeout: 12000 }
+  - tapOn: { id: tab-cart }
+  - waitFor: { id: screen-cart, timeout: 5000 }
+  - tapOn: { id: btn-start-ordering }
+  - waitFor: { id: screen-home, timeout: 5000 }
+  - takeScreenshot: { name: cart-to-home }
+  - assertVisible: { id: screen-home }
+
+---
+appId: com.andhraessence.app
+name: TC-CART-004 Cart Items Listed After Adding
+env:
+  EMAIL: customer@example.com
+  PASSWORD: customer123
+actions:
+  - launchApp
+  - waitFor: { id: screen-login, timeout: 8000 }
+  - tapOn: { id: input-email }
+  - inputText: ${EMAIL}
+  - tapOn: { id: input-password }
+  - inputText: ${PASSWORD}
+  - tapOn: { id: btn-signin }
+  - waitFor: { id: screen-home, timeout: 12000 }
+  - wait: 2000
+  - tapOn: { id: card-restaurant-0 }
+  - waitFor: { id: screen-restaurant, timeout: 5000 }
+  - wait: 1000
+  - tapOn: { id: btn-add-item-0 }
+  - wait: 500
+  - tapOn: { id: tab-cart }
+  - waitFor: { id: screen-cart, timeout: 5000 }
+  - assertVisible: { id: card-cart-item-0 }
+  - takeScreenshot: { name: cart-with-items }
+
+---
+appId: com.andhraessence.app
+name: TC-CART-005 Quantity Stepper Increments Item
+env:
+  EMAIL: customer@example.com
+  PASSWORD: customer123
+actions:
+  - launchApp
+  - waitFor: { id: screen-login, timeout: 8000 }
+  - tapOn: { id: input-email }
+  - inputText: ${EMAIL}
+  - tapOn: { id: input-password }
+  - inputText: ${PASSWORD}
+  - tapOn: { id: btn-signin }
+  - waitFor: { id: screen-home, timeout: 12000 }
+  - wait: 2000
+  - tapOn: { id: card-restaurant-0 }
+  - waitFor: { id: screen-restaurant, timeout: 5000 }
+  - wait: 1000
+  - tapOn: { id: btn-add-item-0 }
+  - wait: 500
+  - tapOn: { id: tab-cart }
+  - waitFor: { id: screen-cart, timeout: 5000 }
+  - tapOn: { id: btn-increment-0 }
+  - wait: 500
+  - takeScreenshot: { name: cart-increment }
+  - assertVisible: { id: text-item-quantity }
+    optional: true
+
+---
+appId: com.andhraessence.app
+name: TC-CART-006 Quantity Stepper Decrements Item
+env:
+  EMAIL: customer@example.com
+  PASSWORD: customer123
+actions:
+  - launchApp
+  - waitFor: { id: screen-login, timeout: 8000 }
+  - tapOn: { id: input-email }
+  - inputText: ${EMAIL}
+  - tapOn: { id: input-password }
+  - inputText: ${PASSWORD}
+  - tapOn: { id: btn-signin }
+  - waitFor: { id: screen-home, timeout: 12000 }
+  - wait: 2000
+  - tapOn: { id: card-restaurant-0 }
+  - waitFor: { id: screen-restaurant, timeout: 5000 }
+  - wait: 1000
+  - tapOn: { id: btn-add-item-0 }
+  - wait: 500
+  - tapOn: { id: btn-add-item-0 }
+  - wait: 500
+  - tapOn: { id: tab-cart }
+  - waitFor: { id: screen-cart, timeout: 5000 }
+  - tapOn: { id: btn-decrement-0 }
+  - wait: 500
+  - takeScreenshot: { name: cart-decrement }
+
+---
+appId: com.andhraessence.app
+name: TC-CART-007 Remove Button Removes Item
+env:
+  EMAIL: customer@example.com
+  PASSWORD: customer123
+actions:
+  - launchApp
+  - waitFor: { id: screen-login, timeout: 8000 }
+  - tapOn: { id: input-email }
+  - inputText: ${EMAIL}
+  - tapOn: { id: input-password }
+  - inputText: ${PASSWORD}
+  - tapOn: { id: btn-signin }
+  - waitFor: { id: screen-home, timeout: 12000 }
+  - wait: 2000
+  - tapOn: { id: card-restaurant-0 }
+  - waitFor: { id: screen-restaurant, timeout: 5000 }
+  - wait: 1000
+  - tapOn: { id: btn-add-item-0 }
+  - wait: 500
+  - tapOn: { id: tab-cart }
+  - waitFor: { id: screen-cart, timeout: 5000 }
+  - tapOn: { id: btn-remove-0 }
+  - wait: 500
+  - takeScreenshot: { name: cart-item-removed }
+  - assertVisible: { id: screen-cart }
+
+---
+appId: com.andhraessence.app
+name: TC-CART-008 Promo Code Input Accepts Text
+env:
+  EMAIL: customer@example.com
+  PASSWORD: customer123
+actions:
+  - launchApp
+  - waitFor: { id: screen-login, timeout: 8000 }
+  - tapOn: { id: input-email }
+  - inputText: ${EMAIL}
+  - tapOn: { id: input-password }
+  - inputText: ${PASSWORD}
+  - tapOn: { id: btn-signin }
+  - waitFor: { id: screen-home, timeout: 12000 }
+  - wait: 2000
+  - tapOn: { id: card-restaurant-0 }
+  - waitFor: { id: screen-restaurant, timeout: 5000 }
+  - wait: 1000
+  - tapOn: { id: btn-add-item-0 }
+  - wait: 500
+  - tapOn: { id: tab-cart }
+  - waitFor: { id: screen-cart, timeout: 5000 }
+  - tapOn: { id: input-promo-code }
+  - inputText: "SAVE50"
+  - takeScreenshot: { name: cart-promo-input }
+
+---
+appId: com.andhraessence.app
+name: TC-CART-009 Valid Promo Code Applies Discount
+env:
+  EMAIL: customer@example.com
+  PASSWORD: customer123
+actions:
+  - launchApp
+  - waitFor: { id: screen-login, timeout: 8000 }
+  - tapOn: { id: input-email }
+  - inputText: ${EMAIL}
+  - tapOn: { id: input-password }
+  - inputText: ${PASSWORD}
+  - tapOn: { id: btn-signin }
+  - waitFor: { id: screen-home, timeout: 12000 }
+  - wait: 2000
+  - tapOn: { id: card-restaurant-0 }
+  - waitFor: { id: screen-restaurant, timeout: 5000 }
+  - wait: 1000
+  - tapOn: { id: btn-add-item-0 }
+  - wait: 500
+  - tapOn: { id: tab-cart }
+  - waitFor: { id: screen-cart, timeout: 5000 }
+  - tapOn: { id: input-promo-code }
+  - inputText: "SAVE10"
+  - tapOn: { id: btn-apply-promo }
+  - wait: 1000
+  - takeScreenshot: { name: cart-promo-success }
+  - assertVisible: { id: text-final-total }
+
+---
+appId: com.andhraessence.app
+name: TC-CART-010 Invalid Promo Code Shows Error
+env:
+  EMAIL: customer@example.com
+  PASSWORD: customer123
+actions:
+  - launchApp
+  - waitFor: { id: screen-login, timeout: 8000 }
+  - tapOn: { id: input-email }
+  - inputText: ${EMAIL}
+  - tapOn: { id: input-password }
+  - inputText: ${PASSWORD}
+  - tapOn: { id: btn-signin }
+  - waitFor: { id: screen-home, timeout: 12000 }
+  - wait: 2000
+  - tapOn: { id: card-restaurant-0 }
+  - waitFor: { id: screen-restaurant, timeout: 5000 }
+  - wait: 1000
+  - tapOn: { id: btn-add-item-0 }
+  - wait: 500
+  - tapOn: { id: tab-cart }
+  - waitFor: { id: screen-cart, timeout: 5000 }
+  - tapOn: { id: input-promo-code }
+  - inputText: "INVALIDCODE"
+  - tapOn: { id: btn-apply-promo }
+  - wait: 1000
+  - takeScreenshot: { name: cart-promo-error }
+
+---
+appId: com.andhraessence.app
+name: TC-CART-011 Delivery Instructions Chips Selectable
+env:
+  EMAIL: customer@example.com
+  PASSWORD: customer123
+actions:
+  - launchApp
+  - waitFor: { id: screen-login, timeout: 8000 }
+  - tapOn: { id: input-email }
+  - inputText: ${EMAIL}
+  - tapOn: { id: input-password }
+  - inputText: ${PASSWORD}
+  - tapOn: { id: btn-signin }
+  - waitFor: { id: screen-home, timeout: 12000 }
+  - wait: 2000
+  - tapOn: { id: card-restaurant-0 }
+  - waitFor: { id: screen-restaurant, timeout: 5000 }
+  - wait: 1000
+  - tapOn: { id: btn-add-item-0 }
+  - wait: 500
+  - tapOn: { id: tab-cart }
+  - waitFor: { id: screen-cart, timeout: 5000 }
+  - tapOn: { id: chip-door }
+  - wait: 300
+  - takeScreenshot: { name: cart-delivery-chip }
+  - tapOn: { id: chip-ring }
+  - wait: 300
+  - takeScreenshot: { name: cart-delivery-chip-2 }
+
+---
+appId: com.andhraessence.app
+name: TC-CART-012 Bill Breakdown Shows Correct Values
+env:
+  EMAIL: customer@example.com
+  PASSWORD: customer123
+actions:
+  - launchApp
+  - waitFor: { id: screen-login, timeout: 8000 }
+  - tapOn: { id: input-email }
+  - inputText: ${EMAIL}
+  - tapOn: { id: input-password }
+  - inputText: ${PASSWORD}
+  - tapOn: { id: btn-signin }
+  - waitFor: { id: screen-home, timeout: 12000 }
+  - wait: 2000
+  - tapOn: { id: card-restaurant-0 }
+  - waitFor: { id: screen-restaurant, timeout: 5000 }
+  - wait: 1000
+  - tapOn: { id: btn-add-item-0 }
+  - wait: 500
+  - tapOn: { id: tab-cart }
+  - waitFor: { id: screen-cart, timeout: 5000 }
+  - assertVisible: { id: text-final-total }
+  - takeScreenshot: { name: cart-bill-breakdown }
+
+---
+appId: com.andhraessence.app
+name: TC-CART-013 Place Order Button Navigates To Checkout
+env:
+  EMAIL: customer@example.com
+  PASSWORD: customer123
+actions:
+  - launchApp
+  - waitFor: { id: screen-login, timeout: 8000 }
+  - tapOn: { id: input-email }
+  - inputText: ${EMAIL}
+  - tapOn: { id: input-password }
+  - inputText: ${PASSWORD}
+  - tapOn: { id: btn-signin }
+  - waitFor: { id: screen-home, timeout: 12000 }
+  - wait: 2000
+  - tapOn: { id: card-restaurant-0 }
+  - waitFor: { id: screen-restaurant, timeout: 5000 }
+  - wait: 1000
+  - tapOn: { id: btn-add-item-0 }
+  - wait: 500
+  - tapOn: { id: tab-cart }
+  - waitFor: { id: screen-cart, timeout: 5000 }
+  - tapOn: { id: btn-checkout }
+  - waitFor: { id: screen-checkout, timeout: 5000 }
+  - takeScreenshot: { name: cart-to-checkout }
+  - assertVisible: { id: screen-checkout }
+
+---
+appId: com.andhraessence.app
+name: TC-CART-014 Clear Cart Works With Confirmation
+env:
+  EMAIL: customer@example.com
+  PASSWORD: customer123
+actions:
+  - launchApp
+  - waitFor: { id: screen-login, timeout: 8000 }
+  - tapOn: { id: input-email }
+  - inputText: ${EMAIL}
+  - tapOn: { id: input-password }
+  - inputText: ${PASSWORD}
+  - tapOn: { id: btn-signin }
+  - waitFor: { id: screen-home, timeout: 12000 }
+  - wait: 2000
+  - tapOn: { id: card-restaurant-0 }
+  - waitFor: { id: screen-restaurant, timeout: 5000 }
+  - wait: 1000
+  - tapOn: { id: btn-add-item-0 }
+  - wait: 500
+  - tapOn: { id: tab-cart }
+  - waitFor: { id: screen-cart, timeout: 5000 }
+  - tapOn: { id: btn-clear-cart }
+  - wait: 1000
+  - takeScreenshot: { name: cart-cleared }
+
+---
+appId: com.andhraessence.app
+name: TC-CART-015 Total Updates In Real Time
+env:
+  EMAIL: customer@example.com
+  PASSWORD: customer123
+actions:
+  - launchApp
+  - waitFor: { id: screen-login, timeout: 8000 }
+  - tapOn: { id: input-email }
+  - inputText: ${EMAIL}
+  - tapOn: { id: input-password }
+  - inputText: ${PASSWORD}
+  - tapOn: { id: btn-signin }
+  - waitFor: { id: screen-home, timeout: 12000 }
+  - wait: 2000
+  - tapOn: { id: card-restaurant-0 }
+  - waitFor: { id: screen-restaurant, timeout: 5000 }
+  - wait: 1000
+  - tapOn: { id: btn-add-item-0 }
+  - wait: 500
+  - tapOn: { id: tab-cart }
+  - waitFor: { id: screen-cart, timeout: 5000 }
+  - takeScreenshot: { name: cart-total-1 }
+  - tapOn: { id: btn-increment-0 }
+  - wait: 500
+  - takeScreenshot: { name: cart-total-2 }

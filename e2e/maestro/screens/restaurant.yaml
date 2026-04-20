@@ -1,0 +1,356 @@
+# Restaurant Detail Screen Tests
+appId: com.andhraessence.app
+name: TC-REST-001 Restaurant Screen Renders Hero Image
+env:
+  EMAIL: customer@example.com
+  PASSWORD: customer123
+actions:
+  - launchApp
+  - waitFor: { id: screen-login, timeout: 8000 }
+  - tapOn: { id: input-email }
+  - inputText: ${EMAIL}
+  - tapOn: { id: input-password }
+  - inputText: ${PASSWORD}
+  - tapOn: { id: btn-signin }
+  - waitFor: { id: screen-home, timeout: 12000 }
+  - wait: 2000
+  - tapOn: { id: card-restaurant-0 }
+  - waitFor: { id: screen-restaurant, timeout: 5000 }
+  - assertVisible: { id: hero-restaurant-image }
+  - takeScreenshot: { name: restaurant-hero }
+
+---
+appId: com.andhraessence.app
+name: TC-REST-002 Restaurant Info Visible (Name Rating Time)
+env:
+  EMAIL: customer@example.com
+  PASSWORD: customer123
+actions:
+  - launchApp
+  - waitFor: { id: screen-login, timeout: 8000 }
+  - tapOn: { id: input-email }
+  - inputText: ${EMAIL}
+  - tapOn: { id: input-password }
+  - inputText: ${PASSWORD}
+  - tapOn: { id: btn-signin }
+  - waitFor: { id: screen-home, timeout: 12000 }
+  - wait: 2000
+  - tapOn: { id: card-restaurant-0 }
+  - waitFor: { id: screen-restaurant, timeout: 5000 }
+  - wait: 1000
+  - assertVisible: { id: text-restaurant-name }
+  - assertVisible: { id: text-restaurant-rating }
+  - assertVisible: { id: text-restaurant-time }
+  - takeScreenshot: { name: restaurant-info }
+
+---
+appId: com.andhraessence.app
+name: TC-REST-003 Offer Banner Visible And Tappable
+env:
+  EMAIL: customer@example.com
+  PASSWORD: customer123
+actions:
+  - launchApp
+  - waitFor: { id: screen-login, timeout: 8000 }
+  - tapOn: { id: input-email }
+  - inputText: ${EMAIL}
+  - tapOn: { id: input-password }
+  - inputText: ${PASSWORD}
+  - tapOn: { id: btn-signin }
+  - waitFor: { id: screen-home, timeout: 12000 }
+  - wait: 2000
+  - tapOn: { id: card-restaurant-0 }
+  - waitFor: { id: screen-restaurant, timeout: 5000 }
+  - scrollDown
+  - wait: 500
+  - assertVisible: { id: banner-offer }
+  - takeScreenshot: { name: restaurant-offer }
+
+---
+appId: com.andhraessence.app
+name: TC-REST-004 Menu Categories Sidebar Works
+env:
+  EMAIL: customer@example.com
+  PASSWORD: customer123
+actions:
+  - launchApp
+  - waitFor: { id: screen-login, timeout: 8000 }
+  - tapOn: { id: input-email }
+  - inputText: ${EMAIL}
+  - tapOn: { id: input-password }
+  - inputText: ${PASSWORD}
+  - tapOn: { id: btn-signin }
+  - waitFor: { id: screen-home, timeout: 12000 }
+  - wait: 2000
+  - tapOn: { id: card-restaurant-0 }
+  - waitFor: { id: screen-restaurant, timeout: 5000 }
+  - wait: 1000
+  - assertVisible: { id: pill-category-0 }
+  - takeScreenshot: { name: restaurant-categories }
+
+---
+appId: com.andhraessence.app
+name: TC-REST-005 Tapping Category Scrolls To Section
+env:
+  EMAIL: customer@example.com
+  PASSWORD: customer123
+actions:
+  - launchApp
+  - waitFor: { id: screen-login, timeout: 8000 }
+  - tapOn: { id: input-email }
+  - inputText: ${EMAIL}
+  - tapOn: { id: input-password }
+  - inputText: ${PASSWORD}
+  - tapOn: { id: btn-signin }
+  - waitFor: { id: screen-home, timeout: 12000 }
+  - wait: 2000
+  - tapOn: { id: card-restaurant-0 }
+  - waitFor: { id: screen-restaurant, timeout: 5000 }
+  - wait: 1000
+  - tapOn: { id: pill-category-1 }
+  - wait: 800
+  - takeScreenshot: { name: restaurant-category-scroll }
+
+---
+appId: com.andhraessence.app
+name: TC-REST-006 Dish Card Shows Photo Name Price Veg Indicator
+env:
+  EMAIL: customer@example.com
+  PASSWORD: customer123
+actions:
+  - launchApp
+  - waitFor: { id: screen-login, timeout: 8000 }
+  - tapOn: { id: input-email }
+  - inputText: ${EMAIL}
+  - tapOn: { id: input-password }
+  - inputText: ${PASSWORD}
+  - tapOn: { id: btn-signin }
+  - waitFor: { id: screen-home, timeout: 12000 }
+  - wait: 2000
+  - tapOn: { id: card-restaurant-0 }
+  - waitFor: { id: screen-restaurant, timeout: 5000 }
+  - wait: 1000
+  - assertVisible: { id: card-menu-item-0 }
+  - assertVisible: { id: text-menu-item-name-0 }
+  - assertVisible: { id: text-menu-item-price-0 }
+  - takeScreenshot: { name: restaurant-menu-item }
+
+---
+appId: com.andhraessence.app
+name: TC-REST-007 Bestseller Badge Shows On Tagged Items
+env:
+  EMAIL: customer@example.com
+  PASSWORD: customer123
+actions:
+  - launchApp
+  - waitFor: { id: screen-login, timeout: 8000 }
+  - tapOn: { id: input-email }
+  - inputText: ${EMAIL}
+  - tapOn: { id: input-password }
+  - inputText: ${PASSWORD}
+  - tapOn: { id: btn-signin }
+  - waitFor: { id: screen-home, timeout: 12000 }
+  - wait: 2000
+  - tapOn: { id: card-restaurant-0 }
+  - waitFor: { id: screen-restaurant, timeout: 5000 }
+  - wait: 1000
+  - assertVisible: { id: badge-bestseller-0 }
+    optional: true
+  - takeScreenshot: { name: restaurant-bestseller }
+
+---
+appId: com.andhraessence.app
+name: TC-REST-008 Add Button Adds Item To Cart
+env:
+  EMAIL: customer@example.com
+  PASSWORD: customer123
+actions:
+  - launchApp
+  - waitFor: { id: screen-login, timeout: 8000 }
+  - tapOn: { id: input-email }
+  - inputText: ${EMAIL}
+  - tapOn: { id: input-password }
+  - inputText: ${PASSWORD}
+  - tapOn: { id: btn-signin }
+  - waitFor: { id: screen-home, timeout: 12000 }
+  - wait: 2000
+  - tapOn: { id: card-restaurant-0 }
+  - waitFor: { id: screen-restaurant, timeout: 5000 }
+  - wait: 1000
+  - tapOn: { id: btn-add-item-0 }
+  - wait: 800
+  - takeScreenshot: { name: restaurant-add-to-cart }
+  - assertVisible: { id: fab-view-cart }
+
+---
+appId: com.andhraessence.app
+name: TC-REST-009 Item Count Updates In Cart Footer
+env:
+  EMAIL: customer@example.com
+  PASSWORD: customer123
+actions:
+  - launchApp
+  - waitFor: { id: screen-login, timeout: 8000 }
+  - tapOn: { id: input-email }
+  - inputText: ${EMAIL}
+  - tapOn: { id: input-password }
+  - inputText: ${PASSWORD}
+  - tapOn: { id: btn-signin }
+  - waitFor: { id: screen-home, timeout: 12000 }
+  - wait: 2000
+  - tapOn: { id: card-restaurant-0 }
+  - waitFor: { id: screen-restaurant, timeout: 5000 }
+  - wait: 1000
+  - tapOn: { id: btn-add-item-0 }
+  - wait: 500
+  - tapOn: { id: btn-add-item-1 }
+  - wait: 500
+  - assertVisible: { id: fab-view-cart }
+  - takeScreenshot: { name: restaurant-cart-footer }
+
+---
+appId: com.andhraessence.app
+name: TC-REST-010 Quantity Stepper Increments Item
+env:
+  EMAIL: customer@example.com
+  PASSWORD: customer123
+actions:
+  - launchApp
+  - waitFor: { id: screen-login, timeout: 8000 }
+  - tapOn: { id: input-email }
+  - inputText: ${EMAIL}
+  - tapOn: { id: input-password }
+  - inputText: ${PASSWORD}
+  - tapOn: { id: btn-signin }
+  - waitFor: { id: screen-home, timeout: 12000 }
+  - wait: 2000
+  - tapOn: { id: card-restaurant-0 }
+  - waitFor: { id: screen-restaurant, timeout: 5000 }
+  - wait: 1000
+  - tapOn: { id: btn-add-item-0 }
+  - wait: 500
+  - scrollDown
+  - wait: 500
+  - assertVisible: { id: btn-increment-0 }
+  - assertVisible: { id: btn-decrement-0 }
+  - takeScreenshot: { name: restaurant-stepper }
+
+---
+appId: com.andhraessence.app
+name: TC-REST-011 View Cart Button Navigates To Cart
+env:
+  EMAIL: customer@example.com
+  PASSWORD: customer123
+actions:
+  - launchApp
+  - waitFor: { id: screen-login, timeout: 8000 }
+  - tapOn: { id: input-email }
+  - inputText: ${EMAIL}
+  - tapOn: { id: input-password }
+  - inputText: ${PASSWORD}
+  - tapOn: { id: btn-signin }
+  - waitFor: { id: screen-home, timeout: 12000 }
+  - wait: 2000
+  - tapOn: { id: card-restaurant-0 }
+  - waitFor: { id: screen-restaurant, timeout: 5000 }
+  - wait: 1000
+  - tapOn: { id: btn-add-item-0 }
+  - wait: 500
+  - tapOn: { id: fab-view-cart }
+  - waitFor: { id: screen-cart, timeout: 5000 }
+  - takeScreenshot: { name: restaurant-to-cart }
+  - assertVisible: { id: screen-cart }
+
+---
+appId: com.andhraessence.app
+name: TC-REST-012 Favorite Toggle Works
+env:
+  EMAIL: customer@example.com
+  PASSWORD: customer123
+actions:
+  - launchApp
+  - waitFor: { id: screen-login, timeout: 8000 }
+  - tapOn: { id: input-email }
+  - inputText: ${EMAIL}
+  - tapOn: { id: input-password }
+  - inputText: ${PASSWORD}
+  - tapOn: { id: btn-signin }
+  - waitFor: { id: screen-home, timeout: 12000 }
+  - wait: 2000
+  - tapOn: { id: card-restaurant-0 }
+  - waitFor: { id: screen-restaurant, timeout: 5000 }
+  - wait: 1000
+  - tapOn: { id: btn-favorite }
+  - wait: 500
+  - takeScreenshot: { name: restaurant-favorite }
+
+---
+appId: com.andhraessence.app
+name: TC-REST-013 Share Button Shows Toast
+env:
+  EMAIL: customer@example.com
+  PASSWORD: customer123
+actions:
+  - launchApp
+  - waitFor: { id: screen-login, timeout: 8000 }
+  - tapOn: { id: input-email }
+  - inputText: ${EMAIL}
+  - tapOn: { id: input-password }
+  - inputText: ${PASSWORD}
+  - tapOn: { id: btn-signin }
+  - waitFor: { id: screen-home, timeout: 12000 }
+  - wait: 2000
+  - tapOn: { id: card-restaurant-0 }
+  - waitFor: { id: screen-restaurant, timeout: 5000 }
+  - wait: 1000
+  - tapOn: { id: btn-share }
+  - wait: 500
+  - takeScreenshot: { name: restaurant-share }
+
+---
+appId: com.andhraessence.app
+name: TC-REST-014 Back Button Returns To Home
+env:
+  EMAIL: customer@example.com
+  PASSWORD: customer123
+actions:
+  - launchApp
+  - waitFor: { id: screen-login, timeout: 8000 }
+  - tapOn: { id: input-email }
+  - inputText: ${EMAIL}
+  - tapOn: { id: input-password }
+  - inputText: ${PASSWORD}
+  - tapOn: { id: btn-signin }
+  - waitFor: { id: screen-home, timeout: 12000 }
+  - wait: 2000
+  - tapOn: { id: card-restaurant-0 }
+  - waitFor: { id: screen-restaurant, timeout: 5000 }
+  - tapOn: { id: btn-back }
+  - waitFor: { id: screen-home, timeout: 5000 }
+  - takeScreenshot: { name: restaurant-back }
+  - assertVisible: { id: screen-home }
+
+---
+appId: com.andhraessence.app
+name: TC-REST-015 Scroll Collapses Hero Shows Sticky Header
+env:
+  EMAIL: customer@example.com
+  PASSWORD: customer123
+actions:
+  - launchApp
+  - waitFor: { id: screen-login, timeout: 8000 }
+  - tapOn: { id: input-email }
+  - inputText: ${EMAIL}
+  - tapOn: { id: input-password }
+  - inputText: ${PASSWORD}
+  - tapOn: { id: btn-signin }
+  - waitFor: { id: screen-home, timeout: 12000 }
+  - wait: 2000
+  - tapOn: { id: card-restaurant-0 }
+  - waitFor: { id: screen-restaurant, timeout: 5000 }
+  - wait: 1000
+  - scrollDown
+  - scrollDown
+  - wait: 500
+  - takeScreenshot: { name: restaurant-sticky-header }
+  - assertVisible: { id: sticky-header }

@@ -1,0 +1,15 @@
+# Helper: Standard logout flow
+appId: com.andhraessence.app
+name: Logout Helper
+actions:
+  - tapOn: { id: tab-profile }
+  - waitFor: { id: screen-profile }
+  - scrollUntilVisible:
+      element:
+        id: btn-logout
+      direction: DOWN
+      scrollStep: 0.25
+  - tapOn: { id: btn-logout }
+  - pressKey: Enter
+  - waitFor: { id: screen-login }
+    timeout: 5000

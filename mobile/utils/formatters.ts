@@ -68,3 +68,7 @@ export const truncateText = (text: string, maxLength: number): string => {
   if (text.length <= maxLength) return text;
   return text.slice(0, maxLength - 3) + "...";
 };
+
+export const pluralize = (count: number, singular: string, plural?: string): string => {
+  return count === 1 ? `${count} ${singular}` : `${count} ${plural || singular + "s"}`;
+};

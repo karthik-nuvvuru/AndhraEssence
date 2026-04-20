@@ -1,0 +1,146 @@
+name: E2E Mobile Tests (Maestro)
+
+on:
+  push:
+    branches: [main, dev]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+env:
+  IOS_SIMULATOR: "iPhone 15"
+  IOS_VERSION: "17.0"
+  MAESTRO_VERSION: "0.107.0"
+
+jobs:
+  smoke-tests:
+    name: Smoke Tests (Critical Path)
+    runs-on: macos-14
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install Maestro
+        run: |
+          curl -Ls "https://get.maestro.mobile.dev" | bash
+          echo "$HOME/.maestro/bin" >> $GITHUB_PATH
+
+      - name: Setup iOS Simulator
+        run: |
+          xcrun simctl list devices available | grep "$IOS_SIMULATOR"
+          xcrun simctl boot "$IOS_SIMULATOR" || true
+
+      - name: Start Metro Bundler
+        run: |
+          cd mobile
+          npm install
+          npm start &
+          METRO_PID=$!
+          echo "METRO_PID=$METRO_PID" >> $GITHUB_ENV
+          sleep 30
+
+      - name: Run Smoke Tests
+        run: |
+          cd e2e
+          maestro test maestro/flows/auth-flow.yaml \
+            --platform ios \
+            --vars EMAIL=customer@example.com,PASSWORD=customer123
+
+      - name: Upload artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: smoke-test-artifacts
+          path: e2e/maestro/artifacts/
+          retention-days: 7
+
+  full-tests:
+    name: Full E2E Suite
+    runs-on: macos-14
+    needs: smoke-tests
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install Maestro
+        run: |
+          curl -Ls "https://get.maestro.mobile.dev" | bash
+          echo "$HOME/.maestro/bin" >> $GITHUB_PATH
+
+      - name: Setup iOS Simulator
+        run: |
+          xcrun simctl boot "$IOS_SIMULATOR" || true
+
+      - name: Start Metro Bundler
+        run: |
+          cd mobile
+          npm install
+          npm start &
+          sleep 30
+
+      - name: Run Full Suite
+        run: |
+          cd e2e
+          maestro test maestro/ \
+            --platform ios \
+            --vars EMAIL=customer@example.com,PASSWORD=customer123 \
+            --report-path ./artifacts/report.html
+
+      - name: Upload Test Results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: full-test-results
+          path: |
+            e2e/maestro/artifacts/
+          retention-days: 14
+
+  demo-test:
+    name: Demo Flow
+    runs-on: macos-14
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install Maestro
+        run: |
+          curl -Ls "https://get.maestro.mobile.dev" | bash
+          echo "$HOME/.maestro/bin" >> $GITHUB_PATH
+
+      - name: Setup iOS Simulator
+        run: |
+          xcrun simctl boot "$IOS_SIMULATOR" || true
+
+      - name: Start Metro Bundler
+        run: |
+          cd mobile
+          npm install
+          npm start &
+          sleep 30
+
+      - name: Run Demo
+        run: |
+          cd e2e
+          maestro test maestro/demo/full-journey-demo.yaml \
+            --platform ios \
+            --slow-factor 2 \
+            --vars EMAIL=customer@example.com,PASSWORD=customer123
+
+      - name: Upload Demo Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: demo-artifacts
+          path: e2e/maestro/artifacts/
+          retention-days: 30

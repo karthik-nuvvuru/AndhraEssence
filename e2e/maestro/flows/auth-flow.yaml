@@ -1,0 +1,60 @@
+# Auth Flow - Complete registration and login journey
+appId: com.andhraessence.app
+name: TC-FLOW-AUTH-001 New User Complete Auth Journey
+env:
+  EMAIL: customer@example.com
+  PASSWORD: customer123
+actions:
+  - launchApp
+  - waitFor: { id: screen-login, timeout: 8000 }
+  # Go to register
+  - tapOn: { id: btn-signup-link }
+  - waitFor: { id: screen-register, timeout: 5000 }
+  - takeScreenshot: { name: flow-register-screen }
+  # Fill registration form
+  - tapOn: { id: input-fullname }
+  - inputText: "New Test User"
+  - tapOn: { id: input-register-email }
+  - inputText: "newuser@test.com"
+  - tapOn: { id: input-phone }
+  - inputText: "9876543210"
+  - tapOn: { id: input-register-password }
+  - inputText: "password123"
+  - tapOn: { id: input-confirm-password }
+  - inputText: "password123"
+  - takeScreenshot: { name: flow-register-filled }
+  # Back to login and sign in
+  - tapOn: { id: btn-signin-link }
+  - waitFor: { id: screen-login, timeout: 5000 }
+  - tapOn: { id: input-email }
+  - inputText: ${EMAIL}
+  - tapOn: { id: input-password }
+  - inputText: ${PASSWORD}
+  - tapOn: { id: btn-signin }
+  - waitFor: { id: screen-home, timeout: 12000 }
+  - takeScreenshot: { name: flow-auth-complete }
+
+---
+appId: com.andhraessence.app
+name: TC-FLOW-AUTH-002 Returning User Login
+env:
+  EMAIL: customer@example.com
+  PASSWORD: customer123
+actions:
+  - launchApp
+  - waitFor: { id: screen-login, timeout: 8000 }
+  - tapOn: { id: input-email }
+  - inputText: ${EMAIL}
+  - tapOn: { id: input-password }
+  - inputText: ${PASSWORD}
+  - tapOn: { id: btn-signin }
+  - waitFor: { id: screen-home, timeout: 12000 }
+  - takeScreenshot: { name: flow-login-success }
+  # Logout
+  - tapOn: { id: tab-profile }
+  - waitFor: { id: screen-profile, timeout: 5000 }
+  - scrollDown
+  - tapOn: { id: btn-logout }
+  - pressKey: Enter
+  - waitFor: { id: screen-login, timeout: 5000 }
+  - takeScreenshot: { name: flow-logout-success }

@@ -9,11 +9,13 @@ import type { MenuItem } from "@/types/api";
 interface MenuItemCardProps {
   item: MenuItem;
   onAddToCart: () => void;
+  itemIndex?: number;
 }
 
 export const MenuItemCard: React.FC<MenuItemCardProps> = React.memo(({
   item,
   onAddToCart,
+  itemIndex = 0,
 }) => {
   return (
     <View style={styles.card}>
@@ -36,7 +38,7 @@ export const MenuItemCard: React.FC<MenuItemCardProps> = React.memo(({
               />
             </View>
             {item.is_featured && (
-              <View style={styles.featuredBadge}>
+              <View style={styles.featuredBadge} testID={`badge-bestseller-${itemIndex}`}>
                 <Star size={9} color={colors.warning} fill={colors.warning} />
                 <Text style={styles.featuredText}>Bestseller</Text>
               </View>
@@ -44,7 +46,7 @@ export const MenuItemCard: React.FC<MenuItemCardProps> = React.memo(({
           </View>
 
           {/* Item Name */}
-          <Text style={styles.itemName} numberOfLines={2}>
+          <Text style={styles.itemName} numberOfLines={2} testID={`text-menu-item-name-${itemIndex}`}>
             {item.name}
           </Text>
 
@@ -57,7 +59,7 @@ export const MenuItemCard: React.FC<MenuItemCardProps> = React.memo(({
 
           {/* Price Row */}
           <View style={styles.priceRow}>
-            <Text style={styles.price}>{formatCurrency(item.price)}</Text>
+            <Text style={styles.price} testID={`text-menu-item-price-${itemIndex}`}>{formatCurrency(item.price)}</Text>
             {item.preparation_time_minutes && (
               <View style={styles.prepTimeRow}>
                 <Clock size={11} color={colors.textTertiary} />

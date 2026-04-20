@@ -1,0 +1,24 @@
+# Helper: Standard login flow
+appId: com.andhraessence.app
+name: Login Helper
+params:
+  email: ${EMAIL}
+  password: ${PASSWORD}
+actions:
+  # If already on login, just fill in credentials
+  - waitFor: { id: screen-login, timeout: 3000 }
+    optional: true
+  # Navigate to login via profile if needed
+  - tapOn: { id: tab-profile }
+    optional: true
+    continueIfFailed: false
+  - waitFor: { id: screen-login, timeout: 3000 }
+    optional: true
+  # Actually login
+  - tapOn: { id: input-email }
+  - inputText: ${EMAIL}
+  - tapOn: { id: input-password }
+  - inputText: ${PASSWORD}
+  - tapOn: { id: btn-signin }
+  - waitFor: { id: screen-home }
+    timeout: 10000

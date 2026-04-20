@@ -1,0 +1,10 @@
+# Helper: Add item to cart
+appId: com.andhraessence.app
+name: Add Item To Cart
+params:
+  itemIndex: 0
+actions:
+  - tapOn:
+      id: btn-add-item-${ITEM_INDEX}
+      timeout: 3000
+  - wait: 500

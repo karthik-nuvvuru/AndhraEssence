@@ -80,6 +80,11 @@ export default function OnboardingScreen() {
     handleScrollIndex(event);
   };
 
+  const completeOnboarding = () => {
+    // For now, just navigate - onboarding state can be stored later
+    router.replace("/auth/login");
+  };
+
   const handleNext = () => {
     if (currentIndex < SLIDES.length - 1) {
       scrollRef.current?.scrollTo({
@@ -88,12 +93,12 @@ export default function OnboardingScreen() {
       });
       setCurrentIndex(currentIndex + 1);
     } else {
-      router.replace("/auth/login");
+      completeOnboarding();
     }
   };
 
   const handleSkip = () => {
-    router.replace("/auth/login");
+    completeOnboarding();
   };
 
   const isLastSlide = currentIndex === SLIDES.length - 1;
@@ -105,7 +110,7 @@ export default function OnboardingScreen() {
   });
 
   return (
-    <View style={styles.wrapper}>
+    <View style={styles.wrapper} testID="screen-onboarding">
       {/* Purple gradient background */}
       <View style={styles.gradientBg}>
         <View style={styles.bgLayer1} />
@@ -117,7 +122,7 @@ export default function OnboardingScreen() {
       <SafeAreaView style={styles.container} edges={["top", "bottom"]}>
         {/* Skip button */}
         <Animated.View style={[styles.skipContainer, { opacity: fadeAnim }]}>
-          <Pressable onPress={handleSkip} style={styles.skipButton}>
+          <Pressable onPress={handleSkip} style={styles.skipButton} testID="btn-skip">
             <Text style={styles.skipText}>Skip</Text>
           </Pressable>
         </Animated.View>
@@ -188,6 +193,7 @@ export default function OnboardingScreen() {
                     opacity,
                   },
                 ]}
+                testID={`dot-indicator-${index}`}
               />
             );
           })}
@@ -203,13 +209,15 @@ export default function OnboardingScreen() {
             },
           ]}
         >
-          <Button
-            title={isLastSlide ? "Get Started" : "Next"}
-            onPress={handleNext}
-            variant="gradient"
-            size="lg"
-            fullWidth
-          />
+          <View testID={isLastSlide ? "btn-get-started" : "btn-next"}>
+            <Button
+              title={isLastSlide ? "Get Started" : "Next"}
+              onPress={handleNext}
+              variant="gradient"
+              size="lg"
+              fullWidth
+            />
+          </View>
         </Animated.View>
       </SafeAreaView>
     </View>

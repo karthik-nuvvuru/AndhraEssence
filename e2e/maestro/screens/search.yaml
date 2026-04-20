@@ -1,0 +1,240 @@
+# Search Screen Tests
+appId: com.andhraessence.app
+name: TC-SEARCH-001 Search Screen Renders With Input
+env:
+  EMAIL: customer@example.com
+  PASSWORD: customer123
+actions:
+  - launchApp
+  - waitFor: { id: screen-login, timeout: 8000 }
+  - tapOn: { id: input-email }
+  - inputText: ${EMAIL}
+  - tapOn: { id: input-password }
+  - inputText: ${PASSWORD}
+  - tapOn: { id: btn-signin }
+  - waitFor: { id: screen-home, timeout: 12000 }
+  - tapOn: { id: btn-search }
+  - waitFor: { id: screen-search, timeout: 5000 }
+  - assertVisible: { id: input-search }
+  - takeScreenshot: { name: search-screen }
+
+---
+appId: com.andhraessence.app
+name: TC-SEARCH-002 Search Input Is Auto Focused
+env:
+  EMAIL: customer@example.com
+  PASSWORD: customer123
+actions:
+  - launchApp
+  - waitFor: { id: screen-login, timeout: 8000 }
+  - tapOn: { id: input-email }
+  - inputText: ${EMAIL}
+  - tapOn: { id: input-password }
+  - inputText: ${PASSWORD}
+  - tapOn: { id: btn-signin }
+  - waitFor: { id: screen-home, timeout: 12000 }
+  - tapOn: { id: btn-search }
+  - waitFor: { id: screen-search, timeout: 5000 }
+  - tapOn: { id: input-search }
+  - takeScreenshot: { name: search-focus }
+
+---
+appId: com.andhraessence.app
+name: TC-SEARCH-003 Typing Shows Instant Results
+env:
+  EMAIL: customer@example.com
+  PASSWORD: customer123
+actions:
+  - launchApp
+  - waitFor: { id: screen-login, timeout: 8000 }
+  - tapOn: { id: input-email }
+  - inputText: ${EMAIL}
+  - tapOn: { id: input-password }
+  - inputText: ${PASSWORD}
+  - tapOn: { id: btn-signin }
+  - waitFor: { id: screen-home, timeout: 12000 }
+  - tapOn: { id: btn-search }
+  - waitFor: { id: screen-search, timeout: 5000 }
+  - tapOn: { id: input-search }
+  - inputText: "Biryani"
+  - wait: 1500
+  - takeScreenshot: { name: search-results-biryani }
+
+---
+appId: com.andhraessence.app
+name: TC-SEARCH-004 Recent Searches Shown When Empty
+env:
+  EMAIL: customer@example.com
+  PASSWORD: customer123
+actions:
+  - launchApp
+  - waitFor: { id: screen-login, timeout: 8000 }
+  - tapOn: { id: input-email }
+  - inputText: ${EMAIL}
+  - tapOn: { id: input-password }
+  - inputText: ${PASSWORD}
+  - tapOn: { id: btn-signin }
+  - waitFor: { id: screen-home, timeout: 12000 }
+  - tapOn: { id: btn-search }
+  - waitFor: { id: screen-search, timeout: 5000 }
+  - wait: 1000
+  - assertVisible: { id: input-search }
+  - takeScreenshot: { name: search-recent }
+
+---
+appId: com.andhraessence.app
+name: TC-SEARCH-005 Trending Searches Visible
+env:
+  EMAIL: customer@example.com
+  PASSWORD: customer123
+actions:
+  - launchApp
+  - waitFor: { id: screen-login, timeout: 8000 }
+  - tapOn: { id: input-email }
+  - inputText: ${EMAIL}
+  - tapOn: { id: input-password }
+  - inputText: ${PASSWORD}
+  - tapOn: { id: btn-signin }
+  - waitFor: { id: screen-home, timeout: 12000 }
+  - tapOn: { id: btn-search }
+  - waitFor: { id: screen-search, timeout: 5000 }
+  - scrollDown
+  - wait: 500
+  - assertVisible: { id: input-search }
+  - takeScreenshot: { name: search-trending }
+
+---
+appId: com.andhraessence.app
+name: TC-SEARCH-006 No Results Empty State
+env:
+  EMAIL: customer@example.com
+  PASSWORD: customer123
+actions:
+  - launchApp
+  - waitFor: { id: screen-login, timeout: 8000 }
+  - tapOn: { id: input-email }
+  - inputText: ${EMAIL}
+  - tapOn: { id: input-password }
+  - inputText: ${PASSWORD}
+  - tapOn: { id: btn-signin }
+  - waitFor: { id: screen-home, timeout: 12000 }
+  - tapOn: { id: btn-search }
+  - waitFor: { id: screen-search, timeout: 5000 }
+  - tapOn: { id: input-search }
+  - inputText: "xyznonexistentfood123"
+  - wait: 2000
+  - takeScreenshot: { name: search-no-results }
+
+---
+appId: com.andhraessence.app
+name: TC-SEARCH-007 Filter Chips Work
+env:
+  EMAIL: customer@example.com
+  PASSWORD: customer123
+actions:
+  - launchApp
+  - waitFor: { id: screen-login, timeout: 8000 }
+  - tapOn: { id: input-email }
+  - inputText: ${EMAIL}
+  - tapOn: { id: input-password }
+  - inputText: ${PASSWORD}
+  - tapOn: { id: btn-signin }
+  - waitFor: { id: screen-home, timeout: 12000 }
+  - tapOn: { id: btn-search }
+  - waitFor: { id: screen-search, timeout: 5000 }
+  - assertVisible: { id: chip-filter-sort }
+  - tapOn: { id: chip-filter-rating-4-0+ }
+  - wait: 500
+  - takeScreenshot: { name: search-filter }
+
+---
+appId: com.andhraessence.app
+name: TC-SEARCH-008 Tapping Result Opens Restaurant
+env:
+  EMAIL: customer@example.com
+  PASSWORD: customer123
+actions:
+  - launchApp
+  - waitFor: { id: screen-login, timeout: 8000 }
+  - tapOn: { id: input-email }
+  - inputText: ${EMAIL}
+  - tapOn: { id: input-password }
+  - inputText: ${PASSWORD}
+  - tapOn: { id: btn-signin }
+  - waitFor: { id: screen-home, timeout: 12000 }
+  - tapOn: { id: btn-search }
+  - waitFor: { id: screen-search, timeout: 5000 }
+  - tapOn: { id: input-search }
+  - inputText: "Biryani"
+  - wait: 1500
+  - tapOn: { id: card-restaurant-search-0 }
+  - waitFor: { id: screen-restaurant, timeout: 5000 }
+  - takeScreenshot: { name: search-to-restaurant }
+  - assertVisible: { id: screen-restaurant }
+
+---
+appId: com.andhraessence.app
+name: TC-SEARCH-009 Clear Search Resets Results
+env:
+  EMAIL: customer@example.com
+  PASSWORD: customer123
+actions:
+  - launchApp
+  - waitFor: { id: screen-login, timeout: 8000 }
+  - tapOn: { id: input-email }
+  - inputText: ${EMAIL}
+  - tapOn: { id: input-password }
+  - inputText: ${PASSWORD}
+  - tapOn: { id: btn-signin }
+  - waitFor: { id: screen-home, timeout: 12000 }
+  - tapOn: { id: btn-search }
+  - waitFor: { id: screen-search, timeout: 5000 }
+  - tapOn: { id: input-search }
+  - inputText: "Biryani"
+  - wait: 1500
+  - tapOn: { id: btn-clear-search }
+  - wait: 500
+  - takeScreenshot: { name: search-clear }
+
+---
+appId: com.andhraessence.app
+name: TC-SEARCH-010 Recent Search Pill Executes Search
+env:
+  EMAIL: customer@example.com
+  PASSWORD: customer123
+actions:
+  - launchApp
+  - waitFor: { id: screen-login, timeout: 8000 }
+  - tapOn: { id: input-email }
+  - inputText: ${EMAIL}
+  - tapOn: { id: input-password }
+  - inputText: ${PASSWORD}
+  - tapOn: { id: btn-signin }
+  - waitFor: { id: screen-home, timeout: 12000 }
+  - tapOn: { id: btn-search }
+  - waitFor: { id: screen-search, timeout: 5000 }
+  - tapOn: { id: pill-recent-biryani }
+  - wait: 1500
+  - takeScreenshot: { name: search-recent-tap }
+
+---
+appId: com.andhraessence.app
+name: TC-SEARCH-011 Back Button Returns To Home
+env:
+  EMAIL: customer@example.com
+  PASSWORD: customer123
+actions:
+  - launchApp
+  - waitFor: { id: screen-login, timeout: 8000 }
+  - tapOn: { id: input-email }
+  - inputText: ${EMAIL}
+  - tapOn: { id: input-password }
+  - inputText: ${PASSWORD}
+  - tapOn: { id: btn-signin }
+  - waitFor: { id: screen-home, timeout: 12000 }
+  - tapOn: { id: btn-search }
+  - waitFor: { id: screen-search, timeout: 5000 }
+  - tapOn: { id: btn-back }
+  - waitFor: { id: screen-home, timeout: 5000 }
+  - assertVisible: { id: screen-home }
+  - takeScreenshot: { name: search-back }

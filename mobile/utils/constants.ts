@@ -16,7 +16,13 @@ const getBackendUrl = () => {
   if (apiUrl) {
     return apiUrl;
   }
-  return __DEV__ ? "http://localhost:8000/api/v1" : "https://api.andhraessence.com/api/v1";
+  // For dev mode in simulator, use host machine's IP for localhost
+  // since simulator can't access host's localhost directly
+  if (__DEV__) {
+    // Use host IP for simulator dev mode
+    return "http://192.168.1.8:8000/api/v1";
+  }
+  return "https://api.andhraessence.com/api/v1";
 };
 
 export const API_BASE_URL = getBackendUrl();

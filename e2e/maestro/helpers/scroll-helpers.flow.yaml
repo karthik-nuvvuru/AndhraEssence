@@ -1,0 +1,37 @@
+# Helper: Common scroll and navigation helpers
+appId: com.andhraessence.app
+name: Scroll Helpers
+
+# Scroll down until element visible
+scrollDownUntilVisible:
+  name: Scroll Down Until Visible
+  params:
+    elementId: null
+    maxScrolls: 10
+    direction: DOWN
+  actions:
+    - repeat:
+        while:
+          notVisible:
+            id: ${ELEMENT_ID}
+        times: 10
+        do:
+          - scrollDown
+
+# Pull to refresh on current screen
+pullToRefresh:
+  name: Pull To Refresh
+  actions:
+    - pullToRefresh
+    - wait: 1000
+
+# Swipe left on element
+swipeLeft:
+  name: Swipe Left
+  params:
+    elementId: null
+  actions:
+    - swipe:
+        element:
+          id: ${ELEMENT_ID}
+        direction: LEFT

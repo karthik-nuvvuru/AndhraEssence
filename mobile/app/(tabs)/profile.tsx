@@ -38,13 +38,15 @@ interface MenuItemProps {
   onPress: () => void;
   isLast?: boolean;
   isDestructive?: boolean;
+  testID?: string;
 }
 
-const MenuItem: React.FC<MenuItemProps> = ({ icon, title, subtitle, onPress, isLast, isDestructive }) => (
+const MenuItem: React.FC<MenuItemProps> = ({ icon, title, subtitle, onPress, isLast, isDestructive, testID }) => (
   <TouchableOpacity
     style={[styles.menuItem, isLast && styles.menuItemLast]}
     onPress={onPress}
     activeOpacity={0.7}
+    testID={testID}
   >
     <View style={styles.menuItemLeft}>
       <View style={[styles.menuIconBox, isDestructive && styles.menuIconBoxDestructive]}>
@@ -97,15 +99,15 @@ export default function ProfileScreen() {
   }, [avatarPulseAnim]);
 
   const menuItems = [
-    { icon: <MapPin size={18} color={colors.primary} />, title: "My Addresses", subtitle: "Manage delivery addresses", onPress: () => router.push("/profile/addresses") },
-    { icon: <CreditCard size={18} color={colors.primary} />, title: "Payment Methods", subtitle: "Cards, wallets, UPI", onPress: () => Alert.alert("Coming Soon", "Payment methods will be available soon") },
-    { icon: <Bell size={18} color={colors.primary} />, title: "Notifications", subtitle: "Preferences and history", onPress: () => Alert.alert("Coming Soon", "Notification settings will be available soon") },
+    { icon: <MapPin size={18} color={colors.primary} />, title: "My Addresses", subtitle: "Manage delivery addresses", onPress: () => router.push("/profile/addresses"), testID: "btn-my-addresses" },
+    { icon: <CreditCard size={18} color={colors.primary} />, title: "Payment Methods", subtitle: "Cards, wallets, UPI", onPress: () => Alert.alert("Coming Soon", "Payment methods will be available soon"), testID: "btn-payment-methods" },
+    { icon: <Bell size={18} color={colors.primary} />, title: "Notifications", subtitle: "Preferences and history", onPress: () => Alert.alert("Coming Soon", "Notification settings will be available soon"), testID: "btn-notifications" },
   ];
 
   const supportItems = [
-    { icon: <HelpCircle size={18} color={colors.textSecondary} />, title: "Help & Support", onPress: () => Alert.alert("Help & Support", "Contact us at support@andhraessence.com") },
-    { icon: <FileText size={18} color={colors.textSecondary} />, title: "Terms & Conditions", onPress: () => Alert.alert("Terms", "Terms & Conditions will be displayed here") },
-    { icon: <Shield size={18} color={colors.textSecondary} />, title: "Privacy Policy", onPress: () => Alert.alert("Privacy", "Privacy Policy will be displayed here") },
+    { icon: <HelpCircle size={18} color={colors.textSecondary} />, title: "Help & Support", onPress: () => Alert.alert("Help & Support", "Contact us at support@andhraessence.com"), testID: "btn-help-support" },
+    { icon: <FileText size={18} color={colors.textSecondary} />, title: "Terms & Conditions", onPress: () => Alert.alert("Terms", "Terms & Conditions will be displayed here"), testID: "btn-terms" },
+    { icon: <Shield size={18} color={colors.textSecondary} />, title: "Privacy Policy", onPress: () => Alert.alert("Privacy", "Privacy Policy will be displayed here"), testID: "btn-privacy" },
   ];
 
   const handleLogout = () => {
@@ -125,7 +127,7 @@ export default function ProfileScreen() {
   const initials = getInitials(user?.full_name || "GU");
 
   return (
-    <SafeAreaView style={styles.container} edges={["top"]}>
+    <SafeAreaView style={styles.container} edges={["top"]} testID="screen-profile">
       <ScrollView
         showsVerticalScrollIndicator={false}
         contentContainerStyle={[styles.scrollContent, { paddingBottom: insets.bottom > 0 ? insets.bottom + spacing.lg : spacing.lg }]}
@@ -157,11 +159,11 @@ export default function ProfileScreen() {
               ]}
             />
             <View style={styles.avatar}>
-              <Text style={styles.avatarInitials}>{initials}</Text>
+              <Text style={styles.avatarInitials} testID="avatar-user">{initials}</Text>
             </View>
           </View>
-          <Text style={styles.userName}>{user?.full_name || "Guest User"}</Text>
-          <Text style={styles.userEmail}>{user?.email || "Welcome to AndhraEssence"}</Text>
+          <Text style={styles.userName} testID="text-user-name">{user?.full_name || "Guest User"}</Text>
+          <Text style={styles.userEmail} testID="text-user-email">{user?.email || "Welcome to AndhraEssence"}</Text>
           {user?.phone && (
             <View style={styles.phoneRow}>
               <Phone size={13} color={colors.textTertiary} />
@@ -172,7 +174,7 @@ export default function ProfileScreen() {
 
         {/* Stats Row */}
         <View style={styles.statsRow}>
-          <View style={styles.statBox}>
+          <View style={styles.statBox} testID="stat-orders">
             <View style={styles.statIconBox}>
               <ShoppingBag size={16} color={colors.primary} />
             </View>
@@ -180,7 +182,7 @@ export default function ProfileScreen() {
             <Text style={styles.statLabel}>Orders</Text>
           </View>
           <View style={styles.statBoxDivider} />
-          <View style={styles.statBox}>
+          <View style={styles.statBox} testID="stat-rewards">
             <View style={styles.statIconBox}>
               <Gift size={16} color={colors.accent} />
             </View>
@@ -188,7 +190,7 @@ export default function ProfileScreen() {
             <Text style={styles.statLabel}>Rewards</Text>
           </View>
           <View style={styles.statBoxDivider} />
-          <View style={styles.statBox}>
+          <View style={styles.statBox} testID="stat-reviews">
             <View style={styles.statIconBox}>
               <Star size={16} color={colors.warning} />
             </View>
@@ -209,6 +211,7 @@ export default function ProfileScreen() {
                 subtitle={item.subtitle}
                 onPress={item.onPress}
                 isLast={index === menuItems.length - 1}
+                testID={item.testID}
               />
             ))}
           </View>
@@ -225,6 +228,7 @@ export default function ProfileScreen() {
                 title={item.title}
                 onPress={item.onPress}
                 isLast={index === supportItems.length - 1}
+                testID={item.testID}
               />
             ))}
           </View>
@@ -254,6 +258,7 @@ export default function ProfileScreen() {
             style={styles.logoutButton}
             onPress={handleLogout}
             activeOpacity={0.7}
+            testID="btn-logout"
           >
             <View style={styles.logoutIconBox}>
               <LogOut size={18} color={colors.error} />

@@ -1,6 +1,6 @@
 import React from "react";
 import { TouchableOpacity, Text, StyleSheet, ViewStyle } from "react-native";
-import { colors, spacing, shadows } from "@/theme";
+import { colors, shadows } from "@/theme";
 
 interface IconButtonProps {
   icon: string;

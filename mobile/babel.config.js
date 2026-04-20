@@ -1,7 +1,14 @@
 module.exports = function(api) {
-  api.cache(true);
+  const isHermes = api.env('hermes');
   return {
-    presets: ['babel-preset-expo'],
+    presets: [
+      [
+        'babel-preset-expo',
+        {
+          unstable_transformImportMeta: true,
+        },
+      ],
+    ],
     plugins: [
       [
         'module-resolver',

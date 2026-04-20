@@ -1,14 +1,20 @@
 {
   "name": "andhraessence-e2e",
-  "version": "1.0.0",
-  "description": "End-to-end tests for AndhraEssence mobile app",
+  "version": "2.0.0",
+  "description": "End-to-end tests for AndhraEssence mobile app using Maestro",
   "scripts": {
-    "test": "playwright test",
-    "test:headed": "playwright test --headed",
-    "test:ui": "playwright test --ui"
+    "test:e2e": "maestro test maestro/ --platform ios",
+    "test:e2e:smoke": "maestro test maestro/flows/auth-flow.yaml --platform ios",
+    "test:e2e:demo": "maestro test maestro/demo/full-journey-demo.yaml --platform ios --slow-factor 2",
+    "test:e2e:screen": "maestro test maestro/screens/${name}.yaml --platform ios",
+    "test:e2e:report": "open maestro/artifacts/ 2>/dev/null || echo 'Run tests first to generate artifacts'",
+    "maestro:test": "npm run test:e2e",
+    "maestro:smoke": "npm run test:e2e:smoke",
+    "maestro:demo": "npm run test:e2e:demo",
+    "maestro:screen": "npm run test:e2e:screen",
+    "maestro:flows": "maestro test maestro/flows/ --platform ios",
+    "maestro:edge": "maestro test maestro/edge-cases/ --platform ios",
+    "maestro:report": "npm run test:e2e:report"
   },
-  "devDependencies": {
-    "@playwright/test": "^1.40.0",
-    "typescript": "^5.3.0"
-  }
+  "devDependencies": {}
 }

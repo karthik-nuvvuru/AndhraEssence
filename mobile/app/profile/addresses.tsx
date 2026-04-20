@@ -9,6 +9,7 @@ import {
 } from "react-native";
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 import { router } from "expo-router";
+import { ChevronLeft } from "lucide-react-native";
 import { GlassCard } from "@/components/ui/GlassCard";
 import { Button } from "@/components/ui/Button";
 import { LoadingSpinner } from "@/components/ui/LoadingSpinner";
@@ -29,7 +30,7 @@ export default function AddressesScreen() {
       const response = await userApi.getAddresses();
       setAddresses(response.data);
     } catch (err: any) {
-      console.error("Failed to fetch addresses:", err);
+      // Address fetch failed
       setError(err?.message || "Failed to load addresses");
     } finally {
       setLoading(false);
@@ -56,8 +57,8 @@ export default function AddressesScreen() {
     return "📍";
   };
 
-  const renderAddress = ({ item }: { item: Address }) => (
-    <GlassCard style={styles.addressCard} variant="default" padding="md">
+  const renderAddress = ({ item, index }: { item: Address; index: number }) => (
+    <GlassCard style={styles.addressCard} variant="default" padding="md" testID={`card-address-${index}`}>
       <TouchableOpacity style={styles.addressContent} activeOpacity={0.7}>
         <View style={styles.addressIconContainer}>
           <Text style={styles.addressIcon}>{getAddressIcon(item.label)}</Text>
@@ -108,8 +109,8 @@ export default function AddressesScreen() {
     return (
       <SafeAreaView style={styles.container} edges={["top"]}>
         <View style={styles.header}>
-          <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-            <Text style={styles.backIcon}>←</Text>
+          <TouchableOpacity onPress={() => router.back()} style={styles.backButton} testID="btn-back">
+            <ChevronLeft size={22} color={colors.textPrimary} />
           </TouchableOpacity>
           <Text style={styles.headerTitle}>My Addresses</Text>
           <View style={styles.headerSpacer} />
@@ -130,13 +131,13 @@ export default function AddressesScreen() {
   }
 
   return (
-    <SafeAreaView style={styles.container} edges={["top"]}>
+    <SafeAreaView style={styles.container} edges={["top"]} testID="screen-addresses">
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-          <Text style={styles.backIcon}>←</Text>
+        <TouchableOpacity onPress={() => router.back()} style={styles.backButton} testID="btn-back">
+          <ChevronLeft size={22} color={colors.textPrimary} />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>My Addresses</Text>
-        <TouchableOpacity onPress={handleAddAddress} style={styles.addButtonHeader}>
+        <TouchableOpacity onPress={handleAddAddress} style={styles.addButtonHeader} testID="btn-add-address">
           <Text style={styles.addButtonHeaderText}>+ Add</Text>
         </TouchableOpacity>
       </View>

@@ -198,13 +198,16 @@ export default function CartScreen() {
     router.push("/");
   };
 
-  const renderCartItem = ({ item }: { item: any }) => (
-    <CartItemCard
-      item={item}
-      onIncrease={handleIncrease}
-      onDecrease={handleDecrease}
-      onRemove={handleRemoveItem}
-    />
+  const renderCartItem = ({ item, index }: { item: any; index: number }) => (
+    <View testID={`card-cart-item-${index}`}>
+      <CartItemCard
+        item={item}
+        onIncrease={handleIncrease}
+        onDecrease={handleDecrease}
+        onRemove={handleRemoveItem}
+        itemIndex={index}
+      />
+    </View>
   );
 
   const renderDeliveryInstructions = () => (
@@ -223,6 +226,7 @@ export default function CartScreen() {
               style={[styles.instructionChip, isSelected && styles.instructionChipSelected]}
               onPress={() => handleInstructionSelect(item.id)}
               activeOpacity={0.7}
+              testID={`chip-${item.id}`}
             >
               <item.Icon
                 size={15}
@@ -343,15 +347,18 @@ export default function CartScreen() {
               onChangeText={setPromoCode}
               autoCapitalize="characters"
               returnKeyType="done"
+              testID="input-promo-code"
             />
           </View>
-          <Button
-            title="Apply"
-            onPress={handleApplyPromo}
-            variant="primary"
-            size="sm"
-            style={styles.applyButton}
-          />
+          <View testID="btn-apply-promo">
+            <Button
+              title="Apply"
+              onPress={handleApplyPromo}
+              variant="primary"
+              size="sm"
+              style={styles.applyButton}
+            />
+          </View>
         </View>
       )}
     </GlassCard>
@@ -366,19 +373,21 @@ export default function CartScreen() {
       <Text style={styles.emptySubtext}>
         Add items from a restaurant to get started
       </Text>
-      <Button
-        title="Explore Restaurants"
-        onPress={handleExplore}
-        variant="primary"
-        size="lg"
-        style={styles.exploreButton}
-      />
+      <View testID="btn-start-ordering">
+        <Button
+          title="Explore Restaurants"
+          onPress={handleExplore}
+          variant="primary"
+          size="lg"
+          style={styles.exploreButton}
+        />
+      </View>
     </View>
   );
 
   if (items.length === 0) {
     return (
-      <SafeAreaView style={styles.container} edges={["top"]}>
+      <SafeAreaView style={styles.container} edges={["top"]} testID="screen-cart">
         <View style={styles.header}>
           <Text style={styles.headerTitle}>Your Cart</Text>
         </View>
@@ -401,7 +410,7 @@ export default function CartScreen() {
               <Text style={styles.restaurantName}>from {restaurantName}</Text>
             )}
           </View>
-          <TouchableOpacity onPress={handleClearCart} style={styles.clearButton}>
+          <TouchableOpacity onPress={handleClearCart} style={styles.clearButton} testID="btn-clear-cart">
             <Trash2 size={16} color={colors.error} />
             <Text style={styles.clearText}>Clear</Text>
           </TouchableOpacity>
@@ -439,13 +448,15 @@ export default function CartScreen() {
               <Text style={styles.stickyTotalLabel}>Total</Text>
               <Text style={styles.stickyTotalValue}>{formatCurrency(total)}</Text>
             </View>
-            <Button
-              title={`Checkout • ${formatCurrency(total)}`}
-              onPress={handleCheckout}
-              variant="gradient"
-              size="lg"
-              style={styles.checkoutButton}
-            />
+            <View testID="btn-checkout">
+              <Button
+                title={`Checkout • ${formatCurrency(total)}`}
+                onPress={handleCheckout}
+                variant="gradient"
+                size="lg"
+                style={styles.checkoutButton}
+              />
+            </View>
           </View>
         </View>
       </KeyboardAvoidingView>

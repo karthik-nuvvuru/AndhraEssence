@@ -1,0 +1,74 @@
+# Edge Case Tests - Empty States
+appId: com.andhraessence.app
+name: TC-EDGE-EMPTY-001 Cart Empty State
+env:
+  EMAIL: customer@example.com
+  PASSWORD: customer123
+actions:
+  - launchApp
+  - waitFor: { id: screen-login, timeout: 8000 }
+  - tapOn: { id: input-email }
+  - inputText: ${EMAIL}
+  - tapOn: { id: input-password }
+  - inputText: ${PASSWORD}
+  - tapOn: { id: btn-signin }
+  - waitFor: { id: screen-home, timeout: 12000 }
+  - tapOn: { id: tab-cart }
+  - waitFor: { id: screen-cart, timeout: 5000 }
+  - assertVisible: { id: screen-cart }
+  - assertVisible: { id: btn-start-ordering }
+  - takeScreenshot: { name: edge-cart-empty }
+
+---
+appId: com.andhraessence.app
+name: TC-EDGE-EMPTY-002 Search No Results
+env:
+  EMAIL: customer@example.com
+  PASSWORD: customer123
+actions:
+  - launchApp
+  - waitFor: { id: screen-login, timeout: 8000 }
+  - tapOn: { id: input-email }
+  - inputText: ${EMAIL}
+  - tapOn: { id: input-password }
+  - inputText: ${PASSWORD}
+  - tapOn: { id: btn-signin }
+  - waitFor: { id: screen-home, timeout: 12000 }
+  - tapOn: { id: btn-search }
+  - waitFor: { id: screen-search, timeout: 5000 }
+  - tapOn: { id: input-search }
+  - inputText: "xyznonexistentfooditem999"
+  - wait: 2000
+  - takeScreenshot: { name: edge-search-empty }
+
+---
+appId: com.andhraessence.app
+name: TC-EDGE-EMPTY-003 Clear Cart From Non-Empty State
+env:
+  EMAIL: customer@example.com
+  PASSWORD: customer123
+actions:
+  - launchApp
+  - waitFor: { id: screen-login, timeout: 8000 }
+  - tapOn: { id: input-email }
+  - inputText: ${EMAIL}
+  - tapOn: { id: input-password }
+  - inputText: ${PASSWORD}
+  - tapOn: { id: btn-signin }
+  - waitFor: { id: screen-home, timeout: 12000 }
+  - wait: 2000
+  - tapOn: { id: card-restaurant-0 }
+  - waitFor: { id: screen-restaurant, timeout: 5000 }
+  - wait: 1000
+  - tapOn: { id: btn-add-item-0 }
+  - wait: 500
+  - tapOn: { id: tab-cart }
+  - waitFor: { id: screen-cart, timeout: 5000 }
+  - assertVisible: { id: card-cart-item-0 }
+  - tapOn: { id: btn-clear-cart }
+  - wait: 500
+  - takeScreenshot: { name: edge-clear-confirm }
+  - pressKey: Back
+  - wait: 500
+  - assertVisible: { id: card-cart-item-0 }
+  - takeScreenshot: { name: edge-clear-cancelled }

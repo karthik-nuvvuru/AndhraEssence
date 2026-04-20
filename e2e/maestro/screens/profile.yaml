@@ -1,0 +1,214 @@
+# Profile Screen Tests
+appId: com.andhraessence.app
+name: TC-PROFILE-001 Profile Screen Renders User Info
+env:
+  EMAIL: customer@example.com
+  PASSWORD: customer123
+actions:
+  - launchApp
+  - waitFor: { id: screen-login, timeout: 8000 }
+  - tapOn: { id: input-email }
+  - inputText: ${EMAIL}
+  - tapOn: { id: input-password }
+  - inputText: ${PASSWORD}
+  - tapOn: { id: btn-signin }
+  - waitFor: { id: screen-home, timeout: 12000 }
+  - tapOn: { id: tab-profile }
+  - waitFor: { id: screen-profile, timeout: 5000 }
+  - assertVisible: { id: screen-profile }
+  - assertVisible: { id: avatar-user }
+  - assertVisible: { id: text-user-name }
+  - assertVisible: { id: text-user-email }
+  - takeScreenshot: { name: profile-screen }
+
+---
+appId: com.andhraessence.app
+name: TC-PROFILE-002 Stats Row Displays Correctly
+env:
+  EMAIL: customer@example.com
+  PASSWORD: customer123
+actions:
+  - launchApp
+  - waitFor: { id: screen-login, timeout: 8000 }
+  - tapOn: { id: input-email }
+  - inputText: ${EMAIL}
+  - tapOn: { id: input-password }
+  - inputText: ${PASSWORD}
+  - tapOn: { id: btn-signin }
+  - waitFor: { id: screen-home, timeout: 12000 }
+  - tapOn: { id: tab-profile }
+  - waitFor: { id: screen-profile, timeout: 5000 }
+  - assertVisible: { id: stat-orders }
+  - assertVisible: { id: stat-rewards }
+  - assertVisible: { id: stat-reviews }
+  - takeScreenshot: { name: profile-stats }
+
+---
+appId: com.andhraessence.app
+name: TC-PROFILE-003 My Addresses Navigation
+env:
+  EMAIL: customer@example.com
+  PASSWORD: customer123
+actions:
+  - launchApp
+  - waitFor: { id: screen-login, timeout: 8000 }
+  - tapOn: { id: input-email }
+  - inputText: ${EMAIL}
+  - tapOn: { id: input-password }
+  - inputText: ${PASSWORD}
+  - tapOn: { id: btn-signin }
+  - waitFor: { id: screen-home, timeout: 12000 }
+  - tapOn: { id: tab-profile }
+  - waitFor: { id: screen-profile, timeout: 5000 }
+  - scrollDown
+  - wait: 500
+  - tapOn: { id: btn-my-addresses }
+  - waitFor: { id: screen-addresses, timeout: 5000 }
+  - takeScreenshot: { name: profile-addresses }
+  - assertVisible: { id: screen-addresses }
+
+---
+appId: com.andhraessence.app
+name: TC-PROFILE-004 Help And Support Shows Alert
+env:
+  EMAIL: customer@example.com
+  PASSWORD: customer123
+actions:
+  - launchApp
+  - waitFor: { id: screen-login, timeout: 8000 }
+  - tapOn: { id: input-email }
+  - inputText: ${EMAIL}
+  - tapOn: { id: input-password }
+  - inputText: ${PASSWORD}
+  - tapOn: { id: btn-signin }
+  - waitFor: { id: screen-home, timeout: 12000 }
+  - tapOn: { id: tab-profile }
+  - waitFor: { id: screen-profile, timeout: 5000 }
+  - scrollDown
+  - wait: 500
+  - tapOn: { id: btn-help-support }
+  - wait: 500
+  - takeScreenshot: { name: profile-help }
+  - pressKey: Back
+
+---
+appId: com.andhraessence.app
+name: TC-PROFILE-005 Terms And Conditions Shows Alert
+env:
+  EMAIL: customer@example.com
+  PASSWORD: customer123
+actions:
+  - launchApp
+  - waitFor: { id: screen-login, timeout: 8000 }
+  - tapOn: { id: input-email }
+  - inputText: ${EMAIL}
+  - tapOn: { id: input-password }
+  - inputText: ${PASSWORD}
+  - tapOn: { id: btn-signin }
+  - waitFor: { id: screen-home, timeout: 12000 }
+  - tapOn: { id: tab-profile }
+  - waitFor: { id: screen-profile, timeout: 5000 }
+  - scrollDown
+  - wait: 500
+  - tapOn: { id: btn-terms }
+  - wait: 500
+  - pressKey: Back
+
+---
+appId: com.andhraessence.app
+name: TC-PROFILE-006 Privacy Policy Shows Alert
+env:
+  EMAIL: customer@example.com
+  PASSWORD: customer123
+actions:
+  - launchApp
+  - waitFor: { id: screen-login, timeout: 8000 }
+  - tapOn: { id: input-email }
+  - inputText: ${EMAIL}
+  - tapOn: { id: input-password }
+  - inputText: ${PASSWORD}
+  - tapOn: { id: btn-signin }
+  - waitFor: { id: screen-home, timeout: 12000 }
+  - tapOn: { id: tab-profile }
+  - waitFor: { id: screen-profile, timeout: 5000 }
+  - scrollDown
+  - wait: 500
+  - tapOn: { id: btn-privacy }
+  - wait: 500
+  - pressKey: Back
+
+---
+appId: com.andhraessence.app
+name: TC-PROFILE-007 Logout Button Tappable
+env:
+  EMAIL: customer@example.com
+  PASSWORD: customer123
+actions:
+  - launchApp
+  - waitFor: { id: screen-login, timeout: 8000 }
+  - tapOn: { id: input-email }
+  - inputText: ${EMAIL}
+  - tapOn: { id: input-password }
+  - inputText: ${PASSWORD}
+  - tapOn: { id: btn-signin }
+  - waitFor: { id: screen-home, timeout: 12000 }
+  - tapOn: { id: tab-profile }
+  - waitFor: { id: screen-profile, timeout: 5000 }
+  - scrollDown
+  - wait: 500
+  - tapOn: { id: btn-logout }
+  - wait: 500
+  - takeScreenshot: { name: profile-logout-dialog }
+  - pressKey: Back
+  - wait: 500
+
+---
+appId: com.andhraessence.app
+name: TC-PROFILE-008 Logout Clears Session
+env:
+  EMAIL: customer@example.com
+  PASSWORD: customer123
+actions:
+  - launchApp
+  - waitFor: { id: screen-login, timeout: 8000 }
+  - tapOn: { id: input-email }
+  - inputText: ${EMAIL}
+  - tapOn: { id: input-password }
+  - inputText: ${PASSWORD}
+  - tapOn: { id: btn-signin }
+  - waitFor: { id: screen-home, timeout: 12000 }
+  - tapOn: { id: tab-profile }
+  - waitFor: { id: screen-profile, timeout: 5000 }
+  - scrollDown
+  - wait: 500
+  - tapOn: { id: btn-logout }
+  - wait: 500
+  - pressKey: Enter
+  - waitFor: { id: screen-login, timeout: 5000 }
+  - takeScreenshot: { name: profile-logged-out }
+
+---
+appId: com.andhraessence.app
+name: TC-PROFILE-009 Cancel Logout Keeps User Logged In
+env:
+  EMAIL: customer@example.com
+  PASSWORD: customer123
+actions:
+  - launchApp
+  - waitFor: { id: screen-login, timeout: 8000 }
+  - tapOn: { id: input-email }
+  - inputText: ${EMAIL}
+  - tapOn: { id: input-password }
+  - inputText: ${PASSWORD}
+  - tapOn: { id: btn-signin }
+  - waitFor: { id: screen-home, timeout: 12000 }
+  - tapOn: { id: tab-profile }
+  - waitFor: { id: screen-profile, timeout: 5000 }
+  - scrollDown
+  - wait: 500
+  - tapOn: { id: btn-logout }
+  - wait: 500
+  - pressKey: Back
+  - wait: 1000
+  - assertVisible: { id: screen-profile }
+  - takeScreenshot: { name: profile-logout-cancelled }
