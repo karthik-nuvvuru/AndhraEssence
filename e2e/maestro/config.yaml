@@ -1,6 +1,5 @@
 # Maestro configuration for AndhraEssence E2E Tests
 appId: com.andhraessence.app
-platform: ios
 workspace: .
 sourceRoot: .
 tests:

@@ -1,0 +1,12 @@
+appId: com.andhraessence.app
+name: TC-HOME-001 Home Screen Renders
+---
+- launchApp
+- waitForAnimationToEnd
+- tapOn: { text: "Skip to Home" }
+- waitForAnimationToEnd
+- waitForAnimationToEnd
+- takeScreenshot: { name: home_01_renders }
+- scroll
+- waitForAnimationToEnd
+- takeScreenshot: { name: home_02_scrolled }

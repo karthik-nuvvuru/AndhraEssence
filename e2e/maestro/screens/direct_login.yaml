@@ -1,0 +1,8 @@
+appId: com.andhraessence.app
+path: maestro/screens/direct_login.yaml
+---
+- launchApp
+- waitForAnimationToEnd
+- openAppState: { appId: com.andhraessence.app }
+- waitForAnimationToEnd
+- runScript: { source: "redirect to auth" }

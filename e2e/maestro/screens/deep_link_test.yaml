@@ -1,0 +1,8 @@
+appId: com.andhraessence.app
+path: maestro/screens/deep_link_test.yaml
+---
+- launchApp
+- waitForAnimationToEnd
+- openAppState: { appId: com.andhraessence.app }
+- waitForAnimationToEnd
+- takeScreenshot: { name: deep_link_start }

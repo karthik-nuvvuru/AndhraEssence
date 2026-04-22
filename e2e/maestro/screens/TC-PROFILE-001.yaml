@@ -1,0 +1,11 @@
+appId: com.andhraessence.app
+name: TC-PROFILE-001 Profile Screen Renders
+---
+- launchApp
+- waitForAnimationToEnd
+- tapOn: { text: "Skip to Home" }
+- waitForAnimationToEnd
+- waitForAnimationToEnd
+- tapOn: { text: "Profile" }
+- waitForAnimationToEnd
+- takeScreenshot: { name: profile_01_renders }

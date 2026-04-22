@@ -1,0 +1,11 @@
+appId: com.andhraessence.app
+name: Quick Login Test
+path: test_login.yaml
+env:
+  EMAIL: customer@example.com
+  PASSWORD: customer123
+---
+- launchApp
+- waitForAnimationToEnd
+- assertVisible: { id: screen-login }
+- takeScreenshot: { name: login_screen }

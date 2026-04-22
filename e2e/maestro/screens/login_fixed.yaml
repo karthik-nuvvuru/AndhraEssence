@@ -1,0 +1,7 @@
+appId: com.andhraessence.app
+path: maestro/screens/login_fixed.yaml
+---
+- launchApp
+- waitForAnimationToEnd
+- tapOn: { text: "Get Started" }
+- waitForAnimationToEnd
