@@ -3,6 +3,7 @@ import { Stack } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import { Platform, LogBox } from "react-native";
+import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { ToastProvider } from "@/components/ui/Toast";
 
 LogBox.ignoreLogs([
@@ -30,17 +31,23 @@ function RootLayoutNav() {
       <Stack.Screen name="restaurant/[id]" />
       <Stack.Screen name="checkout" />
       <Stack.Screen name="order/[id]" />
+      <Stack.Screen name="long-order" />
+      <Stack.Screen name="admin" />
+      <Stack.Screen name="vendor" />
+      <Stack.Screen name="rider" />
     </Stack>
   );
 }
 
 export default function RootLayout() {
   return (
-    <SafeAreaProvider>
-      <ToastProvider>
-        <RootLayoutNav />
-      </ToastProvider>
-      <StatusBar style="dark" />
-    </SafeAreaProvider>
+    <GestureHandlerRootView style={{ flex: 1 }}>
+      <SafeAreaProvider>
+        <ToastProvider>
+          <RootLayoutNav />
+        </ToastProvider>
+        <StatusBar style="dark" />
+      </SafeAreaProvider>
+    </GestureHandlerRootView>
   );
 }

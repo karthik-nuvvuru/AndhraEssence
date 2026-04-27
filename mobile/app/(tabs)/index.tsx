@@ -86,6 +86,7 @@ export default function HomeScreen() {
   const bannerScrollRef = useRef<ScrollView>(null);
   const bannerIndex = useRef(0);
   const bannerAnim = useRef(new Animated.Value(0)).current;
+  const fadeAnims = useRef<Animated.Value[]>([]);
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -114,6 +115,24 @@ export default function HomeScreen() {
   };
 
   useEffect(() => { fetchRestaurants(); }, []);
+
+  // Trigger staggered animations when restaurants load
+  useEffect(() => {
+    if (filteredRestaurants.length > 0) {
+      filteredRestaurants.forEach((_, index) => {
+        if (!fadeAnims.current[index]) {
+          fadeAnims.current[index] = new Animated.Value(0);
+        }
+        Animated.spring(fadeAnims.current[index], {
+          toValue: 1,
+          delay: index * 60,
+          damping: 15,
+          stiffness: 200,
+          useNativeDriver: true,
+        }).start();
+      });
+    }
+  }, [filteredRestaurants.length]);
 
   useEffect(() => {
     if (showVegOnly) {
@@ -290,9 +309,34 @@ export default function HomeScreen() {
     </View>
   );
 
-  const renderRestaurantItem = useCallback(({ item, index }: { item: any; index: number }) => (
-    <View testID={`card-restaurant-${index}`}><RestaurantCard restaurant={item} onPress={() => handleRestaurantPress(item)} /></View>
-  ), [handleRestaurantPress]);
+  const renderRestaurantItem = useCallback(({ item, index }: { item: any; index: number }) => {
+    // Get or create animation value for this index
+    if (!fadeAnims.current[index]) {
+      fadeAnims.current[index] = new Animated.Value(0);
+    }
+    const animValue = fadeAnims.current[index];
+
+    const opacity = animValue.interpolate({
+      inputRange: [0, 1],
+      outputRange: [0, 1],
+    });
+    const translateY = animValue.interpolate({
+      inputRange: [0, 1],
+      outputRange: [20, 0],
+    });
+
+    return (
+      <Animated.View
+        testID={`card-restaurant-${index}`}
+        style={{
+          opacity,
+          transform: [{ translateY }],
+        }}
+      >
+        <RestaurantCard restaurant={item} onPress={() => handleRestaurantPress(item)} />
+      </Animated.View>
+    );
+  }, [handleRestaurantPress]);
 
   const renderSkeleton = () => <View style={styles.skeletonSection}>{[1, 2, 3, 4].map((i) => <ShimmerCard key={i} />)}</View>;
 
@@ -398,7 +442,18 @@ const styles = StyleSheet.create({
   heroTitle: { ...typography.hero, color: colors.textPrimary },
   heroSubtitle: { ...typography.body, color: colors.textSecondary, marginTop: spacing.xs },
   searchBarContainer: { marginBottom: spacing.sm },
-  searchBar: { flexDirection: "row", alignItems: "center", backgroundColor: colors.backgroundCard, borderRadius: borderRadius.full, borderWidth: 1, borderColor: colors.border, paddingHorizontal: spacing.md, paddingVertical: spacing.md, gap: spacing.sm },
+  searchBar: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: colors.backgroundCard,
+    borderRadius: borderRadius.full,
+    borderWidth: 1,
+    borderColor: colors.border,
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.md + 4,
+    gap: spacing.sm,
+    minHeight: 52,
+  },
   searchPlaceholder: { ...typography.body, color: colors.textTertiary, flex: 1 },
   stickyHeader: { position: "absolute", top: 0, left: 0, right: 0, backgroundColor: colors.backgroundSecondary, borderBottomWidth: 1, borderBottomColor: colors.border, zIndex: 100, paddingHorizontal: spacing.md, paddingBottom: spacing.sm },
   stickyHeaderContent: { flexDirection: "row", alignItems: "center", justifyContent: "space-between" },

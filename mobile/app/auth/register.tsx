@@ -17,6 +17,7 @@ import { Mail, Lock, Phone, User, Eye, EyeOff } from "lucide-react-native";
 import { spacing, colors, typography, borderRadius } from "@/theme";
 import { authApi } from "@/services/api/endpoints";
 import { useAuthStore } from "@/store";
+import { getRoleRedirectPath } from "@/utils/roleRedirect";
 
 export default function RegisterScreen() {
   const [fullName, setFullName] = useState("");
@@ -160,7 +161,7 @@ export default function RegisterScreen() {
       );
 
       Alert.alert("Success", "Account created successfully", [
-        { text: "OK", onPress: () => router.replace("/") },
+        { text: "OK", onPress: () => router.replace(getRoleRedirectPath(user.role)) },
       ]);
     } catch (error: any) {
       Animated.sequence([

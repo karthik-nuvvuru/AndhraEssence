@@ -26,6 +26,10 @@ import {
   Gift,
   Star,
   Loader,
+  Settings,
+  BarChart3,
+  UtensilsCrossed,
+  Bike,
 } from "lucide-react-native";
 import { colors, typography, spacing, borderRadius, shadows } from "@/theme";
 import { useAuthStore } from "@/store";
@@ -128,6 +132,29 @@ export default function ProfileScreen() {
     };
     fetchStats();
   }, [user]);
+
+  // Role-specific menu items
+  const getRoleMenuItems = () => {
+    const items = [];
+    if (user?.role === "admin") {
+      items.push(
+        { icon: <Settings size={18} color={colors.accent} />, title: "Admin Panel", subtitle: "Manage app settings", onPress: () => router.push("/admin/dashboard"), testID: "btn-admin-panel", isNew: true }
+      );
+    }
+    if (user?.role === "restaurant_owner") {
+      items.push(
+        { icon: <UtensilsCrossed size={18} color={colors.primary} />, title: "Vendor Dashboard", subtitle: "Manage your restaurant", onPress: () => router.push("/vendor/dashboard"), testID: "btn-vendor-dashboard", isNew: true }
+      );
+    }
+    if (user?.role === "rider") {
+      items.push(
+        { icon: <Bike size={18} color={colors.success} />, title: "Rider Dashboard", subtitle: "Manage deliveries", onPress: () => router.push("/rider/dashboard"), testID: "btn-rider-dashboard", isNew: true }
+      );
+    }
+    return items;
+  };
+
+  const roleMenuItems = getRoleMenuItems();
 
   const menuItems = [
     { icon: <MapPin size={18} color={colors.primary} />, title: "My Addresses", subtitle: "Manage delivery addresses", onPress: () => router.push("/profile/addresses"), testID: "btn-my-addresses" },
@@ -241,6 +268,26 @@ export default function ProfileScreen() {
             <Text style={styles.statLabel}>Reviews</Text>
           </View>
         </View>
+
+        {/* Role-specific Dashboard Access */}
+        {roleMenuItems.length > 0 && (
+          <View style={styles.menuSection}>
+            <Text style={styles.sectionLabel}>Dashboard</Text>
+            <View style={styles.glassCard}>
+              {roleMenuItems.map((item, index) => (
+                <MenuItem
+                  key={index}
+                  icon={item.icon}
+                  title={item.title}
+                  subtitle={item.subtitle}
+                  onPress={item.onPress}
+                  isLast={index === roleMenuItems.length - 1}
+                  testID={item.testID}
+                />
+              ))}
+            </View>
+          </View>
+        )}
 
         {/* Account Settings */}
         <View style={styles.menuSection}>

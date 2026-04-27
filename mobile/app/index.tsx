@@ -15,6 +15,7 @@ import Animated, {
 import { colors, typography, spacing, borderRadius } from "@/theme";
 import { useAuthStore } from "@/store";
 import { STORAGE_KEYS } from "@/utils/constants";
+import { getRoleRedirectPath } from "@/utils/roleRedirect";
 
 export default function Index() {
   const router = useRouter();
@@ -45,9 +46,9 @@ export default function Index() {
     const checkInitialState = async () => {
       try {
         const onboardingCompleted = await AsyncStorage.getItem(STORAGE_KEYS.ONBOARDING_COMPLETED);
-        const isAuth = useAuthStore.getState().isAuthenticated;
-        if (isAuth) {
-          router.replace("/(tabs)");
+        const authState = useAuthStore.getState();
+        if (authState.isAuthenticated) {
+          router.replace(getRoleRedirectPath(authState.user?.role));
         } else if (onboardingCompleted === "true") {
           router.replace("/auth/login");
         }
