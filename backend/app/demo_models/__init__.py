@@ -4,6 +4,12 @@ This module provides SQLite-compatible versions of all models
 for use when demo_mode=True in settings.
 """
 
+from app.demo_models.long_order import (
+    LongOrder,
+    LongOrderCategory,
+    LongOrderItem,
+    LongOrderOrderItem,
+)
 from app.demo_models.order import Order, OrderItem
 from app.demo_models.payment import Payment, Promotion
 from app.demo_models.restaurant import MenuCategory, MenuItem, Restaurant
@@ -25,4 +31,8 @@ __all__ = [
     "Promotion",
     "Review",
     "Notification",
+    "LongOrder",
+    "LongOrderCategory",
+    "LongOrderItem",
+    "LongOrderOrderItem",
 ]

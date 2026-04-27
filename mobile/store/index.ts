@@ -268,3 +268,97 @@ export const useUIStore = create<UIState>((set) => ({
   setLocationEnabled: (enabled) => set({ isLocationEnabled: enabled }),
   setCurrentLocation: (location) => set({ currentLocation: location }),
 }));
+
+// Long Order Cart Store
+export interface LongOrderCartItemState {
+  menuItem: {
+    id: string;
+    name: string;
+    price: number;
+    image_url: string | null;
+    preparation_days: number;
+    unit: string;
+  };
+  quantity: number;
+}
+
+interface LongOrderCartState {
+  items: LongOrderCartItemState[];
+  addressId: string | null;
+
+  addItem: (
+    menuItem: LongOrderCartItemState["menuItem"],
+    quantity?: number
+  ) => void;
+  updateQuantity: (itemId: string, quantity: number) => void;
+  removeItem: (itemId: string) => void;
+  setAddress: (addressId: string) => void;
+  clearCart: () => void;
+  getSubtotal: () => number;
+  getItemCount: () => number;
+  getMaxPrepDays: () => number;
+}
+
+export const useLongOrderCartStore = create<LongOrderCartState>()(
+  persist(
+    (set, get) => ({
+      items: [],
+      addressId: null,
+
+      addItem: (menuItem, quantity = 1) => {
+        const items = get().items;
+        const existingIndex = items.findIndex(
+          (i) => i.menuItem.id === menuItem.id
+        );
+
+        if (existingIndex >= 0) {
+          const newItems = [...items];
+          newItems[existingIndex].quantity += quantity;
+          set({ items: newItems });
+        } else {
+          set({
+            items: [...items, { menuItem, quantity }],
+          });
+        }
+      },
+
+      updateQuantity: (itemId, quantity) => {
+        if (quantity <= 0) {
+          set({ items: get().items.filter((i) => i.menuItem.id !== itemId) });
+        } else {
+          set({
+            items: get().items.map((i) =>
+              i.menuItem.id === itemId ? { ...i, quantity } : i
+            ),
+          });
+        }
+      },
+
+      removeItem: (itemId) =>
+        set({ items: get().items.filter((i) => i.menuItem.id !== itemId) }),
+
+      setAddress: (addressId) => set({ addressId }),
+
+      clearCart: () => set({ items: [], addressId: null }),
+
+      getSubtotal: () =>
+        get().items.reduce(
+          (sum, item) => sum + item.menuItem.price * item.quantity,
+          0
+        ),
+
+      getItemCount: () =>
+        get().items.reduce((sum, item) => sum + item.quantity, 0),
+
+      getMaxPrepDays: () => {
+        const items = get().items;
+        if (items.length === 0) return 0;
+        return Math.max(...items.map((i) => i.menuItem.preparation_days));
+      },
+    }),
+    {
+      name: "long-order-cart-storage",
+      storage: getStorage(),
+    }
+  )
+);
