@@ -1,0 +1,23 @@
+appId: com.andhraessence.app
+path: maestro/screens/full_login_flow.yaml
+---
+- launchApp
+- waitForAnimationToEnd
+- tapOn: { text: "Get Started" }
+- waitForAnimationToEnd
+- swipe: { direction: left }
+- waitForAnimationToEnd
+- swipe: { direction: left }
+- waitForAnimationToEnd
+- swipe: { direction: left }
+- waitForAnimationToEnd
+- assertVisible: { id: input-email }
+- assertVisible: { id: input-password }
+- tapOn: { id: input-email }
+- inputText: "customer@example.com"
+- tapOn: { id: input-password }
+- inputText: "customer123"
+- tapOn: { id: btn-signin }
+- waitForAnimationToEnd
+- waitForAnimationToEnd
+- waitForAnimationToEnd

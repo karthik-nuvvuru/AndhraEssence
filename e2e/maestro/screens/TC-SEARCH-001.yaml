@@ -1,0 +1,11 @@
+appId: com.andhraessence.app
+name: TC-SEARCH-001 Search Screen Renders
+---
+- launchApp
+- waitForAnimationToEnd
+- tapOn: { text: "Skip to Home" }
+- waitForAnimationToEnd
+- waitForAnimationToEnd
+- tapOn: { text: "Search" }
+- waitForAnimationToEnd
+- takeScreenshot: { name: search_01_renders }

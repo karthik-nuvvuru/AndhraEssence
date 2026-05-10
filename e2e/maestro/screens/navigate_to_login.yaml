@@ -1,0 +1,9 @@
+appId: com.andhraessence.app
+path: maestro/screens/navigate_to_login.yaml
+---
+- launchApp
+- waitForAnimationToEnd
+- tapOn: { text: "Skip to Home" }
+- waitForAnimationToEnd
+- tapOn: { text: "Profile" }
+- waitForAnimationToEnd

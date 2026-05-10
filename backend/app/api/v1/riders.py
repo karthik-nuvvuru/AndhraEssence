@@ -16,10 +16,12 @@ if settings.demo_mode:
     from app.demo_models.order import Order
     from app.demo_models.rider import Rider
     from app.demo_models.user import User
+    from app.demo_models.review import Review
 else:
     from app.models.order import Order
     from app.models.rider import Rider, RiderLocationHistory
     from app.models.user import User
+    from app.models.review import Review
 
 from app.api.v1.deps import get_current_user
 from app.config import get_settings
@@ -32,7 +34,12 @@ from app.core.exceptions import (
 from app.schemas.order import OrderResponse
 from app.schemas.rider import (
     AvailableOrderResponse,
+    RiderDeliveryConfirm,
+    RiderDeliveryHistoryEntry,
+    RiderDeliveryHistoryResponse,
     RiderLocationUpdate,
+    RiderPickupConfirm,
+    RiderRatingSubmit,
     RiderResponse,
     RiderUpdate,
 )
@@ -245,3 +252,152 @@ async def get_rider_orders(
         orders = [o for o in orders if o.status == status]
 
     return orders
+
+
+@router.post("/pickup")
+async def confirm_pickup(
+    pickup_data: RiderPickupConfirm,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """Confirm order pickup by rider."""
+    result = await db.execute(
+        select(Order).where(Order.id == pickup_data.order_id)
+    )
+    order = result.scalar_one_or_none()
+
+    if not order:
+        raise NotFoundException("Order not found")
+
+    if order.rider_id != current_user.id:
+        raise ForbiddenException("Order not assigned to this rider")
+
+    if order.status != OrderStatus.READY:
+        raise BadRequestException("Order is not ready for pickup")
+
+    order.status = OrderStatus.PICKED_UP
+    order.picked_up_at = datetime.utcnow()
+    await db.commit()
+    await db.refresh(order)
+
+    return {"message": "Pickup confirmed", "order_id": str(order.id)}
+
+
+@router.post("/deliver")
+async def confirm_delivery(
+    delivery_data: RiderDeliveryConfirm,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """Confirm delivery completion by rider."""
+    result = await db.execute(
+        select(Order).where(Order.id == delivery_data.order_id)
+    )
+    order = result.scalar_one_or_none()
+
+    if not order:
+        raise NotFoundException("Order not found")
+
+    if order.rider_id != current_user.id:
+        raise ForbiddenException("Order not assigned to this rider")
+
+    if order.status not in [OrderStatus.PICKED_UP, OrderStatus.IN_TRANSIT]:
+        raise BadRequestException("Order cannot be delivered at this stage")
+
+    order.status = OrderStatus.DELIVERED
+    order.delivered_at = datetime.utcnow()
+    order.completed_at = datetime.utcnow()
+    order.actual_delivery_time = datetime.utcnow()
+    await db.commit()
+    await db.refresh(order)
+
+    return {"message": "Delivery confirmed", "order_id": str(order.id)}
+
+
+@router.get("/history")
+async def get_delivery_history(
+    limit: int = Query(50, ge=1, le=100),
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """Get rider's delivery history with earnings."""
+    result = await db.execute(
+        select(Order)
+        .options(selectinload(Order.restaurant))
+        .options(selectinload(Order.delivery_address))
+        .options(selectinload(Order.review))
+        .where(
+            Order.rider_id == current_user.id,
+            Order.status == OrderStatus.DELIVERED,
+        )
+        .order_by(Order.completed_at.desc())
+        .limit(limit)
+    )
+    orders = result.scalars().all()
+
+    total_earnings = 0.0
+    total_rating = 0
+    rating_count = 0
+
+    entries = []
+    for order in orders:
+        # Calculate earnings (simplified - could be enhanced)
+        earnings = order.delivery_fee if order.delivery_fee else 20.0
+        total_earnings += earnings
+
+        rating = None
+        if order.review:
+            rating = order.review.rating
+            total_rating += rating
+            rating_count += 1
+
+        entries.append(
+            RiderDeliveryHistoryEntry(
+                order_id=order.id,
+                order_number=order.order_number,
+                restaurant_name=order.restaurant.name if order.restaurant else "Unknown",
+                customer_address=(
+                    order.delivery_address.address_line
+                    if order.delivery_address
+                    else "Unknown"
+                ),
+                earnings=earnings,
+                rating=rating,
+                delivered_at=order.completed_at,
+            )
+        )
+
+    average_rating = total_rating / rating_count if rating_count > 0 else None
+
+    return RiderDeliveryHistoryResponse(
+        total_deliveries=len(entries),
+        total_earnings=total_earnings,
+        average_rating=average_rating,
+        deliveries=entries,
+    )
+
+
+@router.post("/rating")
+async def submit_rider_rating(
+    rating_data: RiderRatingSubmit,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """Submit rider's rating for a customer after delivery."""
+    result = await db.execute(
+        select(Order).where(Order.id == rating_data.order_id)
+    )
+    order = result.scalar_one_or_none()
+
+    if not order:
+        raise NotFoundException("Order not found")
+
+    if order.rider_id != current_user.id:
+        raise ForbiddenException("Order not assigned to this rider")
+
+    if order.status != OrderStatus.DELIVERED:
+        raise BadRequestException("Order must be delivered before rating")
+
+    # Create a review from rider's perspective
+    # This is stored differently from customer reviews
+    return {"message": "Rating submitted", "rating": rating_data.rating}

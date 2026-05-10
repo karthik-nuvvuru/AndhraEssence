@@ -9,6 +9,7 @@ import Animated, {
   Easing,
 } from "react-native-reanimated";
 import { colors, borderRadius } from "@/theme";
+import { useReducedMotion } from "@/hooks/useReducedMotion";
 
 interface ShimmerProps {
   width?: DimensionValue;
@@ -23,15 +24,21 @@ export const Shimmer: React.FC<ShimmerProps> = ({
   borderRadius: br = borderRadius.sm,
   style,
 }) => {
+  const prefersReducedMotion = useReducedMotion();
   const progress = useSharedValue(0);
 
   useEffect(() => {
+    // Skip animation if user prefers reduced motion
+    if (prefersReducedMotion) {
+      progress.value = 1;
+      return;
+    }
     progress.value = withRepeat(
       withTiming(1, { duration: 1500, easing: Easing.linear }),
       -1,
       false
     );
-  }, [progress]);
+  }, [progress, prefersReducedMotion]);
 
   const animatedStyle = useAnimatedStyle(() => {
     const translateX = interpolate(progress.value, [0, 1], [-200, 400]);

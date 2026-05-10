@@ -1,0 +1,11 @@
+appId: com.andhraessence.app
+name: TC-CART-001 Cart Screen Renders
+---
+- launchApp
+- waitForAnimationToEnd
+- tapOn: { text: "Skip to Home" }
+- waitForAnimationToEnd
+- waitForAnimationToEnd
+- tapOn: { text: "Cart" }
+- waitForAnimationToEnd
+- takeScreenshot: { name: cart_01_renders }

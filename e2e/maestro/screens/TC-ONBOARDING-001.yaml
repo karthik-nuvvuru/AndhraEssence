@@ -1,0 +1,9 @@
+appId: com.andhraessence.app
+name: TC-ONBOARDING-001 Onboarding Renders
+---
+- launchApp
+- waitForAnimationToEnd
+- takeScreenshot: { name: onboarding_01_landing }
+- tapOn: { text: "Get Started" }
+- waitForAnimationToEnd
+- takeScreenshot: { name: onboarding_02_first_slide }

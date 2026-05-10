@@ -1,0 +1,18 @@
+appId: com.andhraessence.app
+path: maestro/screens/login_test.yaml
+---
+- launchApp
+- waitForAnimationToEnd
+- tapOn: { text: "Skip to Home" }
+- waitForAnimationToEnd
+- assertVisible: { id: input-email }
+- tapOn: { id: input-email }
+- inputText: "customer@example.com"
+- tapOn: { id: input-password }
+- inputText: "customer123"
+- tapOn: { id: btn-signin }
+- waitForAnimationToEnd
+- waitForAnimationToEnd
+- waitForAnimationToEnd
+- waitForAnimationToEnd
+- waitForAnimationToEnd

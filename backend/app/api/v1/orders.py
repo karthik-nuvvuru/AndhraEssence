@@ -155,7 +155,8 @@ async def create_order(
     tax_amount = round(subtotal * settings.gst_rate, 2)
     delivery_fee = restaurant.delivery_fee
     discount_amount = await apply_promo_code(db, order_data.promo_code, subtotal)
-    total_amount = round(subtotal + tax_amount + delivery_fee - discount_amount, 2)
+    tip_amount = round(max(0.0, order_data.tip_amount), 2)
+    total_amount = round(subtotal + tax_amount + delivery_fee - discount_amount + tip_amount, 2)
 
     if subtotal < restaurant.minimum_order:
         raise BadRequestException(f"Minimum order amount is {restaurant.minimum_order}")
@@ -169,6 +170,7 @@ async def create_order(
         tax_amount=tax_amount,
         delivery_fee=delivery_fee,
         discount_amount=discount_amount,
+        tip_amount=tip_amount,
         total_amount=total_amount,
         payment_method=order_data.payment_method,
         promo_code=order_data.promo_code,
@@ -207,15 +209,30 @@ async def list_orders(
     count_query = select(func.count()).select_from(query.subquery())
     total = (await db.execute(count_query)).scalar()
 
-    # Paginate
+    # Paginate with restaurant eager-loaded so restaurant_name is populated
     query = (
-        query.offset((page - 1) * limit).limit(limit).order_by(Order.created_at.desc())
+        query.options(selectinload(Order.restaurant))
+        .offset((page - 1) * limit)
+        .limit(limit)
+        .order_by(Order.created_at.desc())
     )
     result = await db.execute(query)
     orders = result.scalars().all()
 
+    items = [
+        OrderBrief(
+            id=o.id,
+            order_number=o.order_number,
+            restaurant_name=o.restaurant.name if o.restaurant else None,
+            total_amount=o.total_amount,
+            status=o.status,
+            placed_at=o.placed_at,
+        )
+        for o in orders
+    ]
+
     return PaginatedResponse(
-        items=[OrderBrief.model_validate(o) for o in orders],
+        items=items,
         total=total,
         page=page,
         limit=limit,

@@ -1,10 +1,12 @@
 // Premium Restaurant Card - Liquid Glass Design
-import React, { useState } from "react";
-import { View, Text, Image, StyleSheet, TouchableOpacity, ImageErrorEventData, NativeSyntheticEvent } from "react-native";
+import React, { useState, useRef, useCallback } from "react";
+import { View, Text, Image, StyleSheet, Pressable, ImageErrorEventData, NativeSyntheticEvent, Animated, Platform } from "react-native";
 import { Star, MapPin, Clock } from "lucide-react-native";
 import { colors, typography, spacing, borderRadius, shadows } from "@/theme";
 import { formatCurrency } from "@/utils/formatters";
+import * as Haptics from "expo-haptics";
 import type { Restaurant } from "@/types/api";
+import { useReducedMotion } from "@/hooks/useReducedMotion";
 
 interface RestaurantCardProps {
   restaurant: Restaurant;
@@ -31,7 +33,6 @@ function getFallbackColor(name: string): string {
 
 function getInitials(name: string): string {
   if (!name) return "?";
-  // Get first letter only for cleaner fallback
   return name.charAt(0).toUpperCase();
 }
 
@@ -40,7 +41,9 @@ export const RestaurantCard: React.FC<RestaurantCardProps> = React.memo(({
   onPress,
 }) => {
   const [imageError, setImageError] = useState(false);
-  const [_imageLoading, setImageLoading] = useState(true);
+  const [imageLoading, setImageLoading] = useState(true);
+  const prefersReducedMotion = useReducedMotion();
+  const scaleAnim = useRef(new Animated.Value(1)).current;
 
   // Null guards for all props
   const restaurantName = restaurant?.name ?? "Restaurant";
@@ -52,87 +55,118 @@ export const RestaurantCard: React.FC<RestaurantCardProps> = React.memo(({
   const isOpen = restaurant?.is_open === true;
   const coverImageUrl = restaurant?.cover_image_url || restaurant?.image_url;
 
-  const handleImageError = (e: NativeSyntheticEvent<ImageErrorEventData>) => {
+  const handleImageError = useCallback(() => {
     setImageError(true);
     setImageLoading(false);
-  };
+  }, []);
 
-  const handleImageLoad = () => {
+  const handleImageLoad = useCallback(() => {
     setImageLoading(false);
-  };
+  }, []);
+
+  const handlePressIn = useCallback(() => {
+    if (prefersReducedMotion) return;
+    Animated.spring(scaleAnim, {
+      toValue: 0.97,
+      useNativeDriver: true,
+      damping: 15,
+      stiffness: 300,
+    }).start();
+  }, [prefersReducedMotion, scaleAnim]);
+
+  const handlePressOut = useCallback(() => {
+    if (prefersReducedMotion) return;
+    Animated.spring(scaleAnim, {
+      toValue: 1,
+      useNativeDriver: true,
+      damping: 15,
+      stiffness: 300,
+    }).start();
+  }, [prefersReducedMotion, scaleAnim]);
+
+  const handlePress = useCallback(() => {
+    if (Platform.OS !== 'web') {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    }
+    onPress();
+  }, [onPress]);
 
   // Determine what to show in the image area
-  // Only show placeholder if no URL or image errored (not while loading)
   const showPlaceholder = !coverImageUrl || imageError;
   const placeholderColor = getFallbackColor(restaurantName);
 
   return (
-    <TouchableOpacity onPress={onPress} activeOpacity={0.85} style={styles.wrapper}>
-      <View style={styles.card}>
-        {/* Image section with gradient overlay */}
-        <View style={styles.imageContainer}>
-          {showPlaceholder ? (
-            // Placeholder with initials
-            <View style={[styles.placeholderImage, { backgroundColor: placeholderColor }]}>
-              <Text style={styles.placeholderText}>{getInitials(restaurantName)}</Text>
+    <Animated.View style={[styles.wrapper, { transform: [{ scale: scaleAnim }] }]}>
+      <Pressable
+        onPressIn={handlePressIn}
+        onPressOut={handlePressOut}
+        onPress={handlePress}
+      >
+        <View style={styles.card}>
+          {/* Image section with gradient overlay */}
+          <View style={styles.imageContainer}>
+            {showPlaceholder ? (
+              <View style={[styles.placeholderImage, { backgroundColor: placeholderColor }]}>
+                <Text style={styles.placeholderText}>{getInitials(restaurantName)}</Text>
+              </View>
+            ) : (
+              <Image
+                source={{ uri: coverImageUrl }}
+                style={styles.coverImage}
+                onError={handleImageError}
+                onLoad={handleImageLoad}
+                resizeMode="cover"
+              />
+            )}
+            <View style={styles.gradientOverlay} />
+
+            {/* Status Badge */}
+            <View style={styles.statusBadge}>
+              <View style={[styles.statusDot, { backgroundColor: isOpen ? colors.success : colors.error }]} />
+              <Text style={styles.statusText}>{isOpen ? "Open" : "Closed"}</Text>
             </View>
-          ) : (
-            <Image
-              source={{ uri: coverImageUrl }}
-              style={styles.coverImage}
-              onError={handleImageError}
-              onLoad={handleImageLoad}
-              resizeMode="cover"
-            />
-          )}
-          <View style={styles.gradientOverlay} />
 
-          {/* Status Badge */}
-          <View style={styles.statusBadge}>
-            <View style={[styles.statusDot, { backgroundColor: isOpen ? colors.success : colors.error }]} />
-            <Text style={styles.statusText}>{isOpen ? "Open" : "Closed"}</Text>
+            {/* Delivery Info */}
+            <View style={styles.deliveryBadge}>
+              <Clock size={11} color={colors.textPrimary} />
+              <Text style={styles.deliveryTimeText}>
+                ₹{deliveryFee} delivery
+              </Text>
+            </View>
           </View>
 
-          {/* Delivery Info */}
-          <View style={styles.deliveryBadge}>
-            <Clock size={11} color={colors.textPrimary} />
-            <Text style={styles.deliveryTimeText}>
-              ₹{deliveryFee} delivery
-            </Text>
-          </View>
-        </View>
+          {/* Content Section */}
+          <View style={styles.content}>
+            <View style={styles.nameRow}>
+              <Text style={styles.name} numberOfLines={1}>{restaurantName}</Text>
+              {rating > 0 && (
+                <View style={styles.ratingBadge}>
+                  <Star size={10} color={colors.accent} />
+                  <Text style={styles.ratingText}>{rating.toFixed(1)}</Text>
+                </View>
+              )}
+            </View>
 
-        {/* Content Section */}
-        <View style={styles.content}>
-          <View style={styles.nameRow}>
-            <Text style={styles.name} numberOfLines={1}>{restaurantName}</Text>
-            {rating > 0 && (
-              <View style={styles.ratingBadge}>
-                <Star size={10} color={colors.accent} />
-                <Text style={styles.ratingText}>{rating.toFixed(1)}</Text>
+            {cuisineType && (
+              <View style={styles.cuisineRow}>
+                <MapPin size={12} color={colors.textTertiary} />
+                <Text style={styles.cuisine} numberOfLines={1}>{cuisineType}</Text>
               </View>
             )}
-          </View>
 
-          {cuisineType && (
-            <View style={styles.cuisineRow}>
-              <MapPin size={12} color={colors.textTertiary} />
-              <Text style={styles.cuisine} numberOfLines={1}>{cuisineType}</Text>
-            </View>
-          )}
-
-          <Text style={styles.address} numberOfLines={1}>
-            {addressLine1}{addressLine1 && city ? `, ${city}` : city}
-          </Text>
-
-          {deliveryFee > 0 && (
-            <Text style={styles.deliveryFeeText}>
-              {formatCurrency(deliveryFee)} delivery
+            <Text style={styles.address} numberOfLines={1}>
+              {addressLine1}{addressLine1 && city ? `, ${city}` : city}
             </Text>
-          )}
+
+            {deliveryFee > 0 && (
+              <Text style={styles.deliveryFeeText}>
+                {formatCurrency(deliveryFee)} delivery
+              </Text>
+            )}
+          </View>
         </View>
-      </View>
-    </TouchableOpacity>
+      </Pressable>
+    </Animated.View>
   );
 });
 

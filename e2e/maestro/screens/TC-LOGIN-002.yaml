@@ -1,0 +1,20 @@
+appId: com.andhraessence.app
+name: TC-LOGIN-002 Email Validation Empty
+env:
+  EMAIL: customer@example.com
+  PASSWORD: customer123
+---
+- launchApp
+- waitForAnimationToEnd
+- tapOn: { text: "Skip to Home" }
+- waitForAnimationToEnd
+- tapOn: { text: "Profile" }
+- waitForAnimationToEnd
+- waitForAnimationToEnd
+- tapOn: { id: input-email }
+- inputText: ""
+- tapOn: { id: input-password }
+- inputText: "testpass"
+- tapOn: { id: btn-signin }
+- waitForAnimationToEnd
+- takeScreenshot: { name: login_empty_email_error }

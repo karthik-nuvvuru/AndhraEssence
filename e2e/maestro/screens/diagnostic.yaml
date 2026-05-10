@@ -1,0 +1,9 @@
+appId: com.andhraessence.app
+path: maestro/screens/diagnostic.yaml
+---
+- launchApp
+- waitForAnimationToEnd
+- waitForAnimationToEnd
+- waitForAnimationToEnd
+- waitForAnimationToEnd
+- takeScreenshot: { name: 01_after_launch }

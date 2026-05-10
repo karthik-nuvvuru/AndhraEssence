@@ -120,7 +120,7 @@ export default function CheckoutScreen() {
     const address = addresses.find(a => a.id === selectedAddressId);
     Alert.alert(
       "Confirm Order",
-      `Total: ${formatCurrency(total)}\nDelivery to: ${address?.address_line1 || "selected address"}\nPayment: ${paymentMethod === "razorpay" ? "Credit/Debit Card" : paymentMethod === "wallet" ? "Wallet" : "Cash on Delivery"}`,
+      `Total: ${formatCurrency(total)}\nDelivery to: ${address?.address_line || "selected address"}\nPayment: ${paymentMethod === "razorpay" ? "Credit/Debit Card" : paymentMethod === "wallet" ? "Wallet" : "Cash on Delivery"}`,
       [
         { text: "Cancel", style: "cancel" },
         { text: "Confirm", onPress: handlePlaceOrder, style: "default" },
@@ -217,7 +217,7 @@ export default function CheckoutScreen() {
             ) : addresses.length === 0 ? (
               <View style={styles.noAddressContainer}>
                 <Text style={styles.noAddressText}>No saved addresses</Text>
-                <Button title="Add Address" variant="outline" size="sm" onPress={() => {}} />
+                <Button title="Add Address" variant="outline" size="sm" onPress={() => router.push("/profile/addresses")} />
               </View>
             ) : (
               <TouchableOpacity
@@ -245,7 +245,7 @@ export default function CheckoutScreen() {
                         )}
                       </View>
                       <Text style={styles.addressText}>
-                        {selectedAddress.address_line1}, {selectedAddress.city}
+                        {selectedAddress.address_line}, {selectedAddress.city}
                       </Text>
                       <Text style={styles.addressSubtext}>
                         {selectedAddress.state} {selectedAddress.postal_code}
@@ -255,7 +255,13 @@ export default function CheckoutScreen() {
                     <Text style={styles.addressPlaceholder}>Select an address</Text>
                   )}
                 </View>
-                <TouchableOpacity style={styles.changeButton} testID="btn-change-address">
+                <TouchableOpacity style={styles.changeButton} testID="btn-change-address"
+                  onPress={() => {
+                    const idx = addresses.findIndex(a => a.id === selectedAddressId);
+                    const next = (idx + 1) % addresses.length;
+                    setSelectedAddressId(addresses[next].id);
+                  }}
+                >
                   <Text style={styles.changeButtonText}>Change</Text>
                 </TouchableOpacity>
               </TouchableOpacity>

@@ -2,7 +2,7 @@ import {
   getDevicePushTokenAsync,
 } from "expo-notifications";
 import * as Notifications from "expo-notifications";
-import { Platform } from "react-native";
+import { Platform, Linking } from "react-native";
 import { deviceApi } from "@/services/api/endpoints";
 
 // Configure notification behavior
@@ -170,10 +170,11 @@ export async function handleNotificationTap(
     case "order_update":
     case "order_status":
       if (data.orderId) {
-        // Navigate to order tracking - use Linking for deep linking
         const deepLinkUrl = `andhraessence://order/${data.orderId}`;
         console.log("[NotificationService] Navigating to order:", deepLinkUrl);
-        // The URL will be handled by the system's linking handler
+        if (Platform.OS !== "web") {
+          await Linking.openURL(deepLinkUrl);
+        }
       }
       break;
 
@@ -181,14 +182,19 @@ export async function handleNotificationTap(
       if (data.restaurantId) {
         const deepLinkUrl = `andhraessence://restaurant/${data.restaurantId}`;
         console.log("[NotificationService] Navigating to restaurant:", deepLinkUrl);
+        if (Platform.OS !== "web") {
+          await Linking.openURL(deepLinkUrl);
+        }
       }
       break;
 
     case "promotion":
     case "general":
     default:
-      // Open the app to the home screen
       console.log("[NotificationService] Opening home screen");
+      if (Platform.OS !== "web") {
+        await Linking.openURL("andhraessence://");
+      }
       break;
   }
 }

@@ -46,6 +46,9 @@ class User(Base):
     notifications = relationship(
         "Notification", back_populates="user", cascade="all, delete-orphan"
     )
+    long_orders = relationship(
+        "LongOrder", back_populates="customer", foreign_keys="LongOrder.customer_id"
+    )
 
     def __repr__(self):
         return f"<User {self.email} ({self.role})>"
@@ -72,6 +75,7 @@ class Address(Base):
     # Relationships
     user = relationship("User", back_populates="addresses")
     orders = relationship("Order", back_populates="delivery_address")
+    long_orders = relationship("LongOrder", back_populates="delivery_address")
 
     def __repr__(self):
         return f"<Address {self.label}: {self.address_line}>"

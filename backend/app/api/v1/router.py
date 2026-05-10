@@ -3,6 +3,7 @@ from fastapi import APIRouter
 from app.api.v1 import (
     admin,
     auth,
+    long_orders,
     menu,
     notifications,
     orders,
@@ -11,6 +12,7 @@ from app.api.v1 import (
     restaurants,
     riders,
     users,
+    vendor,
 )
 
 api_router = APIRouter()
@@ -28,3 +30,5 @@ api_router.include_router(riders.router, prefix="/riders", tags=["Riders"])
 api_router.include_router(notifications.router, tags=["Notifications"])
 api_router.include_router(admin.router, prefix="/admin", tags=["Admin"])
 api_router.include_router(promotions.router, prefix="/promotions", tags=["Promotions"])
+api_router.include_router(vendor.router, prefix="/vendor", tags=["Vendor"])
+api_router.include_router(long_orders.router, prefix="/long-orders", tags=["Long Orders"])

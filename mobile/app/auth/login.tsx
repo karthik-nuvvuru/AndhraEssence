@@ -8,13 +8,16 @@ import {
   TextInput,
   Pressable,
   KeyboardAvoidingView,
+  Alert,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { router } from "expo-router";
 import { Mail, Lock, Eye, EyeOff } from "lucide-react-native";
-import { spacing, colors, typography, borderRadius } from "@/theme";
+import { spacing, colors, typography, borderRadius, shadows } from "@/theme";
 import { authApi } from "@/services/api/endpoints";
 import { useAuthStore } from "@/store";
+import { useToast } from "@/components/ui/Toast";
+import { getRoleRedirectPath } from "@/utils/roleRedirect";
 
 export default function LoginScreen() {
   const [email, setEmail] = useState("");
@@ -24,6 +27,7 @@ export default function LoginScreen() {
   const [passwordError, setPasswordError] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const { setAuth } = useAuthStore();
+  const { showToast } = useToast();
 
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const slideAnim = useRef(new Animated.Value(40)).current;
@@ -137,13 +141,15 @@ export default function LoginScreen() {
         access_token,
         refresh_token
       );
-      router.replace("/");
-    } catch {
+      router.replace(getRoleRedirectPath(user.role) as any);
+    } catch (err: any) {
       Animated.sequence([
         Animated.timing(buttonScaleAnim, { toValue: 0.95, duration: 50, useNativeDriver: true }),
         Animated.timing(buttonScaleAnim, { toValue: 1.02, duration: 100, useNativeDriver: true }),
         Animated.timing(buttonScaleAnim, { toValue: 1, duration: 50, useNativeDriver: true }),
       ]).start();
+      const message = err.response?.data?.detail || "Invalid email or password. Please try again.";
+      showToast(message, "error");
     } finally {
       setLoading(false);
     }
@@ -252,7 +258,7 @@ export default function LoginScreen() {
               </View>
 
               {/* Forgot */}
-              <Pressable style={styles.forgotRow} testID="btn-forgot-password">
+              <Pressable style={styles.forgotRow} onPress={() => Alert.alert("Reset Password", "Password reset flow will be available soon")} testID="btn-forgot-password">
                 <Text style={styles.forgotText}>Forgot Password?</Text>
               </Pressable>
             </Animated.View>
@@ -393,12 +399,13 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     backgroundColor: colors.background,
-    borderRadius: borderRadius.md,
+    borderRadius: borderRadius.lg,
     borderWidth: 1,
     borderColor: colors.border,
     paddingHorizontal: spacing.md,
-    paddingVertical: 14,
+    paddingVertical: 16,
     gap: spacing.sm,
+    minHeight: 56,
   },
   inputError: {
     borderColor: colors.error,
@@ -425,23 +432,39 @@ const styles = StyleSheet.create({
   },
   ctaButton: {
     width: "100%",
-    borderRadius: borderRadius.md,
+    borderRadius: borderRadius.lg,
     overflow: "hidden",
     marginBottom: spacing.lg,
+    minHeight: 58,
+    backgroundColor: colors.primary,
+    ...shadows.coralStrong,
   },
   ctaButtonPressed: {
-    opacity: 0.85,
+    opacity: 0.9,
+    transform: [{ scale: 0.98 }],
   },
   ctaInner: {
     backgroundColor: colors.primary,
-    paddingVertical: 17,
+    paddingVertical: spacing.md + 4,
+    paddingHorizontal: spacing.xl,
     alignItems: "center",
+    justifyContent: "center",
+    minHeight: 58,
+    borderRadius: borderRadius.lg,
+    borderWidth: 2,
+    borderColor: colors.white,
+    borderStyle: "solid",
+    borderTopWidth: 0,
+    borderLeftWidth: 0,
+    borderRightWidth: 0,
+    borderBottomWidth: 0,
   },
   ctaText: {
-    fontSize: 17,
-    fontWeight: "700",
+    fontSize: 18,
+    fontWeight: "800",
     color: colors.white,
-    letterSpacing: 0.3,
+    letterSpacing: 0.5,
+    textTransform: "uppercase",
   },
   ctaLoadingText: {
     fontSize: 17,

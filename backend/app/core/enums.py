@@ -50,7 +50,7 @@ class OrderStatusTransitions:
         OrderStatus.CONFIRMED: [OrderStatus.PREPARING, OrderStatus.CANCELLED],
         OrderStatus.PREPARING: [OrderStatus.READY, OrderStatus.CANCELLED],
         OrderStatus.READY: [OrderStatus.PICKED_UP, OrderStatus.CANCELLED],
-        OrderStatus.PICKED_UP: [OrderStatus.IN_TRANSIT],
+        OrderStatus.PICKED_UP: [OrderStatus.IN_TRANSIT, OrderStatus.DELIVERED],
         OrderStatus.IN_TRANSIT: [OrderStatus.DELIVERED],
         OrderStatus.DELIVERED: [],
         OrderStatus.CANCELLED: [OrderStatus.REFUNDED],

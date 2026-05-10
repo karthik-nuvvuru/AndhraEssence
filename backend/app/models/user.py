@@ -39,6 +39,9 @@ class User(Base):
     orders = relationship(
         "Order", back_populates="customer", foreign_keys="Order.customer_id"
     )
+    long_orders = relationship(
+        "LongOrder", back_populates="customer"
+    )
     restaurant = relationship("Restaurant", back_populates="owner", uselist=False)
     rider = relationship("Rider", back_populates="user", uselist=False)
     notifications = relationship(
@@ -72,6 +75,7 @@ class Address(Base):
     # Relationships
     user = relationship("User", back_populates="addresses")
     orders = relationship("Order", back_populates="delivery_address")
+    long_orders = relationship("LongOrder", back_populates="delivery_address")
 
     def __repr__(self):
         return f"<Address {self.label}: {self.address_line}>"

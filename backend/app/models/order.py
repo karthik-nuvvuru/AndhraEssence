@@ -37,6 +37,7 @@ class Order(Base):
     tax_amount = Column(Float, default=0.0)
     delivery_fee = Column(Float, default=0.0)
     discount_amount = Column(Float, default=0.0)
+    tip_amount = Column(Float, default=0.0)
     promo_code = Column(String(50), nullable=True)
     total_amount = Column(Float, nullable=False)
 
@@ -63,10 +64,14 @@ class Order(Base):
     delivery_instructions = Column(Text, nullable=True)
     estimated_delivery_time = Column(DateTime, nullable=True)
     actual_delivery_time = Column(DateTime, nullable=True)
+    picked_up_at = Column(DateTime, nullable=True)
+    delivered_at = Column(DateTime, nullable=True)
 
     # Timestamps
     placed_at = Column(DateTime, default=datetime.utcnow)
     confirmed_at = Column(DateTime, nullable=True)
+    preparing_at = Column(DateTime, nullable=True)
+    ready_at = Column(DateTime, nullable=True)
     completed_at = Column(DateTime, nullable=True)
     cancelled_at = Column(DateTime, nullable=True)
     cancellation_reason = Column(Text, nullable=True)

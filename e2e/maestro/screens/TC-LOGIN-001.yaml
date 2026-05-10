@@ -1,0 +1,7 @@
+appId: "com.andhraessence.app"
+name: "TC-LOGIN-001 Login Screen"
+---
+- launchApp
+- waitForAnimationToEnd
+- takeScreenshot:
+    name: "test"

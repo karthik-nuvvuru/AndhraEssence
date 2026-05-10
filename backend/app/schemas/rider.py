@@ -74,3 +74,45 @@ class AvailableOrderResponse(BaseModel):
     distance_km: float
     estimated_pickup_time: datetime
     earnings: float
+
+
+class RiderPickupConfirm(BaseModel):
+    """Rider confirms pickup."""
+
+    order_id: UUID
+
+
+class RiderDeliveryConfirm(BaseModel):
+    """Rider confirms delivery."""
+
+    order_id: UUID
+    signature_image: str | None = None
+
+
+class RiderRatingSubmit(BaseModel):
+    """Rider submits rating for customer."""
+
+    order_id: UUID
+    rating: int = Field(..., ge=1, le=5)
+    comment: str | None = None
+
+
+class RiderDeliveryHistoryEntry(BaseModel):
+    """Delivery history entry."""
+
+    order_id: UUID
+    order_number: str
+    restaurant_name: str
+    customer_address: str
+    earnings: float
+    rating: int | None
+    delivered_at: datetime
+
+
+class RiderDeliveryHistoryResponse(BaseModel):
+    """Rider delivery history."""
+
+    total_deliveries: int
+    total_earnings: float
+    average_rating: float | None
+    deliveries: list[RiderDeliveryHistoryEntry]
