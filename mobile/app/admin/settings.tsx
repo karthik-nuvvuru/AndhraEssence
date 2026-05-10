@@ -27,12 +27,12 @@ export default function AdminSettingsScreen() {
       try {
         const data = await extendedAdminApi.getSettings();
         setSettings({
-          platform_name: data.platform_name || "",
-          support_email: data.support_email || "",
-          support_phone: data.support_phone || "",
-          commission_rate: data.commission_rate?.toString() || "",
-          min_order_amount: data.min_order_amount?.toString() || "",
-          delivery_radius_km: data.delivery_radius_km?.toString() || "",
+          platform_name: data.data.platform_name || "",
+          support_email: data.data.support_email || "",
+          support_phone: data.data.support_phone || "",
+          commission_rate: data.data.commission_rate?.toString() || "",
+          min_order_amount: data.data.min_order_amount?.toString() || "",
+          delivery_radius_km: data.data.delivery_radius_km?.toString() || "",
         });
       } catch (error) {
         console.error("Failed to fetch settings:", error);

@@ -161,7 +161,7 @@ export default function RegisterScreen() {
       );
 
       Alert.alert("Success", "Account created successfully", [
-        { text: "OK", onPress: () => router.replace(getRoleRedirectPath(user.role)) },
+        { text: "OK", onPress: () => router.replace(getRoleRedirectPath(user.role) as any) },
       ]);
     } catch (error: any) {
       Animated.sequence([

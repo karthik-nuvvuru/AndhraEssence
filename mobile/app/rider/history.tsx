@@ -32,11 +32,11 @@ export default function RiderHistoryScreen() {
   const fetchHistory = async () => {
     try {
       const data = await extendedRiderApi.getDeliveryHistory(50);
-      setDeliveries(data.deliveries);
+      setDeliveries(data.data.deliveries);
       setStats({
-        total_deliveries: data.total_deliveries,
-        total_earnings: data.total_earnings,
-        average_rating: data.average_rating,
+        total_deliveries: data.data.total_deliveries,
+        total_earnings: data.data.total_earnings,
+        average_rating: data.data.average_rating,
       });
     } catch (error) {
       console.error("Failed to fetch history:", error);

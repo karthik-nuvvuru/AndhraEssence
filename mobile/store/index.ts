@@ -222,31 +222,39 @@ interface OrderState {
   setTrackingOrderId: (orderId: string | null) => void;
 }
 
-export const useOrderStore = create<OrderState>((set, get) => ({
-  orders: [],
-  currentOrder: null,
-  trackingOrderId: null,
+export const useOrderStore = create<OrderState>()(
+  persist(
+    (set, get) => ({
+      orders: [],
+      currentOrder: null,
+      trackingOrderId: null,
 
-  setOrders: (orders) => set({ orders }),
+      setOrders: (orders) => set({ orders }),
 
-  addOrder: (order) =>
-    set({ orders: [order, ...get().orders] }),
+      addOrder: (order) =>
+        set({ orders: [order, ...get().orders] }),
 
-  updateOrder: (orderId, updates) =>
-    set({
-      orders: get().orders.map((o) =>
-        o.id === orderId ? { ...o, ...updates } : o
-      ),
-      currentOrder:
-        get().currentOrder?.id === orderId
-          ? { ...get().currentOrder, ...updates }
-          : get().currentOrder,
+      updateOrder: (orderId, updates) =>
+        set({
+          orders: get().orders.map((o) =>
+            o.id === orderId ? { ...o, ...updates } : o
+          ),
+          currentOrder:
+            get().currentOrder?.id === orderId
+              ? { ...get().currentOrder, ...updates }
+              : get().currentOrder,
+        }),
+
+      setCurrentOrder: (order) => set({ currentOrder: order }),
+
+      setTrackingOrderId: (orderId) => set({ trackingOrderId: orderId }),
     }),
-
-  setCurrentOrder: (order) => set({ currentOrder: order }),
-
-  setTrackingOrderId: (orderId) => set({ trackingOrderId: orderId }),
-}));
+    {
+      name: "order-storage",
+      storage: getStorage(),
+    }
+  )
+);
 
 // UI Store
 interface UIState {

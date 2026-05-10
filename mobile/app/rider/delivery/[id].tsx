@@ -34,7 +34,7 @@ export default function RiderDeliveryScreen() {
     const fetchOrder = async () => {
       try {
         const orders = await riderApi.getMyOrders();
-        const activeOrder = orders.find(
+        const activeOrder = orders.data.find(
           (o: any) => ["ready", "picked_up", "in_transit"].includes(o.status)
         );
         setOrder(activeOrder);

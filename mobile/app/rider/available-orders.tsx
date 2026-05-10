@@ -35,7 +35,7 @@ export default function RiderAvailableOrdersScreen() {
   const fetchOrders = async () => {
     try {
       const data = await riderApi.getAvailableOrders();
-      setOrders(data);
+      setOrders(data.data);
     } catch (error) {
       console.error("Failed to fetch orders:", error);
     } finally {

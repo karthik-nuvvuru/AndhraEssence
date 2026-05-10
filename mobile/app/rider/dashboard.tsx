@@ -32,9 +32,9 @@ export default function RiderDashboardScreen() {
     try {
       const history = await extendedRiderApi.getDeliveryHistory(50);
       setStats({
-        total_deliveries: history.total_deliveries,
-        total_earnings: history.total_earnings,
-        average_rating: history.average_rating,
+        total_deliveries: history.data.total_deliveries,
+        total_earnings: history.data.total_earnings,
+        average_rating: history.data.average_rating,
       });
     } catch (error) {
       console.error("Failed to fetch stats:", error);

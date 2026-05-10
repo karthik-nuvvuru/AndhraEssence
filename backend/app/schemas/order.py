@@ -51,6 +51,7 @@ class OrderCreate(BaseModel):
     payment_method: PaymentMethod
     promo_code: str | None = None
     delivery_instructions: str | None = None
+    tip_amount: float = 0.0
 
 
 class OrderUpdate(BaseModel):
@@ -76,6 +77,7 @@ class OrderResponse(BaseModel):
     tax_amount: float
     delivery_fee: float
     discount_amount: float
+    tip_amount: float = 0.0
     promo_code: str | None = None
     total_amount: float
     status: OrderStatus

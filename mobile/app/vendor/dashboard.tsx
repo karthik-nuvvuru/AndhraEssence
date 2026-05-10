@@ -3,7 +3,7 @@ import React, { useEffect, useState } from "react";
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, RefreshControl } from "react-native";
 import { useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { Settings, Package, DollarSign, Star, Clock, ChevronRight } from "lucide-react-native";
+import { Settings, Package, DollarSign, Star, Clock, ChevronRight, UtensilsCrossed } from "lucide-react-native";
 import { colors, spacing, typography, borderRadius, shadows } from "@/theme";
 import { useAuthStore } from "@/store";
 import { vendorApi } from "@/services/api/vendor";
@@ -31,7 +31,7 @@ export default function VendorDashboardScreen() {
   const fetchDashboard = async () => {
     try {
       const data = await vendorApi.getDashboard();
-      setStats(data);
+      setStats(data.data);
     } catch (error) {
       console.error("Failed to fetch dashboard:", error);
     } finally {
@@ -136,7 +136,7 @@ export default function VendorDashboardScreen() {
 
           <TouchableOpacity style={styles.actionCard} onPress={() => router.push("/vendor/menu")}>
             <View style={[styles.actionIcon, { backgroundColor: colors.infoBg }]}>
-              <BarChart3 size={24} color={colors.info} />
+              <UtensilsCrossed size={24} color={colors.info} />
             </View>
             <Text style={styles.actionLabel}>Menu</Text>
             <ChevronRight size={16} color={colors.textTertiary} />
@@ -152,7 +152,7 @@ export default function VendorDashboardScreen() {
 
           <TouchableOpacity style={styles.actionCard} onPress={() => router.push("/vendor/settings")}>
             <View style={[styles.actionIcon, { backgroundColor: colors.warningBg }]}>
-              <BarChart3 size={24} color={colors.warning} />
+              <UtensilsCrossed size={24} color={colors.warning} />
             </View>
             <Text style={styles.actionLabel}>Settings</Text>
             <ChevronRight size={16} color={colors.textTertiary} />

@@ -66,6 +66,7 @@ export interface Order {
   tax_amount: number;
   delivery_fee: number;
   discount_amount: number;
+  tip_amount?: number;
   total_amount: number;
   status: OrderStatus;
   payment_status: PaymentStatus;
@@ -81,7 +82,7 @@ export interface Order {
   delivered_at?: string;
   cancelled_at?: string;
   cancellation_reason?: string;
-  items?: Array<{ item_name: string; quantity: number; price: number }>;
+  items?: Array<{ id?: string; menu_item_id?: string; item_name: string; item_price: number; quantity: number; subtotal: number; special_instructions?: string }>;
 }
 
 export type OrderStatus =
@@ -121,8 +122,7 @@ export interface Address {
   id: string;
   user_id: string;
   label: string;
-  address_line1: string;
-  address_line2?: string;
+  address_line: string;
   city: string;
   state: string;
   postal_code: string;

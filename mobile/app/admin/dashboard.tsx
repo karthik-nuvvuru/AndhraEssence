@@ -3,7 +3,7 @@ import React, { useEffect, useState } from "react";
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, RefreshControl, Dimensions } from "react-native";
 import { useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { Users, Restaurant, Bike, Package, TrendingUp, ChevronRight, BarChart3 } from "lucide-react-native";
+import { Users, Store, Bike, Package, TrendingUp, ChevronRight, BarChart3 } from "lucide-react-native";
 import { colors, spacing, typography, borderRadius } from "@/theme";
 import { adminApi } from "@/services/api/endpoints";
 import { extendedAdminApi } from "@/services/api/admin";
@@ -36,7 +36,7 @@ export default function AdminDashboardScreen() {
   const fetchDashboard = async () => {
     try {
       const data = await adminApi.getDashboard();
-      setStats(data);
+      setStats(data.data);
     } catch (error) {
       console.error("Failed to fetch dashboard:", error);
     } finally {
@@ -87,10 +87,10 @@ export default function AdminDashboardScreen() {
 
           <GlassCard style={styles.statCard}>
             <View style={[styles.statIcon, { backgroundColor: colors.primaryGlow }]}>
-              <Restaurant size={20} color={colors.primary} />
+              <Store size={20} color={colors.primary} />
             </View>
             <Text style={styles.statValue}>{stats?.total_restaurants || 0}</Text>
-            <Text style={styles.statLabel}>Restaurants</Text>
+            <Text style={styles.statLabel}>Stores</Text>
           </GlassCard>
 
           <GlassCard style={styles.statCard}>
@@ -137,10 +137,10 @@ export default function AdminDashboardScreen() {
 
           <TouchableOpacity style={styles.actionCard} onPress={() => router.push("/admin/restaurants")}>
             <View style={[styles.actionIcon, { backgroundColor: colors.primaryGlow }]}>
-              <Restaurant size={24} color={colors.primary} />
+              <Store size={24} color={colors.primary} />
             </View>
             <View style={styles.actionInfo}>
-              <Text style={styles.actionLabel}>Restaurants</Text>
+              <Text style={styles.actionLabel}>Stores</Text>
               <Text style={styles.actionSubtext}>Approve & manage</Text>
             </View>
             <ChevronRight size={16} color={colors.textTertiary} />
@@ -176,7 +176,7 @@ export default function AdminDashboardScreen() {
             <View key={order.id} style={styles.orderItem}>
               <View>
                 <Text style={styles.orderNumber}>{order.order_number}</Text>
-                <Text style={styles.orderRestaurant}>{order.restaurant_name}</Text>
+                <Text style={styles.orderStore}>{order.restaurant_name}</Text>
               </View>
               <View style={styles.orderRight}>
                 <Text style={styles.orderAmount}>₹{order.total_amount.toFixed(2)}</Text>
@@ -308,7 +308,7 @@ const styles = StyleSheet.create({
     ...typography.body,
     color: colors.textPrimary,
   },
-  orderRestaurant: {
+  orderStore: {
     ...typography.caption,
     color: colors.textTertiary,
   },

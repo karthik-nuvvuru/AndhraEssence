@@ -45,7 +45,7 @@ export default function AdminUsersScreen() {
       const params: any = {};
       if (roleFilter) params.role = roleFilter;
       const data = await adminApi.getUsers(params);
-      setUsers(data);
+      setUsers(data.data);
     } catch (error) {
       console.error("Failed to fetch users:", error);
     } finally {

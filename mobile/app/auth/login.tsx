@@ -141,7 +141,7 @@ export default function LoginScreen() {
         access_token,
         refresh_token
       );
-      router.replace(getRoleRedirectPath(user.role));
+      router.replace(getRoleRedirectPath(user.role) as any);
     } catch (err: any) {
       Animated.sequence([
         Animated.timing(buttonScaleAnim, { toValue: 0.95, duration: 50, useNativeDriver: true }),

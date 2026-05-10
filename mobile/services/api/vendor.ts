@@ -22,10 +22,7 @@ export const vendorApi = {
     }>("/vendor/orders", { params }),
 
   updateOrderStatus: (orderId: string, status: string) =>
-    apiClient.patch(`/vendor/orders/${orderId}/status`, status, {
-      headers: { "Content-Type": "application/json" },
-      data: { status },
-    }),
+    apiClient.patch(`/vendor/orders/${orderId}/status`, { status }),
 
   getMenu: () => apiClient.get<any[]>("/vendor/menu"),
 

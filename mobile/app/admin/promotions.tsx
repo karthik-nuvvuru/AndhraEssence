@@ -42,7 +42,7 @@ export default function AdminPromotionsScreen() {
   const fetchPromotions = async () => {
     try {
       const data = await extendedAdminApi.getPromotions();
-      setPromotions(data);
+      setPromotions(data.data);
     } catch (error) {
       console.error("Failed to fetch promotions:", error);
     } finally {

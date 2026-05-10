@@ -38,7 +38,7 @@ export default function LongOrderHistoryScreen() {
       const params: any = {};
       if (statusFilter) params.status = statusFilter;
       const data = await longOrdersApi.getOrders(params);
-      setOrders(data.items);
+      setOrders(data.data.items);
     } catch (error) {
       console.error("Failed to fetch orders:", error);
     } finally {

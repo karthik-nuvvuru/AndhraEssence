@@ -43,7 +43,7 @@ export default function VendorOrdersScreen() {
       const params: any = {};
       if (statusFilter) params.status = statusFilter;
       const data = await vendorApi.getOrders(params);
-      setOrders(data.items);
+      setOrders(data.data.items);
     } catch (error) {
       console.error("Failed to fetch orders:", error);
     } finally {

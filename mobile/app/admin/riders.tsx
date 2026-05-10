@@ -26,7 +26,7 @@ export default function AdminRidersScreen() {
   const fetchRiders = async () => {
     try {
       const data = await extendedAdminApi.getPendingRiders();
-      setRiders(data);
+      setRiders(data.data);
     } catch (error) {
       console.error("Failed to fetch riders:", error);
     } finally {

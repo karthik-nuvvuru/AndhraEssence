@@ -38,7 +38,7 @@ export default function LongOrderDetailScreen() {
     const fetchOrder = async () => {
       try {
         const data = await longOrdersApi.getOrder(params.id as string);
-        setOrder(data);
+        setOrder(data.data);
       } catch (error) {
         console.error("Failed to fetch order:", error);
       } finally {

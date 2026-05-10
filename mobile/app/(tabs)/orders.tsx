@@ -92,8 +92,7 @@ export default function OrdersScreen() {
       const response = await orderApi.list();
       setOrders(response.data.items ?? []);
     } catch (err: any) {
-      // Orders fetch failed
-      setError(err?.message || "Failed to load orders.");
+      setError(err?.response?.data?.detail || err?.message || "Failed to load orders.");
     } finally {
       setLoading(false);
       setRefreshing(false);

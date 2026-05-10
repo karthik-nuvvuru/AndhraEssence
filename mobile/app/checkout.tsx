@@ -120,7 +120,7 @@ export default function CheckoutScreen() {
     const address = addresses.find(a => a.id === selectedAddressId);
     Alert.alert(
       "Confirm Order",
-      `Total: ${formatCurrency(total)}\nDelivery to: ${address?.address_line1 || "selected address"}\nPayment: ${paymentMethod === "razorpay" ? "Credit/Debit Card" : paymentMethod === "wallet" ? "Wallet" : "Cash on Delivery"}`,
+      `Total: ${formatCurrency(total)}\nDelivery to: ${address?.address_line || "selected address"}\nPayment: ${paymentMethod === "razorpay" ? "Credit/Debit Card" : paymentMethod === "wallet" ? "Wallet" : "Cash on Delivery"}`,
       [
         { text: "Cancel", style: "cancel" },
         { text: "Confirm", onPress: handlePlaceOrder, style: "default" },
@@ -245,7 +245,7 @@ export default function CheckoutScreen() {
                         )}
                       </View>
                       <Text style={styles.addressText}>
-                        {selectedAddress.address_line1}, {selectedAddress.city}
+                        {selectedAddress.address_line}, {selectedAddress.city}
                       </Text>
                       <Text style={styles.addressSubtext}>
                         {selectedAddress.state} {selectedAddress.postal_code}

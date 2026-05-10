@@ -31,16 +31,16 @@ export default function RiderEarningsScreen() {
     const fetchData = async () => {
       try {
         const data = await extendedRiderApi.getDeliveryHistory(100);
-        setDeliveries(data.deliveries.map((d: any) => ({
+        setDeliveries(data.data.deliveries.map((d: any) => ({
           order_id: d.order_id,
           order_number: d.order_number,
           earnings: d.earnings,
           delivered_at: d.delivered_at,
         })));
         setStats({
-          total_deliveries: data.total_deliveries,
-          total_earnings: data.total_earnings,
-          average_rating: data.average_rating,
+          total_deliveries: data.data.total_deliveries,
+          total_earnings: data.data.total_earnings,
+          average_rating: data.data.average_rating,
         });
       } catch (error) {
         console.error("Failed to fetch earnings:", error);

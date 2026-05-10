@@ -30,7 +30,7 @@ export default function VendorEarningsScreen() {
   const fetchEarnings = async () => {
     try {
       const data = await vendorApi.getEarnings(period);
-      setEarnings(data);
+      setEarnings(data.data);
     } catch (error) {
       console.error("Failed to fetch earnings:", error);
     } finally {

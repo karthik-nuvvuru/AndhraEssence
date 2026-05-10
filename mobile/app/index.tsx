@@ -48,7 +48,7 @@ export default function Index() {
         const onboardingCompleted = await AsyncStorage.getItem(STORAGE_KEYS.ONBOARDING_COMPLETED);
         const authState = useAuthStore.getState();
         if (authState.isAuthenticated) {
-          router.replace(getRoleRedirectPath(authState.user?.role));
+          router.replace(getRoleRedirectPath(authState.user?.role) as any);
         } else if (onboardingCompleted === "true") {
           router.replace("/auth/login");
         }

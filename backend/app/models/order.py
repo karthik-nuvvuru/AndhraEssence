@@ -37,6 +37,7 @@ class Order(Base):
     tax_amount = Column(Float, default=0.0)
     delivery_fee = Column(Float, default=0.0)
     discount_amount = Column(Float, default=0.0)
+    tip_amount = Column(Float, default=0.0)
     promo_code = Column(String(50), nullable=True)
     total_amount = Column(Float, nullable=False)
 

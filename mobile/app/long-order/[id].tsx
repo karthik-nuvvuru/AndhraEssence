@@ -17,7 +17,7 @@ import { longOrdersApi, type LongOrderItem } from "@/services/api/longOrders";
 import { useLongOrderCartStore } from "@/store";
 import { GlassCard } from "@/components/ui/GlassCard";
 import { Button } from "@/components/ui/Button";
-import QuantityStepper from "@/components/ui/QuantityStepper";
+import { QuantityStepper } from "@/components/ui/QuantityStepper";
 import { LoadingSpinner } from "@/components/ui/LoadingSpinner";
 
 export default function LongOrderDetailScreen() {
@@ -33,7 +33,7 @@ export default function LongOrderDetailScreen() {
     const fetchItem = async () => {
       try {
         const data = await longOrdersApi.getItem(params.id as string);
-        setItem(data);
+        setItem(data.data);
       } catch (error) {
         console.error("Failed to fetch item:", error);
       } finally {
@@ -185,7 +185,8 @@ export default function LongOrderDetailScreen() {
             <Text style={styles.quantityLabel}>Quantity</Text>
             <QuantityStepper
               value={quantity}
-              onChange={setQuantity}
+              onIncrease={() => setQuantity((q) => Math.min(q + 1, item.stock_quantity))}
+              onDecrease={() => setQuantity((q) => Math.max(q - 1, 1))}
               min={1}
               max={item.stock_quantity}
             />

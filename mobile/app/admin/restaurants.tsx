@@ -2,7 +2,7 @@
 import React, { useEffect, useState } from "react";
 import { View, Text, StyleSheet, FlatList, TouchableOpacity, RefreshControl, Alert } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { Restaurant, MapPin, CheckCircle, XCircle } from "lucide-react-native";
+import { Store, MapPin, CheckCircle, XCircle } from "lucide-react-native";
 import { colors, spacing, typography, borderRadius } from "@/theme";
 import { extendedAdminApi } from "@/services/api/admin";
 import { GlassCard } from "@/components/ui/GlassCard";
@@ -28,7 +28,7 @@ export default function AdminRestaurantsScreen() {
     try {
       if (activeTab === "pending") {
         const data = await extendedAdminApi.getPendingRestaurants();
-        setRestaurants(data);
+        setRestaurants(data.data);
       }
     } catch (error) {
       console.error("Failed to fetch restaurants:", error);
@@ -133,7 +133,7 @@ export default function AdminRestaurantsScreen() {
         }
         ListEmptyComponent={
           <View style={styles.empty}>
-            <Restaurant size={48} color={colors.textTertiary} />
+            <Store size={48} color={colors.textTertiary} />
             <Text style={styles.emptyText}>No pending restaurants</Text>
           </View>
         }

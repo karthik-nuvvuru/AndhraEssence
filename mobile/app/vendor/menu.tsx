@@ -41,7 +41,7 @@ export default function VendorMenuScreen() {
   const fetchMenu = async () => {
     try {
       const data = await vendorApi.getMenu();
-      setCategories(data);
+      setCategories(data.data);
     } catch (error) {
       console.error("Failed to fetch menu:", error);
     } finally {

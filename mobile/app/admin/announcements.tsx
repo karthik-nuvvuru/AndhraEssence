@@ -50,7 +50,7 @@ export default function AdminAnnouncementsScreen() {
         target_roles: selectedRoles,
         is_active: true,
       });
-      Alert.alert("Success", `Announcement sent to ${result.recipients} users`);
+      Alert.alert("Success", `Announcement sent to ${result.data.recipients} users`);
       setTitle("");
       setBody("");
       setSelectedRoles([]);

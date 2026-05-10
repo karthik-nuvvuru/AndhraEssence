@@ -66,9 +66,59 @@ const MOCK_RESTAURANT = {
 export default function RestaurantDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
-  const [restaurant] = useState(MOCK_RESTAURANT);
-  const [menu] = useState<MenuCategory[]>(MOCK_MENU);
-  const [loading] = useState(false);
+  const [restaurant, setRestaurant] = useState<typeof MOCK_RESTAURANT>(MOCK_RESTAURANT);
+  const [menu, setMenu] = useState<MenuCategory[]>(MOCK_MENU);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (!id) return;
+    let cancelled = false;
+
+    const fetchData = async () => {
+      try {
+        setLoading(true);
+        const [restRes, menuRes] = await Promise.allSettled([
+          restaurantApi.getById(id),
+          restaurantApi.getMenu(id),
+        ]);
+
+        if (cancelled) return;
+
+        if (restRes.status === "fulfilled") {
+          setRestaurant(restRes.value.data as any);
+        }
+
+        if (menuRes.status === "fulfilled" && Array.isArray(menuRes.value.data)) {
+          const items = menuRes.value.data as MenuItem[];
+          const categoryMap = new Map<string, MenuCategory>();
+          items.forEach((item) => {
+            const catName = item.category || "Menu";
+            const catId = item.category_id || catName.toLowerCase().replace(/\s+/g, "-");
+            if (!categoryMap.has(catId)) {
+              categoryMap.set(catId, {
+                id: catId,
+                name: catName,
+                restaurant_id: id,
+                display_order: categoryMap.size,
+                items: [],
+              });
+            }
+            categoryMap.get(catId)!.items!.push(item);
+          });
+          if (categoryMap.size > 0) {
+            setMenu(Array.from(categoryMap.values()));
+          }
+        }
+      } catch {
+        // Fall back to mock data silently
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    };
+
+    fetchData();
+    return () => { cancelled = true; };
+  }, [id]);
   const [isFavorite, setIsFavorite] = useState(false);
   const [activeCategory, setActiveCategory] = useState<string>("popular");
   const { addItem, getItemCount, getSubtotal, items } = useCartStore();

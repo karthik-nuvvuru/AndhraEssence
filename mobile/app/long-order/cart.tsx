@@ -17,7 +17,7 @@ import { longOrdersApi } from "@/services/api/longOrders";
 import { useLongOrderCartStore } from "@/store";
 import { GlassCard } from "@/components/ui/GlassCard";
 import { Button } from "@/components/ui/Button";
-import QuantityStepper from "@/components/ui/QuantityStepper";
+import { QuantityStepper } from "@/components/ui/QuantityStepper";
 import { userApi } from "@/services/api/endpoints";
 import type { Address } from "@/types/api";
 
@@ -46,8 +46,8 @@ export default function LongOrderCartScreen() {
     const fetchAddresses = async () => {
       try {
         const data = await userApi.getAddresses();
-        setAddresses(data);
-        const defaultAddr = data.find((a: Address) => a.is_default) || data[0];
+        setAddresses(data.data);
+        const defaultAddr = data.data.find((a: Address) => a.is_default) || data.data[0];
         if (defaultAddr) {
           setSelectedAddressId(defaultAddr.id);
           setAddress(defaultAddr.id);
@@ -178,7 +178,8 @@ export default function LongOrderCartScreen() {
                 <View style={styles.itemActions}>
                   <QuantityStepper
                     value={item.quantity}
-                    onChange={(val) => updateQuantity(item.menuItem.id, val)}
+                    onIncrease={() => updateQuantity(item.menuItem.id, item.quantity + 1)}
+                    onDecrease={() => updateQuantity(item.menuItem.id, item.quantity - 1)}
                     min={1}
                     max={99}
                   />

@@ -40,9 +40,9 @@ export default function LongOrdersScreen() {
         longOrdersApi.getItems({ limit: 50 }),
         longOrdersApi.getItems({ is_bestseller: true, limit: 10 }),
       ]);
-      setCategories(cats);
-      setItems(itemsData);
-      setBestsellers(bestsellersData);
+      setCategories(cats.data);
+      setItems(itemsData.data);
+      setBestsellers(bestsellersData.data);
     } catch (error) {
       console.error("Failed to fetch long orders data:", error);
     } finally {
